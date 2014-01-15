@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include "CL/cl.h"
 
-#define BLOCK_SIZE 8
+#define BLOCK_SIZE 32
 
 int main(int argc, char *argv[])
 {
@@ -197,8 +197,12 @@ int main(int argc, char *argv[])
     clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
     total_time = time_end - time_start;
 
-    printf("runtime was %f (ms)\n", (total_time / 1000000.0));
-    printf("on a matrix of size %d.\n", ROWS);
+    // for test automation
+    printf("%f\n", (total_time / 1000000.0));
+
+    // for documentation
+    // printf("runtime was %f (ms)\n", (total_time / 1000000.0));
+    // printf("on a matrix of size %d.\n", ROWS);
 
     // read the output back to host memory
     err = clEnqueueReadBuffer(command_queue, output_buffer, CL_TRUE, 0, sizeof(cl_float)*width*height, results, 0, NULL, NULL);

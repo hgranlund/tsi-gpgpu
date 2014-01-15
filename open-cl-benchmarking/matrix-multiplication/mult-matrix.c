@@ -73,8 +73,12 @@ int main(int argc, char *argv[])
 
     matrix S = mat_mul(&a, &a);
 
-    printf("runtime was %f (ms)\n", (WallTime() - time) * 1000);
-    printf("on a matrix of size %d.\n", x);
+    // for test automation
+    printf("%f\n", (WallTime() - time) * 1000);
+
+    // for documentation
+    // printf("runtime was %f (ms)\n", (WallTime() - time) * 1000);
+    // printf("on a matrix of size %d.\n", x);
 
     free(M);
     free(S);

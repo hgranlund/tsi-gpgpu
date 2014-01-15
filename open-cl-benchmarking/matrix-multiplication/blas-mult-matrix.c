@@ -41,8 +41,12 @@ int main(int argc, char *argv[])
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans,
         x, x, x, 1.0, M, x, M, x, 0.0, S, x);
 
-    printf("runtime was %f (ms)\n", (WallTime() - time) * 1000);
-    printf("on a matrix of size %d.\n", x);
+    // for test automation
+    printf("%f\n", (WallTime() - time) * 1000);
+
+    // for documentation
+    // printf("runtime was %f (ms)\n", (WallTime() - time) * 1000);
+    // printf("on a matrix of size %d.\n", x);
 
     free(M);
     free(S);

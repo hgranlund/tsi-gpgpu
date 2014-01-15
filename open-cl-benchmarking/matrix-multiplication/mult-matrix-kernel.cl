@@ -1,7 +1,5 @@
 // ------ multMatrix_kernel.cl ----------
 
-#define BLOCKSIZE 8
-
 // simple matrix multiplication
 __kernel void multMatrixSimple(__global float *mO,
                          __global float *mA,

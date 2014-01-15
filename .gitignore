@@ -20,3 +20,6 @@
 
 # Sublime
 .sublime*
+
+# Data files
+*.dat
