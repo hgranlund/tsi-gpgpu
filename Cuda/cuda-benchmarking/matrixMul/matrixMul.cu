@@ -319,7 +319,7 @@ int main(int argc, char **argv)
     printf("MatrixA(%d,%d), MatrixB(%d,%d)\n", dimsA.x, dimsA.y, dimsB.x, dimsB.y);
 
     float matrix_result = matrixMultiply(argc, argv, block_size, dimsA, dimsB);
-    int itr = 30;
+    int itr = 20;
     for (int i = 0; i < 608+32*itr; i+=32)
     {
         dimsA.x=dimsA.y=dimsB.x=dimsB.y=i;
