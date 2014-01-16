@@ -41,3 +41,31 @@ Ease of use comparison
 * Documentation
 * Installation
 * Coding
+
+
+| Query | No of Stackoverflow.com results |
+|--------------------|-------------------:|
+| Tagged OpenCL      | 6137               |
+| Tagged CUDA        | 1935               |
+| Open search OpenCL | 5818               |
+| Open search CUDA   | 16174              |
+
+
+| Query |          No of Google results |
+|-----------------------------|--------:|
+| opencl paralell programming | 322000  |
+| cuda paralell programming   | 558000  |
+| opencl gpgpu                | 558000  |
+| cuda gpgpu                  | 816000  |
+| opencl programming          | 875000  |
+| cuda programming            | 2790000 |
+
+
+| Query | No of Google Scholar results |
+|-----------------------------|-------:|
+| opencl paralell programming | 7480   |
+| cuda paralell programming   | 17100  |
+| opencl gpgpu                | 5230   |
+| cuda gpgpu                  | 13500  |
+| opencl programming          | 8160   |
+| cuda programming            | 22700  |
