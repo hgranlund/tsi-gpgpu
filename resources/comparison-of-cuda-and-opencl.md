@@ -25,7 +25,11 @@ The four implementations where tested on a desktop computer running 64-bit Ubunt
 
 The results are presented in the following graph:
 ![matrix-multiplication-benchmark](matrix-multiplication-benchmark-results.png)
-We see that the naive serial implementation quickly becomes unusable, due to a rapid increase in run time. The improvement gained by using ATLAS BLAS is very large compared to the naive implementation, although it cannot keep up with the run times achieved by the 
+We see that the naive serial implementation quickly becomes unusable, due to a rapid increase in run time. The improvement gained by using ATLAS BLAS is very large compared to the naive implementation, although it cannot keep up with the run times achieved by the CUDA and OpenCL implementations.
+
+The difference between CUDA and OpenCL is quite small, compared to the other implementations, but the CUDA implementation is on average about twice as fast as the OpenCL implementation.
+
+It is important to note that this is a very but it migth indicate that the throw comparison made in 2010 by is still correct.
 
 
 Ease of use comparison
