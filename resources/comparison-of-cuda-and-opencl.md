@@ -23,8 +23,10 @@ The four implementations where tested on a desktop computer running 64-bit Ubunt
 | Graphics   | GeForce GTX 560 Ti/PCIe/SSE2          |
 | Memory     | 7.8 GiB                               |
 
-The results are presented in the following graph:
-![matrix-multiplication-benchmark](matrix-multiplication-benchmark-results.png)
+The results are presented in Figure 1:
+
+![Matrix multiplication benchmark results](matrix-multiplication-benchmark-results.png)
+
 We see that the naive serial implementation quickly becomes unusable, due to a rapid increase in run time. The improvement gained by using ATLAS BLAS is very large compared to the naive implementation, although it cannot keep up with the run times achieved by the CUDA and OpenCL implementations.
 
 The difference between CUDA and OpenCL is quite small, compared to the naive and BLAS implementations, but the CUDA implementation is on average about twice as fast as the OpenCL implementation. This is quite a big difference, and this could be related to all tests being run on a NVIDIA graphics card. It might also have been caused by different quality between the NVIDIA and AMD examples.
@@ -38,36 +40,33 @@ CUDA and OpenCL](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1
 Documentation
 -------------
 
-When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the online documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables.
+When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the online documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables (all data from 16. Jan 2014).
 
 
 | Query | No of Stackoverflow.com results |
-|--------------------|-------------------:|
+|--------------------|--------------------|
 | Tagged OpenCL      | 1935               |
 | Tagged CUDA        | 6137               |
 | Open search OpenCL | 5818               |
 | Open search CUDA   | 16174              |
-*Data from 16. Jan 2014*
 
 | Query |           No of Google results |
-|-----------------------------|---------:|
+|-----------------------------|----------|
 | opencl paralell programming | ~322000  |
 | cuda paralell programming   | ~558000  |
 | opencl gpgpu                | ~558000  |
 | cuda gpgpu                  | ~816000  |
 | opencl programming          | ~875000  |
 | cuda programming            | ~2790000 |
-*Data from 16. Jan 2014*
 
 | Query | No of Google Scholar results |
-|-----------------------------|-------:|
+|-----------------------------|--------|
 | opencl paralell programming | ~7480  |
 | cuda paralell programming   | ~17100 |
 | opencl gpgpu                | ~5230  |
 | cuda gpgpu                  | ~13500 |
 | opencl programming          | ~8160  |
 | cuda programming            | ~22700 |
-*Data from 16. Jan 2014*
 
 
 Conclusion
