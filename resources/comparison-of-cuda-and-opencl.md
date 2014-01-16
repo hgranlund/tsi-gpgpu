@@ -45,8 +45,8 @@ Ease of use comparison
 
 | Query | No of Stackoverflow.com results |
 |--------------------|-------------------:|
-| Tagged OpenCL      | 6137               |
-| Tagged CUDA        | 1935               |
+| Tagged OpenCL      | 1935               |
+| Tagged CUDA        | 6137               |
 | Open search OpenCL | 5818               |
 | Open search CUDA   | 16174              |
 
