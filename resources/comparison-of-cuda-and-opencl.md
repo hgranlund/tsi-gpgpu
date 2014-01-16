@@ -17,6 +17,7 @@ The test algorithm multiplies two square matrices of size NxN. This is an intere
 
 The four implementations where tested on a desktop computer running 64-bit Ubuntu 13.04 with the following hardware:
 
+|------------|---------------------------------------|
 | Processor  | Intel Core i7-2600K CPU @ 3.40GHz x 8 |
 | Graphics   | GeForce GTX 560 Ti/PCIe/SSE2          |
 | Memory     | 7.8 GiB                               |
