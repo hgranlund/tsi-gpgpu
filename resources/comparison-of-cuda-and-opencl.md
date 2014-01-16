@@ -38,7 +38,7 @@ CUDA and OpenCL](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1
 Documentation
 -------------
 
-When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the on-line documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables.
+When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the online documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables.
 
 
 | Query | No of Stackoverflow.com results |
