@@ -35,12 +35,10 @@ It is also important to note that this is a very small test. In order to be able
 CUDA and OpenCL](https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=1&cad=rja&ved=0CC4QFjAA&url=http%3A%2F%2Fwww.researchgate.net%2Fpublication%2F224262957_A_Comprehensive_Performance_Comparison_of_CUDA_and_OpenCL%2Ffile%2F9c96051c2bd67d9896.pdf&ei=a17WUp3IAe2MyQPYtYHYCA&usg=AFQjCNFH4LaF52l3MCQh4a2M7l-EA0zvdA&sig2=oBxdSx4bOewMRbnzqrlARQ) by Janbin Fang et al.
 
 
-Ease of use comparison
-----------------------
+Documentation
+-------------
 
-* Documentation
-* Installation
-* Coding
+When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the on-line documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables.
 
 
 | Query | No of Stackoverflow.com results |
@@ -49,23 +47,30 @@ Ease of use comparison
 | Tagged CUDA        | 6137               |
 | Open search OpenCL | 5818               |
 | Open search CUDA   | 16174              |
+*Data from 16. Jan 2014*
 
-
-| Query |          No of Google results |
-|-----------------------------|--------:|
-| opencl paralell programming | 322000  |
-| cuda paralell programming   | 558000  |
-| opencl gpgpu                | 558000  |
-| cuda gpgpu                  | 816000  |
-| opencl programming          | 875000  |
-| cuda programming            | 2790000 |
-
+| Query |           No of Google results |
+|-----------------------------|---------:|
+| opencl paralell programming | ~322000  |
+| cuda paralell programming   | ~558000  |
+| opencl gpgpu                | ~558000  |
+| cuda gpgpu                  | ~816000  |
+| opencl programming          | ~875000  |
+| cuda programming            | ~2790000 |
+*Data from 16. Jan 2014*
 
 | Query | No of Google Scholar results |
 |-----------------------------|-------:|
-| opencl paralell programming | 7480   |
-| cuda paralell programming   | 17100  |
-| opencl gpgpu                | 5230   |
-| cuda gpgpu                  | 13500  |
-| opencl programming          | 8160   |
-| cuda programming            | 22700  |
+| opencl paralell programming | ~7480  |
+| cuda paralell programming   | ~17100 |
+| opencl gpgpu                | ~5230  |
+| cuda gpgpu                  | ~13500 |
+| opencl programming          | ~8160  |
+| cuda programming            | ~22700 |
+*Data from 16. Jan 2014*
+
+
+Conclusion
+----------
+
+In all our tests CUDA outperformed OpenCL. Although our tests were very limited in scope, they support the opinion that currently, CUDA is faster and better documented than OpenCL. If you don not need the portability offered by OpenCL, we would recommend using CUDA.
