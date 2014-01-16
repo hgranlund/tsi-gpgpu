@@ -15,9 +15,15 @@ The test algorithm multiplies two square matrices of size NxN. This is an intere
 * Matrix multiplication can be parallelized over a large number of computational cores, making it suitable for GPGPU programming.
 * The mathematics of matrix multiplication is trivial, making it an easy to understand example problem.
 
-The four implementations where tested, and the results are presented in the following graph:
+The four implementations where tested on a desktop computer running 64-bit Ubuntu 13.04 with the following hardware:
 
+| Processor  | Intel Core i7-2600K CPU @ 3.40GHz x 8 |
+| Graphics   | GeForce GTX 560 Ti/PCIe/SSE2          |
+| Memory     | 7.8 GiB                               |
+
+The results are presented in the following graph:
 ![matrix-multiplication-benchmark](matrix-multiplication-benchmark-results.png)
+We see that the naive serial implementation quickly becomes unusable, due to a rapid increase in run time. The improvement gained by using ATLAS BLAS is very large compared to the naive implementation, although it cannot keep up with the run times achieved by the 
 
 
 Ease of use comparison
