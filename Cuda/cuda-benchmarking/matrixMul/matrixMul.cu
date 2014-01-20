@@ -166,7 +166,7 @@ float matrixMultiply(int argc, char **argv, int block_size, dim3 &dimsA, dim3 &d
 
 
     // Execute the kernel
-    int nIter = 300;
+    int nIter = 10;
 
     for (int j = 0; j < nIter; j++)
     {
@@ -279,7 +279,6 @@ int main(int argc, char **argv)
 
     // Use a larger block size for Fermi and above
     int block_size = (deviceProp.major < 2) ? 16 : 32;
-
     dim3 dimsA(5*2*block_size, 5*2*block_size, 1);
     dim3 dimsB(5*2*block_size, 5*2*block_size, 1);
 
@@ -316,14 +315,13 @@ int main(int argc, char **argv)
 
 
 
-    printf("MatrixA(%d,%d), MatrixB(%d,%d)\n", dimsA.x, dimsA.y, dimsB.x, dimsB.y);
 
     float matrix_result = matrixMultiply(argc, argv, block_size, dimsA, dimsB);
-    int itr = 20;
-    for (int i = 0; i < 608+32*itr; i+=32)
+    int itr = 128;
+    for (int i = 0; i < 32*itr; i+=32)
     {
-        dimsA.x=dimsA.y=dimsB.x=dimsB.y=i;
         printf("MatrixA(%d,%d), MatrixB(%d,%d)\n", dimsA.x, dimsA.y, dimsB.x, dimsB.y);
+        dimsA.x=dimsA.y=dimsB.x=dimsB.y=i;
         matrixMultiply(argc, argv, block_size, dimsA, dimsB);
     }
     exit(matrix_result);
