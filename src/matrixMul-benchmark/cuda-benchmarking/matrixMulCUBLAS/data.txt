@@ -1,0 +1,5 @@
+[Matrix Multiply CUBLAS] - Starting...
+GPU Device 0: "GeForce GTX 560 Ti" with compute capability 2.1
+
+MatrixA(3936,3936), MatrixB(3936,3936), MatrixC(3936,3936)
+cudaMalloc d_C returned error code 2, line(300)
