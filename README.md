@@ -7,7 +7,7 @@ A project to investigate the power of GPGPU programming for engineering tasks.
 The quick n'dirty guide to getting started on Windows
 -----------------------------------------------------
 
-Currently, gcc and make is used to build and compile the C code. If you have a Windows system with these commands available in a command-line environment, you're good to go.
+Currently, gcc and make is used to build and compile the C code. If you have a Windows system with these commands available in a command-line environment, you're good to go. Finally you'll need a suitable installation of CUDA.
 
 Alternatively, you should be able to use cl and nmake from the VisualStudio command-line toolset, but this option has not been tested. More information about this topic is available at [msdn](http://msdn.microsoft.com/en-us/library/f35ctcxw.aspx). You'll probably need to make some changes to the makefiles in order to make them use the cl compiler.
 
