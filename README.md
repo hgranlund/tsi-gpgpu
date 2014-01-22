@@ -4,8 +4,7 @@ tsi-gpgpu
 A project to investigate the power of GPGPU programming for engineering tasks.
 
 
-The quick n'dirty guide to getting started on Windows
------------------------------------------------------
+## The quick n'dirty guide to getting started on Windows
 
 Currently, gcc and make is used to build and compile the C code. If you have a Windows system with these commands available in a command-line environment, you're good to go. Finally you'll need a suitable installation of CUDA.
 
