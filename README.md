@@ -3,6 +3,8 @@ tsi-gpgpu
 
 A project to investigate the power of GPGPU programming for engineering tasks.
 
+Code and documentation for different experiments are placed under the ```/src``` folder.
+
 
 The quick n'dirty guide to getting started on Windows
 -----------------------------------------------------
