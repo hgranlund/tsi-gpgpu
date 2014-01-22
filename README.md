@@ -31,3 +31,10 @@ Run the installer [GNU make](http://gnuwin32.sourceforge.net/packages/make.htm),
 ### Installing CUDA
 
 Get the installer at the [download page](https://developer.nvidia.com/cuda-downloads). NVIDIA has a good [getting started guide](http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows/index.html).
+
+
+### Bonus snacks for *NIX addicts
+
+* Virtual desktops can be used with the [Desktops](http://technet.microsoft.com/en-us/sysinternals/cc817881.aspx) add-on in Windows.
+* PowerShell is your new bash.
+* [PsGet](http://psget.net/) is a package manager for PowerShell modules. Try it out with [Posh-Git](http://www.imtraum.com/blog/streamline-git-with-powershell/).
