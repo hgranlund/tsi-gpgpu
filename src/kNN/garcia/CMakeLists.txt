@@ -1,15 +1,19 @@
 
 
 # Append current NVCC flags by something, eg comput capability
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -lcuda -lpthread)
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} )
 
+MACRO(ADD_APP APP)
+  CUDA_ADD_EXECUTABLE(${APP} ${APP}.cu)
+  TARGET_LINK_LIBRARIES(${APP} -lcuda)
+  SET(all-bin "${all-bin} ${APP}")
+ENDMACRO(ADD_APP)
 
-set(CUDASRCS
-        knn_cuda_with_indexes_imporved.cu
-)
+ADD_APP(knn_cuda_with_indexes_mod)
+# ADD_APP(knn_cuda_with_indexes)
+# ADD_APP(knn_cublas_with_indexes)
+# ADD_APP(knn_cublas_with_indexes_mod)
 
-CUDA_ADD_EXECUTABLE(knn_cuda_with_indexes_imporved ${CUDASRCS})
-target_link_libraries(knn_cuda_with_indexes_imporved -lcuda)
 
 # Some untested, alternative statements of how to add libraries to an CUDA executable
 
