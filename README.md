@@ -4,11 +4,6 @@ tsi-gpgpu
 A project to investigate the power of GPGPU programming for engineering tasks.
 
 
-A little bit about the folder structure
----------------------------------------
-TODO
-
-
 The quick n'dirty guide to getting started on Windows
 -----------------------------------------------------
 
