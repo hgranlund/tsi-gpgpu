@@ -30,4 +30,4 @@ Run the installer [GNU make](http://gnuwin32.sourceforge.net/packages/make.htm),
 
 ### Installing CUDA
 
-TODO
+Get the installer at the [download page](https://developer.nvidia.com/cuda-downloads). NVIDIA has a good [getting started guide](http://docs.nvidia.com/cuda/cuda-getting-started-guide-for-microsoft-windows/index.html).
