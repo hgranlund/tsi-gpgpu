@@ -16,6 +16,10 @@
 #define MAX_PART_OF_FREE_MEMORY_USED   0.9
 #define BLOCK_DIM                      16
 
+#ifndef max
+#define max(a,b) (((a) (b)) ? (a) : (b))
+#define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
 
 __global__ void cuComputeNorm(float *mat, int width, int pitch, int height, float *norm){
     unsigned int xIndex = blockIdx.x * blockDim.x + threadIdx.x;

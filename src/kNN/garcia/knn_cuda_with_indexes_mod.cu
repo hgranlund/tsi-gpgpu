@@ -19,6 +19,7 @@
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
+
 // Texture containing the reference points (if it is possible)
 texture<float, 2, cudaReadModeElementType> texA;
 
