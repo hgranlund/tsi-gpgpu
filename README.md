@@ -40,3 +40,24 @@ Get the installer at the [download page](https://developer.nvidia.com/cuda-downl
 * Virtual desktops can be used with the [Desktops](http://technet.microsoft.com/en-us/sysinternals/cc817881.aspx) add-on in Windows.
 * PowerShell is your new bash.
 * [PsGet](http://psget.net/) is a package manager for PowerShell modules. Try it out with [Posh-Git](http://www.imtraum.com/blog/streamline-git-with-powershell/).
+
+## Staring guide on Ubuntu
+
+### Install requirements
+
+ **CUDA toolkit:**
+
+    sudo apt-get install nvidia-cuda-toolkit
+
+ **cmake:**
+
+    sudo apt-get install cmake
+
+### Build
+
+    mkdir build $$ cd build
+    cmake ../
+    make
+
+All executables will be in ***/build/bin***
+
