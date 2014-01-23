@@ -1,21 +1,16 @@
-cmake_minimum_required(VERSION 2.8)
-
-project(KNN)
-# SET(CMAKE_C_COMPILER gcc)
-# SET(CMAKE_CXX_COMPILER g++)
-# set(CUDA_HOST_COMPILER gcc)
-# set(CMAKE_MODULE_PATH "/usr/share/cmake/Modules" ${CMAKE_MODULE_PATH})
-find_package(CUDA REQUIRED)
-message(STATUS "CUDA_HOST_COMPILER ${CUDA_HOST_COMPILER}.")
-message(STATUS "CMAKE_C_COMPILER ${CMAKE_C_COMPILER}.")
-message(STATUS "CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER}.")
-SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}" )
-if (CUDA_FOUND)
-        message("CUDA found, using device squaring!")
-        add_subdirectory(garcia)
-
-else()
-        message("CUDA not found, doing something alternatively")
-endif()
 
 
+# Append current NVCC flags by something, eg comput capability
+set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} )
+
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/garcia
+  )
+
+CUDA_ADD_EXECUTABLE(knn_cuda_with_indexes_mod  garcia/knn_cuda_with_indexes_mod.cu)
+TARGET_LINK_LIBRARIES(knn_cuda_with_indexes_mod -lcuda)
+
+# ADD_APP(knn_cuda_with_indexes)
+# ADD_APP(knn_cublas_with_indexes)
+# ADD_APP(knn_cublas_with_indexes_mod)
