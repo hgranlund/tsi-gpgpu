@@ -16,11 +16,6 @@
 #include <math.h>
 #include <time.h>
 
-TEST(simple, B) {
-  // test();
-  printf("simeeemn\n");
-  SUCCEED();
-}
 
 TEST(knn_tests, knn_complete_test){
 
