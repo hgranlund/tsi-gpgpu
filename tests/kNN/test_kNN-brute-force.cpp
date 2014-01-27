@@ -27,11 +27,11 @@ TEST(knn_tests, knn_complete_test){
   float* query;               // Pointer to query point array
   float* dist;                // Pointer to distance array
   int*   ind;                 // Pointer to index array
-  int    ref_nb     = 1;    // Reference point number, max=65535
-  int    query_nb   = 6000;   // Query point number,     max=65535
+  int    ref_nb     = 4064;    // Reference point number, max=65535
+  int    query_nb   = 1;   // Query point number,     max=65535
   int    dim        = 3;      // Dimension of points
   int    k          = 20;     // Nearest neighbors to consider
-  int    iterations = 100;
+  int    iterations = 1;
   int    i;
 
   // Memory allocation
@@ -57,11 +57,12 @@ TEST(knn_tests, knn_complete_test){
   printf("Number of query points          : %6d\n", query_nb);
   printf("Dimension of points             : %4d\n", dim     );
   printf("Number of neighbors to consider : %4d\n", k       );
-  printf("Processing kNN search           :"                );
+  printf("Processing kNN search           :\n"                );
 
   // cudaEventRecord(start, 0);
-  for (i=0; i<iterations; i++)
+  for (i=0; i<iterations; i++){
     knn(ref, ref_nb, query, query_nb, dim, k, dist, ind);
+  }
   // cudaEventRecord(stop, 0);
   // cudaEventSynchronize(stop);
   // cudaEventElapsedTime(&elapsed_time, start, stop);
@@ -69,6 +70,7 @@ TEST(knn_tests, knn_complete_test){
 
   // cudaEventDestroy(start);
   // cudaEventDestroy(stop);
+
   free(ind);
   free(dist);
   free(query);
