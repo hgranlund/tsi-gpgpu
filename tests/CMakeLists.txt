@@ -24,5 +24,6 @@ if (BUILD_TESTS)
   # Extra linking for the project.
   target_link_libraries(runUnitTests knn -lcuda)
 
-  add_test(all_tests runUnitTests)
+  add_test(run_test runUnitTests)
+  add_custom_target(test runUnitTests)
 endif()
