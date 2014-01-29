@@ -14,10 +14,13 @@
 
 ## Week 5
 
+### Done
+* Made correctnesstest for knn_brute_force.
+
 ### Todo
 * Implement bitonic search
 * Make garcias algorithm handle more than ~65000 points.
-
+* Test agenst Thrust_radixsort
 
 
 ## Week 4
