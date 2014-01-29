@@ -53,6 +53,7 @@ else()
   set(CUDPP_STATIC_LIB 1)
 endif(TSI_GPGPU_BUILD_SHARED_LIBS)
 
+file(COPY tests/data DESTINATION tests)
 
 if (CUDA_FOUND)
         add_subdirectory(src/kNN)
