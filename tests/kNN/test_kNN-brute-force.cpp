@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 
 
-#include <knn.h>
+#include <knn_gpgpu.h>
 
 
 // Includes
@@ -46,7 +46,7 @@ TEST(knn_tests, test_knn_brute_force_give_rigth_result_with_6553_points){
   fclose(file);
 
   for (i=0; i<iterations; i++){
-    knn(ref, ref_nb, query, query_nb, dim, k, dist, ind);
+    knn_brute_force(ref, ref_nb, query, query_nb, dim, k, dist, ind);
   }
 
   int correct_ind[] = {3261, 2799, 5752, 1837, 522, 5065, 5410, 1915, 2618, 627, 6095, 305, 3375, 269, 6180, 4963, 2216, 3393, 31, 5061};
@@ -61,4 +61,3 @@ TEST(knn_tests, test_knn_brute_force_give_rigth_result_with_6553_points){
   free(ref);
   SUCCEED();
 }
-

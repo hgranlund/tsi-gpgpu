@@ -63,7 +63,7 @@ else()
 endif()
 
 export(
-  TARGETS knn runUnitTests
-  FILE ${LIBRARY_OUTPUT_PATH}/knn-targets.cmake
+  TARGETS knn_gpgpu runUnitTests
+  FILE ${LIBRARY_OUTPUT_PATH}/knn_gpgpu-targets.cmake
   )
 include(CPack)
