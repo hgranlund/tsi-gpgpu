@@ -1,22 +1,24 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(tsi-gpgpu)
-# SET(CMAKE_C_COMPILER gcc)
-# SET(CMAKE_CXX_COMPILER g++)
-# set(CUDA_HOST_COMPILER gcc)
-# set(CMAKE_MODULE_PATH "/usr/share/cmake/Modules" ${CMAKE_MODULE_PATH})
+project(tsi_gpgpu)
+
 find_package(CUDA REQUIRED)
 
-message(STATUS "CUDA_HOST_COMPILER ${CUDA_HOST_COMPILER}.")
-message(STATUS "CMAKE_C_COMPILER ${CMAKE_C_COMPILER}.")
-message(STATUS "CMAKE_CXX_COMPILER ${CMAKE_CXX_COMPILER}.")
+option(CUDPP_BUILD_SHARED_LIBS
+  "TSI_GPGPUOn to build shared libraries, off for static libraries."
+  ON
+  )
 
-SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS}" )
-if (CUDA_FOUND)
-        add_subdirectory(src/kNN)
-else()
-        message("CUDA not found, doing something alternatively")
-endif()
+option(CUDA_VERBOSE_PTXAS
+  "On to enable verbose output from the PTXAS assembler."
+  OFF
+  )
+
+option(BUILD_TESTS
+  "Build all tests."
+  ON
+  )
+
 
 ## Set the directory where the binaries will be stored
 set(EXECUTABLE_OUTPUT_PATH
@@ -32,12 +34,36 @@ set(LIBRARY_OUTPUT_PATH
   "Directory where all the libraries will be stored"
   )
 
+
 set(CMAKE_MODULE_PATH
   ${CMAKE_SOURCE_DIR}/cmake
   )
 
-set(tsi-gpgpu_INCLUDE_DIRS
+set(tsi_gpgpu_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/include
   )
 
-include_directories(${gpgpu_INCLUDE_DIRS})
+include_directories(${tsi_gpgpu_INCLUDE_DIRS})
+
+if(TSI_GPGPU_BUILD_SHARED_LIBS)
+  # User wants to build Dynamic Libraries, so change the LIB_TYPE variable to CMake keyword 'SHARED'
+  set(LIB_TYPE SHARED)
+else()
+  set(LIB_TYPE STATIC)
+  set(CUDPP_STATIC_LIB 1)
+endif(TSI_GPGPU_BUILD_SHARED_LIBS)
+
+file(COPY tests/data DESTINATION tests)
+
+if (CUDA_FOUND)
+        add_subdirectory(src/kNN)
+        add_subdirectory(tests)
+else()
+        message("CUDA not found, doing something alternatively")
+endif()
+
+export(
+  TARGETS knn runUnitTests
+  FILE ${LIBRARY_OUTPUT_PATH}/knn-targets.cmake
+  )
+include(CPack)
