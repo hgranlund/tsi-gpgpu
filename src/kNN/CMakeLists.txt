@@ -8,12 +8,12 @@ include_directories(
   )
 
 set(CUHFILES
-kNN-brute-force.cuh
+kNN-brute-force-garcia.cuh
 bitonic_sort.cuh
 )
 
 set(CUFILES
-kNN-brute-force.cu
+kNN-brute-force-garcia.cu
 bitonic_sort.cu
 )
 
@@ -101,7 +101,7 @@ install(TARGETS knn_gpgpu
   EXPORT knn_gpgpu-targets
   )
 
-install(EXPORT knn-targets
+install(EXPORT knn_gpgpu-targets
   DESTINATION lib
   )
 

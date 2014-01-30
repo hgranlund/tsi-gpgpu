@@ -16,7 +16,7 @@ if (BUILD_TESTS)
   # Include the gtest library. gtest_SOURCE_DIR is available due to
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
-  add_executable(runUnitTests kNN/test_kNN-brute-force.cpp kNN/test_bitonic_sort.cu)
+  add_executable(runUnitTests kNN/test-kNN-brute-force-garcia.cpp)
 
   # Standard linking to gtest stuff.
   target_link_libraries(runUnitTests gtest gtest_main)

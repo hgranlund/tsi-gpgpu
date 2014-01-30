@@ -6,6 +6,7 @@
 #include <math.h>
 #include "cuda.h"
 #include <time.h>
+#include <bitonic_sort.cuh>
 
 
 // Constants used by the program
@@ -118,6 +119,7 @@ __global__ void cuInsertionSort(float *dist, int dist_pitch, int *ind, int ind_p
     // Pointer shift, initialization, and max value
     p_dist   = dist + xIndex;
     p_ind    = ind  + xIndex;
+
     max_dist = p_dist[0];
     p_ind[0] = 1;
 
@@ -189,7 +191,7 @@ void printErrorMessage(cudaError_t error, int memorySize){
 
 
 
-void knn_brute_force(float* ref_host, int ref_width, float* query_host, int query_width, int height, int k, float* dist_host, int* ind_host){
+void knn(float* ref_host, int ref_width, float* query_host, int query_width, int height, int k, float* dist_host, int* ind_host){
 
   unsigned int size_of_float = sizeof(float);
   unsigned int size_of_int   = sizeof(int);
@@ -213,6 +215,7 @@ void knn_brute_force(float* ref_host, int ref_width, float* query_host, int quer
   size_t       memory_free;
 
 
+
   unsigned int use_texture = ( ref_width*size_of_float<=MAX_TEXTURE_WIDTH_IN_BYTES && height*size_of_float<=MAX_TEXTURE_HEIGHT_IN_BYTES );
 
   cuInit(0);
@@ -232,6 +235,7 @@ void knn_brute_force(float* ref_host, int ref_width, float* query_host, int quer
   }
   query_pitch = query_pitch_in_bytes/size_of_float;
   dist_dev    = query_dev + height * query_pitch;
+  printf("query_pitch: %d\n", query_pitch);
 
   result = cudaMallocPitch( (void **) &ind_dev, &ind_pitch_in_bytes, max_nb_query_traited * size_of_int, k);
   if (result){
@@ -240,7 +244,7 @@ void knn_brute_force(float* ref_host, int ref_width, float* query_host, int quer
     return;
   }
   ind_pitch = ind_pitch_in_bytes/size_of_int;
-
+  printf("ind_pitch: %d\n", ind_pitch);
   if (use_texture){
 
     cudaChannelFormatDesc channelDescA = cudaCreateChannelDesc<float>();
@@ -283,7 +287,6 @@ void knn_brute_force(float* ref_host, int ref_width, float* query_host, int quer
 
     // Copy of part of query actually being treated
     cudaMemcpy2D(query_dev, query_pitch_in_bytes, &query_host[i], query_width*size_of_float, actual_nb_query_width*size_of_float, height, cudaMemcpyHostToDevice);
-
     // Grids ans threads
     dim3 g_16x16(actual_nb_query_width/16, ref_width/16, 1);
     dim3 t_16x16(16, 16, 1);
@@ -318,8 +321,18 @@ void knn_brute_force(float* ref_host, int ref_width, float* query_host, int quer
     }
 
     // Kernel 2: Sort each column
-    cuInsertionSort<<<g_256x1,t_256x1>>>(dist_dev, query_pitch, ind_dev, ind_pitch, actual_nb_query_width, ref_width, k);
 
+    cuInsertionSort<<<g_256x1,t_256x1>>>(dist_dev, query_pitch, ind_dev, ind_pitch, actual_nb_query_width, ref_width, k);
+    bitonicSort(
+                              d_OutputKey,
+                              d_OutputVal,
+                              d_InputKey,
+                              d_InputVal,
+                              N / arrayLength,
+                              arrayLength,
+                              DIR
+                          );
+    // bitonic_sort()
     // Kernel 3: Compute square root of k first elements
     cuParallelSqrt<<<g_k_16x16,t_k_16x16>>>(dist_dev, query_width, query_pitch, k);
 
@@ -338,3 +351,4 @@ void knn_brute_force(float* ref_host, int ref_width, float* query_host, int quer
     cudaFree(query_dev);
   }
 }
+

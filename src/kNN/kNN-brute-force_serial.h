@@ -12,6 +12,6 @@ __global__ void cuParallelSqrt(float *dist, int width, int pitch, int k);
 
 void printErrorMessage(cudaError_t error, int memorySize);
 
-void knn_brute_force(float* ref_host, int ref_width, float* query_host, int query_width, int height, int k, float* dist_host, int* ind_host);
+void knn_serial(float* ref_host, int ref_width, float* query_host, int query_width, int height, int k, float* dist_host, int* ind_host);
 
 #endif
