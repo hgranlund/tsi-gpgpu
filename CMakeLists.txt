@@ -16,7 +16,7 @@ option(CUDA_VERBOSE_PTXAS
 
 option(BUILD_TESTS
   "Build all tests."
-  ON
+  OFF
   )
 
 
@@ -45,14 +45,6 @@ set(tsi_gpgpu_INCLUDE_DIRS
 
 include_directories(${tsi_gpgpu_INCLUDE_DIRS})
 
-if(TSI_GPGPU_BUILD_SHARED_LIBS)
-  # User wants to build Dynamic Libraries, so change the LIB_TYPE variable to CMake keyword 'SHARED'
-  set(LIB_TYPE SHARED)
-else()
-  set(LIB_TYPE STATIC)
-  set(CUDPP_STATIC_LIB 1)
-endif(TSI_GPGPU_BUILD_SHARED_LIBS)
-
 
 if (CUDA_FOUND)
         add_subdirectory(src/kNN)
@@ -61,8 +53,4 @@ else()
         message("CUDA not found, doing something alternatively")
 endif()
 
-export(
-  TARGETS knn runUnitTests
-  FILE ${LIBRARY_OUTPUT_PATH}/knn-targets.cmake
-  )
 include(CPack)
