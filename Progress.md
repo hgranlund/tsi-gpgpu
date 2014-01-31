@@ -15,13 +15,13 @@
 ## Week 5
 
 ### Done
-* Made correctnesstest for knn_brute_force.
+* Made correctness test for knn_brute_force_garcia.
+* Implemented a serial bitonic sort.
+* Started to re-implement the brute force algorithm to make it handle more then ~65000 points.  It only need the sorting step to be a working knn-algorithm.
 
 ### Todo
-* Implement bitonic search
-* Make garcias algorithm handle more than ~65000 points.
-* Test agenst Thrust_radixsort
-
+* Make the knn brute borce reimplementation complete.
+* To optimizations.  
 
 ## Week 4
 
