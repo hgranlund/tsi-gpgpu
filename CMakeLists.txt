@@ -45,8 +45,6 @@ set(tsi_gpgpu_INCLUDE_DIRS
 
 include_directories(${tsi_gpgpu_INCLUDE_DIRS})
 
-<<<<<<< HEAD
-=======
 if(TSI_GPGPU_BUILD_SHARED_LIBS)
   # User wants to build Dynamic Libraries, so change the LIB_TYPE variable to CMake keyword 'SHARED'
   set(LIB_TYPE SHARED)
@@ -56,7 +54,6 @@ else()
 endif(TSI_GPGPU_BUILD_SHARED_LIBS)
 
 file(COPY tests/data DESTINATION tests)
->>>>>>> 59e37fa19d90d87cc2d2770530931b80bb1f6509
 
 if (CUDA_FOUND)
         add_subdirectory(src/kNN)
