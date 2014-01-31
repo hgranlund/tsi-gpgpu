@@ -8,15 +8,24 @@ include_directories(
   )
 
 set(CUHFILES
+kNN-brute-force-garcia.cuh
 kNN-brute-force.cuh
+bitonic_sort.cuh
 )
 
 set(CUFILES
+kNN-brute-force-garcia.cu
 kNN-brute-force.cu
+bitonic_sort.cu
 )
 
+set(CFILES
+
+)
+
+
 set(HFILES_PUBLIC
-  ../../include/knn.h
+  ../../include/knn_gpgpu.h
   )
 
 source_group("CUDA Source Files" FILES ${CUFILES})
@@ -32,7 +41,7 @@ set(GENCODE -gencode=arch=compute_10,code=compute_10) # at least generate PTX
 
 option(CUDPP_GENCODE_SM10
        "ON to generate code for Compute Capability 1.0 devices (e.g. Tesla C870)"
-       ON)
+       OFF)
 
 option(CUDPP_GENCODE_SM13
        "ON to generate code for Compute Capability 1.3 devices (e.g. Tesla C1060)"
@@ -76,10 +85,11 @@ endif (CUDA_VERBOSE_PTXAS)
 
 
 
-cuda_add_library(knn ${LIB_TYPE}
+cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${CUHFILES}
   ${HFILES_PUBLIC}
   ${CUFILES}
+  ${CFILES}
   OPTIONS ${GENCODE} ${CUDA_NVCC_FLAGS} ${VERBOSE_PTXAS}
   )
 
@@ -88,12 +98,12 @@ install(FILES ${HFILES_PUBLIC}
   DESTINATION include
   )
 
-install(TARGETS knn
+install(TARGETS knn_gpgpu
   DESTINATION lib
-  EXPORT knn-targets
+  EXPORT knn_gpgpu-targets
   )
 
-install(EXPORT knn-targets
+install(EXPORT knn_gpgpu-targets
   DESTINATION lib
   )
 
