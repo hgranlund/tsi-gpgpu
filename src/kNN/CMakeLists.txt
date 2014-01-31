@@ -10,13 +10,11 @@ include_directories(
 set(CUHFILES
 kNN-brute-force-garcia.cuh
 kNN-brute-force.cuh
-bitonic_sort.cuh
 )
 
 set(CUFILES
 kNN-brute-force-garcia.cu
 kNN-brute-force.cu
-bitonic_sort.cu
 )
 
 set(CFILES
