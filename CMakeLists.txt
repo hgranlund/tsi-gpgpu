@@ -50,7 +50,7 @@ if(TSI_GPGPU_BUILD_SHARED_LIBS)
   set(LIB_TYPE SHARED)
 else()
   set(LIB_TYPE STATIC)
-  set(CUDPP_STATIC_LIB 1)
+  set(TSI_GPGPU_STATIC_LIB 1)
 endif(TSI_GPGPU_BUILD_SHARED_LIBS)
 
 file(COPY tests/data DESTINATION tests)
@@ -62,8 +62,4 @@ else()
         message("CUDA not found, doing something alternatively")
 endif()
 
-export(
-  TARGETS knn_gpgpu runUnitTests
-  FILE ${LIBRARY_OUTPUT_PATH}/knn_gpgpu-targets.cmake
-  )
 include(CPack)
