@@ -4,7 +4,7 @@ project(tsi_gpgpu)
 
 find_package(CUDA REQUIRED)
 
-option(CUDPP_BUILD_SHARED_LIBS
+option(TSI_GPGPU_BUILD_SHARED_LIBS
   "TSI_GPGPUOn to build shared libraries, off for static libraries."
   ON
   )
