@@ -20,8 +20,7 @@ dist(struct kd_node_t *a, struct kd_node_t *b, int dim)
     }
     return d;
 }
- 
-/* see quickselect method */
+
 struct kd_node_t*
 find_median(struct kd_node_t *start, struct kd_node_t *end, int idx)
 {
@@ -50,8 +49,7 @@ find_median(struct kd_node_t *start, struct kd_node_t *end, int idx)
             }
         }
         swap(store, end - 1);
- 
-        /* median has duplicate values */
+
         if (store->x[idx] == md->x[idx])
             return md;
  
@@ -74,8 +72,7 @@ make_tree(struct kd_node_t *t, int len, int i, int dim)
     }
     return n;
 }
- 
-/* global variable, so sue me */
+
 int visited;
  
 void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
@@ -95,7 +92,6 @@ void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
         *best = root;
     }
  
-    /* if chance of exact match is high */
     if (!*best_dist) return;
  
     if (++i >= dim) i = 0;
@@ -104,6 +100,13 @@ void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
     if (dx2 >= *best_dist) return;
     nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist);
 }
+
+double WallTime ()
+{
+  struct timeval tmpTime;
+  gettimeofday(&tmpTime,NULL);
+  return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
+}
  
 #define N 1000000
 #define rand1() (rand() / (double)RAND_MAX)
@@ -111,36 +114,26 @@ void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
 int main(void)
 {
     int i;
-    struct kd_node_t wp[] = {
-        {{2, 3}}, {{5, 4}}, {{9, 6}}, {{4, 7}}, {{8, 1}}, {{7, 2}}
-    };
+    
     struct kd_node_t this = {{9, 2}};
     struct kd_node_t *root, *found, *million;
     double best_dist;
  
-    root = make_tree(wp, sizeof(wp) / sizeof(wp[1]), 0, 2);
- 
-    visited = 0;
-    found = 0;
-    nearest(root, &this, 0, 2, &found, &best_dist);
- 
-    printf(">> WP tree\nsearching for (%g, %g)\n"
-        "found (%g, %g) dist %g\nseen %d nodes\n\n",
-        this.x[0], this.x[1],
-        found->x[0], found->x[1], sqrt(best_dist), visited);
- 
     million = calloc(N, sizeof(struct kd_node_t));
     srand(time(0));
     for (i = 0; i < N; i++) rand_pt(million[i]);
- 
+
+    double time = WallTime();
     root = make_tree(million, N, 0, 3);
+    printf("Built K-D tree with %d random points in %f (ms)\n", N, (WallTime() - time) * 1000);
+
     rand_pt(this);
  
     visited = 0;
     found = 0;
     nearest(root, &this, 0, 3, &found, &best_dist);
  
-    printf(">> Million tree\nsearching for (%g, %g, %g)\n"
+    printf("Searching for (%g, %g, %g)\n"
         "found (%g, %g, %g) dist %g\nseen %d nodes\n",
         this.x[0], this.x[1], this.x[2],
         found->x[0], found->x[1], found->x[2],
@@ -163,11 +156,10 @@ int main(void)
         nearest(root, &this, 0, 3, &found, &best_dist);
         sum += visited;
     }
-    printf("\n>> Million tree\n"
-        "visited %d nodes for %d random findings (%f per lookup)\n",
+    printf("Visited %d nodes for %d random findings (%f per lookup)\n",
         sum, test_runs, sum/(double)test_runs);
  
-    // free(million);
+    free(million);
  
     return 0;
 }
