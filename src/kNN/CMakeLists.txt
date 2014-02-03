@@ -18,7 +18,11 @@ kNN-brute-force.cu
 )
 
 set(CFILES
+bitonic-sort-serial.c
+)
 
+set(HFILES
+bitonic-sort-serial.h
 )
 
 

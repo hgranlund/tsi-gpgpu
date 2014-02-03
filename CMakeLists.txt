@@ -16,7 +16,7 @@ option(CUDA_VERBOSE_PTXAS
 
 option(BUILD_TESTS
   "Build all tests."
-  OFF
+  ON
   )
 
 
@@ -50,7 +50,7 @@ if(TSI_GPGPU_BUILD_SHARED_LIBS)
   set(LIB_TYPE SHARED)
 else()
   set(LIB_TYPE STATIC)
-  set(CUDPP_STATIC_LIB 1)
+  set(TSI_GPGPU_STATIC_LIB 1)
 endif(TSI_GPGPU_BUILD_SHARED_LIBS)
 
 file(COPY tests/data DESTINATION tests)
