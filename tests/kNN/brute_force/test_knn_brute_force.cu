@@ -10,7 +10,7 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-
+#include "../common.c"
 
 
 
@@ -59,7 +59,7 @@ TEST(knn_brute_force, test_knn_brute_force_give_rigth_result_with_6553_points){
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsed_time, start, stop);
-  printf(" done in %f s\n", elapsed_time/1000);
+  // printf(" done in %f s\n", elapsed_time/1000);
 
   // Destroy cuda event object and free memory
   cudaEventDestroy(start);
@@ -75,39 +75,44 @@ TEST(knn_brute_force, test_bitonic_sort){
 
   float *h_dist, *d_dist;
   int *h_ind, *d_ind;
-  int n = 16777216,i;
-
-  h_dist = (float*) malloc(n*sizeof(float));
-  h_ind= (int*) malloc(n*sizeof(int));
-  srand(time(NULL));
-  for (i=0 ; i<n; i++)
+  int i,n;
+  for (n = 8; n < 2097152*2; n <<=1)
   {
-    h_dist[i]    = n-i-1  ;
-    // h_dist[i]    = (float)rand() / (float)100;
-    h_ind[i]=i;
+
+    h_dist = (float*) malloc(n*sizeof(float));
+    h_ind= (int*) malloc(n*sizeof(int));
+    srand(time(NULL));
+    for (i=0 ; i<n; i++)
+    {
+      // h_dist[i]    = n-i-1  ;
+      h_dist[i]    = (int)rand();
+      h_ind[i]=i;
+    }
+
+    cudaMalloc( (void **) &d_dist, n* sizeof(float));
+    cudaMalloc( (void **) &d_ind, n * sizeof(int));
+
+    cudaMemcpy(d_dist, h_dist, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_ind, h_ind, n*sizeof(int), cudaMemcpyHostToDevice);
+    printArray(h_dist,n);
+
+    bitonic_sort(d_dist,d_ind, n, 1);
+    cudaMemcpy(h_dist,d_dist, n*sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_ind,d_ind , n*sizeof(int), cudaMemcpyDeviceToHost);
+    printArray(h_dist,n);
+
+    float last_value = h_dist[0];
+    for (i = 0; i < n; ++i)
+    {
+      ASSERT_LE(last_value, h_dist[i]) << "Faild with i = "<<i << " and n = " << n;
+      last_value=h_dist[i];
+    }
+
+
+    free(h_ind);
+    free(h_dist);
+    cudaFree(d_dist);
+    cudaFree(d_ind);
+
   }
-
-  cudaMalloc( (void **) &d_dist, n* sizeof(float));
-  cudaMalloc( (void **) &d_ind, n * sizeof(int));
-
-  cudaMemcpy(d_dist, h_dist, n*sizeof(float), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_ind, h_ind, n*sizeof(int), cudaMemcpyHostToDevice);
-
-
-  bitonic_sort(d_dist,d_ind, n);
-  cudaMemcpy(h_dist,d_dist, n*sizeof(float), cudaMemcpyDeviceToHost);
-  cudaMemcpy(h_ind,d_ind , n*sizeof(int), cudaMemcpyDeviceToHost);
-  float last_value = h_dist[0];
-  for (i = 0; i < n; ++i)
-  {
-    ASSERT_LE(last_value, h_dist[i]);
-    last_value=h_dist[i];
-  }
-
-
-  free(h_ind);
-  free(h_dist);
-  cudaFree(d_dist);
-  cudaFree(d_ind);
-
 }
