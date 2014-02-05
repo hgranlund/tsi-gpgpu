@@ -10,7 +10,7 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#include "../common.c"
+#include "../../../common/common-debug.c"
 
 
 
