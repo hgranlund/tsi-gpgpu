@@ -12,6 +12,19 @@
 
 
 
+## Week 6
+
+### Done
+* Implemented bitonic sort on gpu --> Knn-brute-force is reimplemented and  can compute more then ~65000 points.
+* Made a test to bitonic sort.
+
+
+### TODO
+* Plot a graph to show knn-brute-force performance.
+*
+
+
+
 ## Week 5
 
 ### Done
@@ -21,7 +34,7 @@
 
 ### Todo
 * Make the knn brute borce reimplementation complete.
-* To optimizations.  
+* Optimize the re-implemented knn-algorithm.
 
 ## Week 4
 
