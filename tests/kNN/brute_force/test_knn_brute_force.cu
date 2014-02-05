@@ -73,27 +73,29 @@ TEST(knn_brute_force, test_knn_brute_force_give_rigth_result_with_6553_points){
 
 TEST(knn_brute_force, test_bitonic_sort){
 
-  float *h_dist, *d_dist;
-  int *h_ind, *d_ind;
+  float *h_dist,*h_dist_orig, *d_dist;
+  int *h_ind,*h_ind_orig, *d_ind;
   int i,n;
-  for (n = 8; n < 2097152*2; n <<=1)
+  for (n = 8; n <=16777216; n <<=1)
   {
 
     h_dist = (float*) malloc(n*sizeof(float));
+    h_dist_orig = (float*) malloc(n*sizeof(float));
     h_ind= (int*) malloc(n*sizeof(int));
+    h_ind_orig= (int*) malloc(n*sizeof(int));
     srand(time(NULL));
     for (i=0 ; i<n; i++)
     {
       // h_dist[i]    = n-i-1  ;
-      h_dist[i]    = (int)rand();
-      h_ind[i]=i;
+      h_dist_orig[i]    = (int)rand();
+      h_ind_orig[i]=i;
     }
 
     cudaMalloc( (void **) &d_dist, n* sizeof(float));
     cudaMalloc( (void **) &d_ind, n * sizeof(int));
 
-    cudaMemcpy(d_dist, h_dist, n*sizeof(float), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_ind, h_ind, n*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_dist, h_dist_orig, n*sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_ind, h_ind_orig, n*sizeof(int), cudaMemcpyHostToDevice);
     printArray(h_dist,n);
 
     bitonic_sort(d_dist,d_ind, n, 1);
@@ -107,7 +109,10 @@ TEST(knn_brute_force, test_bitonic_sort){
       ASSERT_LE(last_value, h_dist[i]) << "Faild with i = "<<i << " and n = " << n;
       last_value=h_dist[i];
     }
-
+    for (i = 0; i < n; ++i)
+    {
+      ASSERT_LE(h_dist[i], h_dist_orig[h_ind[i]]) << "Faild with i = "<<i << " and n = " << n;
+    }
 
     free(h_ind);
     free(h_dist);
