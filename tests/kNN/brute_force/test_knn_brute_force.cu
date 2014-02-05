@@ -14,56 +14,52 @@
 
 
 
-TEST(knn_brute_force, test_knn_brute_force_give_rigth_result_with_6553_points){
- // Variables and parameters
+
+TEST(knn_brute_force, test_knn_correctness){
+
   float* ref;                 // Pointer to reference point array
   float* query;               // Pointer to query point array
   float* dist;                // Pointer to distance array
   int*   ind;                 // Pointer to index array
-  int    ref_nb     = 8;   // Reference point number, max=65535
-  int    query_nb   = 1;   // Query point number,     max=65535
-  int    dim        = 3;     // Dimension of points
-  int    k          = 8;     // Nearest neighbors to consider
+  int    ref_nb;              // Reference point number, max=65535
+  int    query_nb;            // Query point number,     max=65535
+  int    dim;                 // Dimension of points
+  int    k          = 10;     // Nearest neighbors to consider
+  int    iterations = 1;
   int    i;
 
-  // Memory allocation
+  char fileName[] = "data/knn_brute_force_6553_ref_points_1_query_point.data";
+  FILE* file = fopen(fileName, "rb");
+
+  fread(&ref_nb, sizeof(int), 1, file);
+  ref_nb=4096;
+  fread(&query_nb, sizeof(int), 1, file);
+  fread(&dim, sizeof(int), 1, file);
   ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
   query  = (float *) malloc(query_nb * dim * sizeof(float));
-  dist   = (float *) malloc( k * sizeof(float));
-  ind    = (int *)   malloc( k * sizeof(int));
+  dist   = (float *) malloc(query_nb * k * sizeof(float));
+  ind    = (int *)   malloc(query_nb * k * sizeof(int));
 
-  // Init
-  srand(time(NULL));
-  for (i=0 ; i<ref_nb   * dim ; i++)
+  for (int count = 0; count < ref_nb*dim; count++)
   {
-    ref[i]    = (float)rand() / (float)RAND_MAX;
+    fread(&ref[count], sizeof(float), 1, file);
   }
-  for (i=0 ; i<query_nb * dim ; i++)
+  for (int count = 0; count < query_nb*dim; count++)
   {
-    query[i]  = (float)rand() / (float)RAND_MAX;
+    fread(&query[count], sizeof(float), 1, file);
   }
 
-  // Variables for duration evaluation
-  cudaEvent_t start, stop;
-  cudaEventCreate(&start);
-  cudaEventCreate(&stop);
-  float elapsed_time;
+  fclose(file);
 
-  // Display informations
+  for (i=0; i<iterations; i++){
+    knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
+  }
+  int correct_ind[] = {119, 3309, 3515, 2455, 3172, 1921, 3803, 919, 1048, 244};
+  for (int i = 0; i < k; ++i)
+  {
+    ASSERT_EQ(ind[i], correct_ind[i]);
+  }
 
-  // Call kNN search CUDA
-  cudaEventRecord(start, 0);
-
-  knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
-
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsed_time, start, stop);
-  // printf(" done in %f s\n", elapsed_time/1000);
-
-  // Destroy cuda event object and free memory
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
   free(ind);
   free(dist);
   free(query);
