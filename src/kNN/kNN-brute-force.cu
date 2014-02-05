@@ -13,7 +13,7 @@ __device__ void cuCompare(float &distA, int &indA, float &distB, int &indB, int 
 {
   float f;
   int i;
-  if ((distA  > distB) == dir)
+  if ((distA  >= distB) == dir)
   {
     f = distA;
     distA  = distB;
@@ -40,7 +40,23 @@ __global__ void cuComputeDistanceGlobal( float* ref, int ref_nb , int dim,  floa
   }
 }
 
+__global__ void cuBitonicSortOneBlock(float* dist, int* ind, int n,int dir){
 
+  int blockoffset = blockIdx.x * blockDim.x *2;
+  dist+=blockoffset;
+  ind+=blockoffset;
+
+  for (uint size = 2; size <= blockDim.x*2; size <<= 1)
+  {
+    uint ddd = dir ^ ((threadIdx.x & (size / 2)) != 0);
+    for (uint stride = size / 2; stride > 0; stride >>= 1)
+    {
+      __syncthreads();
+      uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
+      cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
+    }
+  }
+}
 __global__ void cuBitonicSort(float* dist, int* ind, int n,int dir){
 
   int blockoffset = blockIdx.x * blockDim.x *2;
@@ -96,7 +112,7 @@ __global__ void cuBitonicMergeShared(float* dist, int* ind, int n, int size, int
   ind+=blockoffset;
   uint comparatorI = (blockIdx.x * blockDim.x + threadIdx.x) & ((n / 2) - 1);
   uint ddd = dir ^ ((comparatorI & (size / 2)) != 0);
-  for (uint stride = SHARED_SIZE_LIMIT / 2; stride > 0; stride >>= 1)
+  for (uint stride = blockDim.x; stride > 0; stride >>= 1)
   {
     __syncthreads();
     uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
@@ -104,18 +120,20 @@ __global__ void cuBitonicMergeShared(float* dist, int* ind, int n, int size, int
   }
 }
 
-void bitonic_sort(float* dist_dev, int* ind_dev, int n){
-  int  blockCount = n / SHARED_SIZE_LIMIT;
-  int threadCount = SHARED_SIZE_LIMIT/ 2;
-  int dir = 1;
+void bitonic_sort(float* dist_dev, int* ind_dev, int n, int dir){
+  int max_threads_per_block = min(SHARED_SIZE_LIMIT, n);
+  int  blockCount = n / max_threads_per_block;
+  int threadCount = max_threads_per_block/ 2;
   blockCount = max(1, blockCount);
-  threadCount = min(SHARED_SIZE_LIMIT, threadCount);
-  cuBitonicSort<<<blockCount, 2>>>(dist_dev,ind_dev, n, dir);
-  if (blockCount>1)
-  {
-    for (uint size = 2 * SHARED_SIZE_LIMIT; size <= n; size <<= 1){
+  threadCount = min(max_threads_per_block, threadCount);
+  if (blockCount==1){
+    cuBitonicSortOneBlock<<<blockCount, threadCount>>>(dist_dev,ind_dev, n, dir);
+  }
+  else{
+    cuBitonicSort<<<blockCount, threadCount>>>(dist_dev,ind_dev, n, dir);
+    for (uint size = 2 * max_threads_per_block; size <= n; size <<= 1){
       for (uint stride = size / 2; stride > 0; stride >>= 1){
-        if (stride >= SHARED_SIZE_LIMIT)
+        if (stride >= max_threads_per_block)
         {
           cuBitonicMergeGlobal<<<blockCount, threadCount>>>(dist_dev,ind_dev, n, size, stride, dir);
         }
@@ -164,7 +182,7 @@ void knn_brute_force(float* ref_host, int ref_nb, float* query_host, int dim, in
   cudaMemcpy(ref_dev, ref_host, ref_nb*dim*size_of_float, cudaMemcpyHostToDevice);
   cudaMemcpyToSymbol(query_dev, query_host, dim*size_of_float);
   cuComputeDistanceGlobal<<<256,1>>>(ref_dev, ref_nb, dim, dist_dev, ind_dev);
-  bitonic_sort(dist_dev,ind_dev, ref_nb);
+  bitonic_sort(dist_dev,ind_dev, ref_nb, 1);
   cuParallelSqrt<<<k,1>>>(dist_dev, k);
 
   cudaMemcpy(dist_host, dist_dev, k*size_of_float, cudaMemcpyDeviceToHost);
