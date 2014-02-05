@@ -59,5 +59,5 @@ Get the installer at the [download page](https://developer.nvidia.com/cuda-downl
     cmake ../
     make
 
-All executables will be in ***/build/bin***
-
+All executables will be in ***/build/bin***.
+All libraries will be in ***/build/lib/***.
