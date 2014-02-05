@@ -7,7 +7,7 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#define SHARED_SIZE_LIMIT 512U
+#define SHARED_SIZE_LIMIT 1024U
 
 __device__ void cuCompare(float &distA, int &indA, float &distB, int &indB, int dir)
 {
@@ -29,7 +29,7 @@ __global__ void cuComputeDistanceGlobal( float* ref, int ref_nb , int dim,  floa
 
   float dx,dy,dz;
 
-  int index = blockIdx.x;
+  int index = blockIdx.x*blockDim.x+threadIdx.x;
   while (index < ref_nb){
     dx=ref[index*dim] - query_dev[0];
     dy=ref[index*dim + 1] - query_dev[1];
@@ -173,7 +173,7 @@ void knn_brute_force(float* ref_host, int ref_nb, float* query_host, int dim, in
 
   uint log2L;
   uint factorizationRemainder = factorRadix2(&log2L, ref_nb);
-  assert(factorizationRemainder == 1);
+  // assert(factorizationRemainder == 1);
 
   cudaMalloc( (void **) &dist_dev, ref_nb * size_of_float);
   cudaMalloc( (void **) &ind_dev, ref_nb * size_of_int);
@@ -181,7 +181,11 @@ void knn_brute_force(float* ref_host, int ref_nb, float* query_host, int dim, in
 
   cudaMemcpy(ref_dev, ref_host, ref_nb*dim*size_of_float, cudaMemcpyHostToDevice);
   cudaMemcpyToSymbol(query_dev, query_host, dim*size_of_float);
-  cuComputeDistanceGlobal<<<256,1>>>(ref_dev, ref_nb, dim, dist_dev, ind_dev);
+
+  int threadCount = min(ref_nb, SHARED_SIZE_LIMIT);
+  int blockCount = ref_nb/threadCount;
+  blockCount = min(blockCount, 65000);
+  cuComputeDistanceGlobal<<<blockCount,threadCount>>>(ref_dev, ref_nb, dim, dist_dev, ind_dev);
   bitonic_sort(dist_dev,ind_dev, ref_nb, 1);
   cuParallelSqrt<<<k,1>>>(dist_dev, k);
 
