@@ -10,7 +10,7 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#include "../../../common/common-debug.c"
+#include "../../../common/common-debug.h"
 
 
 
@@ -92,12 +92,12 @@ TEST(knn_brute_force_bitonic, test_bitonic_sort){
 
     cudaMemcpy(d_dist, h_dist_orig, n*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_ind, h_ind_orig, n*sizeof(int), cudaMemcpyHostToDevice);
-    printArray(h_dist,n);
+    printFloatArray(h_dist,n);
 
     bitonic_sort(d_dist,d_ind, n, 1);
     cudaMemcpy(h_dist,d_dist, n*sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_ind,d_ind , n*sizeof(int), cudaMemcpyDeviceToHost);
-    printArray(h_dist,n);
+    printFloatArray(h_dist,n);
 
     float last_value = h_dist[0];
     for (i = 0; i < n; ++i)

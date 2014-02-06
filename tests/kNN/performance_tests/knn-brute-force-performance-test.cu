@@ -9,7 +9,7 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#include "../../../common/common-debug.c"
+#include "../../../common/common-debug.h"
 
 
 void  run_iteration(int ref_nb, int k, int iterations){

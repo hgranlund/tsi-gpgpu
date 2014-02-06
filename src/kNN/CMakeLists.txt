@@ -11,11 +11,13 @@ include_directories(
 
 set(CUHFILES
 brute-force/kNN-brute-force-garcia.cuh
+brute-force/kNN-brute-force.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 )
 
 set(CUFILES
 brute-force/kNN-brute-force-garcia.cu
+brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-bitonic.cu
 )
 

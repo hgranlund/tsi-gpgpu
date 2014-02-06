@@ -1,15 +1,11 @@
-#include <math.h>
-#include <time.h>
-#include <assert.h>
+#include "common-debug.h"
 
-
-int debug = 0;
-
-void printArray(float* l, int n){
+void printFloatArray(float* l, int n){
+  int i;
   if (debug)
   {
     printf("[%3.1f", l[0] );
-      for (int i = 1; i < n; ++i)
+      for (i = 1; i < n; ++i)
       {
         printf(", %3.1f", l[i] );
       }
@@ -17,14 +13,17 @@ void printArray(float* l, int n){
     }
   }
 
-void printArray(int* l, int n){
+void printIntArray(int* l, int n){
+  int i;
   if (debug)
   {
     printf("[%d", l[0] );
-      for (int i = 1; i < n; ++i)
+      for (i = 1; i < n; ++i)
       {
         printf(", %d", l[i] );
       }
       printf("]\n");
     }
   }
+
+
