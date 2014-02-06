@@ -73,11 +73,10 @@ int main(int argc, char const *argv[])
 
   printf("Running Knn-brute-force with no memory optimalisations\n");
   printf("k, n, time(ms) \n");
-  for (int i = 10600000; i < 83886080; i+=250000)
+  for (int i = 100000; i < 20850000; i+=250000)
   {
-
     cudaDeviceSynchronize();
+    cudaDeviceReset();
     run_iteration(i,10,1);
   }
-
 }
