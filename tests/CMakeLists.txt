@@ -4,6 +4,7 @@ project(tests)
 
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/kNN
+ ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
 )
 
 ################################
@@ -25,4 +26,10 @@ if (BUILD_TESTS)
 
   add_test(run_test runUnitTests)
   add_custom_target(test runUnitTests)
+
+
+  cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
+  target_link_libraries(performance knn_gpgpu -lcuda)
+  add_custom_target(time performance)
+
 endif()
