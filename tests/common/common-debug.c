@@ -16,3 +16,15 @@ void printArray(float* l, int n){
       printf("]\n");
     }
   }
+
+void printArray(int* l, int n){
+  if (debug)
+  {
+    printf("[%d", l[0] );
+      for (int i = 1; i < n; ++i)
+      {
+        printf(", %d", l[i] );
+      }
+      printf("]\n");
+    }
+  }
