@@ -1,7 +1,7 @@
 
 
 // Includes
-#include <kNN-brute-force.cuh>
+#include <kNN-brute-force-bitonic.cuh>
 #include <knn_gpgpu.h>
 #include <stdio.h>
 
@@ -50,7 +50,7 @@ void  run_iteration(int ref_nb, int k, int iterations){
   cudaEventRecord(start, 0);
   for (int i = 0; i < iterations; ++i)
   {
-    knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
+    knn_brute_force_bitonic(ref, ref_nb, query, dim, k, dist, ind);
   }
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(start);
