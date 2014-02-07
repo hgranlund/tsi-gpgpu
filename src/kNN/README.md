@@ -21,33 +21,25 @@ Related to the k-d tree based approach:
 Brute force based effort
 ------------------------
 
-### Garcia
-
-_Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
-_Fast k Nearest Neighbor Search using GPU - Garcia et al._
-_K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al._
+#### Garcia's base algorithm
 
 Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
 
 1. Calculate the distance between all reference points and query points.
 2. Sort the distances and pick the k smallest distances.
 
-Garcias algorithm supports any number of dimensions, reference points and query points (or up to ~65000, number of blocks in the GPU). Due to this feature the algorithm use a lot of extra computation power when only one query point and a small dimensions is selected.
+Garcias implementation supports any number of dimensions, reference points and query points (or up to ~65000, number of blocks in the GPU). Due to this feature the algorithm use a lot of extra computation power when only one query point and a small dimensions is selected.
 
 #### Time complexity
 
 Steps:
 
-1. O(n). Every reference point must be evaluated once. Huge positional for parallelizing.
+1. O(n). Every reference point must be evaluated once. Since all calculations are independent, we have a large potential for parallelizing.
 2. Insertion sort: O(n^2).
 
+#### Our reimplementation
 
-### Graham Nolan
-
-He is talking about improving Garcia's algorithm by reimplementing step two with a bitonic sort.
-
-We have not been able to get the source code, but he said the improvement was significant.
-
+Graham Nolan discusses the possibility of improving Garcia's algorithm by reimplementing step two with a bitonic sort. His source code has not been available to us, but he states that the run-time improvements was significant. As well as choosing bitonic sort for the sorting stage of our algorithm, our implementation supports up to 15 000 000 points before memory errors occur, and we have limited the number of dimensions to three.
 
 #### Time complexity
 
@@ -56,35 +48,21 @@ Steps:
 1. O(n).
 2. Bitonic sort: worst case = O(n*log²(n)), average time ( parallel) = O(log²(n)).
 
+#### Results
 
-### Our reimplementation.
+Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
 
-This algorithm uses the same steps as Garcia and Nolan, but they have been reimplemented to support more points. (Got memory error over 15 000 000 points).
+![knn-brute-force-vs-serial-k-d-tree](knn-brute-force-vs-serial-k-d-tree.png)
 
+We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
 
-
-#### Time complexity
-
-Steps:
-
-1. O(n).
-2. Bitonic sort: worst case = O(n*log²(n)), average time ( parallel) = O(log²(n)).
-
+The results for the serial k-d implementation will be discussed in the next section.
 
 #### Possible improvements
 
 * Memory improvements. Use shared memory and texture memory.
 * Modify bitonic sort, so do not need to sort all the points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block(constant), n= number of reference points
 * Replace bitonic sort with min reduce. O(k*log²(n)).
-
-* General overview of the method.
-* Reference to literature.
-* Some reasoning about speed.
-* Some results.
-* Bottlenecks.
-* Some ideas of what can be improved.
-
-![knn-brute-force-vs-serial-k-d-tree](knn-brute-force-vs-serial-k-d-tree.png)
 
 
 KD-tree based effort
