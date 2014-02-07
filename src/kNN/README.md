@@ -68,6 +68,14 @@ The results for the serial k-d implementation will be discussed in the next sect
 KD-tree based effort
 --------------------
 
+#### k-d trees
+
+![2d-k-d-tree](http://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Kdtree_2d.svg/555px-Kdtree_2d.svg.png)
+
+![corresponding-binary-tree](http://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Tree_0001.svg/894px-Tree_0001.svg.png)
+
+#### The serial base algorithm
+
 _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
 
 * General overview of the method.
