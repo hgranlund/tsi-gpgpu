@@ -189,7 +189,7 @@ void knn_brute_force_bitonic(float* ref_host, int ref_nb, float* query_host, int
   checkCudaErrors(cudaMemcpyToSymbol(query_dev, query_host, dim*size_of_float));
   int threadCount = min(ref_nb, SHARED_SIZE_LIMIT);
   int blockCount = ref_nb/threadCount;
-  blockCount = min(blockCount, 65000);
+  blockCount = min(blockCount, 65536);
   cuComputeDistanceGlobal<<<blockCount,threadCount>>>(ref_dev, ref_nb, dim, dist_dev, ind_dev);
   bitonic_sort(dist_dev,ind_dev, ref_nb, 1);
   cuParallelSqrt<<<k,1>>>(dist_dev, k);
