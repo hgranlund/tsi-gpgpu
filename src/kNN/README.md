@@ -27,4 +27,4 @@ KD-tree based effort
 Final thoughts
 --------------
 
-* Access to [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://hgpu.org/?p=5151) paper.
+* Access to [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5382329) paper.
