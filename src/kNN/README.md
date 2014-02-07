@@ -70,24 +70,54 @@ KD-tree based effort
 
 #### k-d trees
 
+A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the 
+
 ![2d-k-d-tree](Kdtree_2d.svg.png)
+
+In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
+
+Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from [Wikipedia](http://en.wikipedia.org/wiki/K-d_tree))
 
 ![corresponding-binary-tree](Tree_0001.svg.png)
 
+Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log² n) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log² n) time.
+
 #### The serial base algorithm
 
-_Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
+1. Build a balanced k-d tree from the point cloud.
+2. Query the tree for different sets of neighbors.
 
-* General overview of the method.
-* Reference to literature.
-* Some reasoning about speed.
-* Some results.
-* Bottlenecks.
-* Some ideas of what can be improved.
+#### Time complexity
+
+Steps:
+
+1. O(kn log² n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
+2. Approximately O(log² n), but dependent on size of k.
+
+#### Results
+
+Referring to the previous result graph, we are going to break down 
 
 ![serial-k-d-tree-breakdown](serial-k-d-tree-breakdown.png)
+
+As expected, almost all the time is spent building the tree. Querying for the closest neighbor in the largest tree took less than 0.0015 ms, but 9 seconds is a long time to wait for the tree to build.
+
+The paper _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._ offers interesting, although slightly complex, ideas to an efficient parallelization of k-d tree construction. I order to save time, a good amount of time was spent searching for, and trying out, different open source implementations based on this paper. This search was unsuccessful. All the implementations we managed to find was problematic due to lack of updates, often not updated since 2011, and still running on CUDA 4.1, lack of documentation, lack of generalization or dubious source code.
+
+A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by NVIDIA, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
+
+Our focus therefore turned to implementing and parallelizing the algorithm our self. This has proven to be a quite challenging task. One might think that you would just would split the workload over new processors every time a split occur in the recursive algorithm. This would give a speed increase, but you still have to process all the nodes in the root node, requiring at least O(n) time.
+
+Another option could be to build several small trees on different processes, but then you would get an large time penalty when trying to combine the different sub-trees.
+
+#### Further work
+
+* Try out a heuristic and parallel method for determining the median point.
+* Parallelize the code according to one of the simple strategies.
+* Further investigate the strategies used in _Real-Time KD-Tree Construction on Graphics Hardware_
+
 
 Final thoughts
 --------------
 
-* Access to [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5382329) paper.
+We have discovered a possible relevant paper, [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5382329), behind a pay-wall we cannot access with our student accounts. Maybe you have access to this Ole Ivar?
