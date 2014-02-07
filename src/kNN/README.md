@@ -1,6 +1,16 @@
 The quest for a fast KNN search
 ===============================
 
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The following papers, available in the resources folder, forms the literary basis for our current work.
+
+Related to the brute force approach:
+* _Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
+* _Fast k Nearest Neighbor Search using GPU - Garcia et al._
+* _K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al._
+
+Related to the k-d tree based approach:
+* _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
+
 Something general about kNN search. We will study for three dimensions.
 
 Brute force based effort
