@@ -13,6 +13,8 @@ Brute force based effort
 * Bottlenecks.
 * Some ideas of what can be improved.
 
+![knn-brute-force-vs-serial-k-d-tree](knn-brute-force-vs-serial-k-d-tree.png)
+
 
 KD-tree based effort
 --------------------
@@ -23,6 +25,8 @@ KD-tree based effort
 * Some results.
 * Bottlenecks.
 * Some ideas of what can be improved.
+
+![serial-k-d-tree-breakdown](serial-k-d-tree-breakdown.png)
 
 Final thoughts
 --------------
