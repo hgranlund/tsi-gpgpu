@@ -17,10 +17,10 @@
 ### Done
 * Implemented bitonic sort on gpu --> Knn-brute-force is reimplemented and  can compute more then ~65000 points.
 * Made a test to bitonic sort.
+* Plot a graph to show knn-brute-force performance.
 
 
 ### TODO
-* Plot a graph to show knn-brute-force performance.
 *
 
 
