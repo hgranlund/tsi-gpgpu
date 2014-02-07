@@ -108,58 +108,39 @@ double WallTime ()
   return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
 }
  
-#define N 1000000
-#define rand1() (rand() / (double)RAND_MAX)
+#define rand1() rand()
 #define rand_pt(v) { v.x[0] = rand1(); v.x[1] = rand1(); v.x[2] = rand1(); }
-int main(void)
+int main(int argc, char *argv[])
 {
-    int i;
+    int i,
+        N = atoi(argv[1]);
     
-    struct kd_node_t this = {{9, 2}};
+    struct kd_node_t this;
     struct kd_node_t *root, *found, *million;
     double best_dist;
  
+    // Generating random data
     million = calloc(N, sizeof(struct kd_node_t));
     srand(time(0));
     for (i = 0; i < N; i++) rand_pt(million[i]);
 
+    // Building the KD-tree
     double time = WallTime();
     root = make_tree(million, N, 0, 3);
-    printf("Built K-D tree with %d random points in %f (ms)\n", N, (WallTime() - time) * 1000);
+    double build_duration = (WallTime() - time);
 
-    rand_pt(this);
- 
-    visited = 0;
-    found = 0;
-    nearest(root, &this, 0, 3, &found, &best_dist);
- 
-    printf("Searching for (%g, %g, %g)\n"
-        "found (%g, %g, %g) dist %g\nseen %d nodes\n",
-        this.x[0], this.x[1], this.x[2],
-        found->x[0], found->x[1], found->x[2],
-        sqrt(best_dist), visited);
- 
-    /* search many random points in million tree to see average behavior.
-       tree size vs avg nodes visited:
-        10      ~  7
-        100     ~ 16.5
-        1000        ~ 25.5
-        10000       ~ 32.8
-        100000      ~ 38.3
-        1000000     ~ 42.6
-        10000000    ~ 46.7              */
+    // Timing awerage query time over 100 000 queries.
+    time = WallTime(); 
     int sum = 0, test_runs = 100000;
     for (i = 0; i < test_runs; i++) {
-        found = 0;
-        visited = 0;
         rand_pt(this);
         nearest(root, &this, 0, 3, &found, &best_dist);
-        sum += visited;
     }
-    printf("Visited %d nodes for %d random findings (%f per lookup)\n",
-        sum, test_runs, sum/(double)test_runs);
- 
+    double awg_query_duration = (WallTime() - time) / test_runs;
+
+    // printf("For %d random points: tree build time - %lf, awg query time - %lf\n", N, build_duration * 1000, awg_query_duration * 1000);
+    printf("%d %lf %lf\n", N, build_duration * 1000, awg_query_duration * 1000);
+
     free(million);
- 
     return 0;
 }

@@ -58,8 +58,7 @@ find_median(struct kd_node_t *start, struct kd_node_t *end, int idx)
     }
 }
  
-struct kd_node_t*
-make_tree(struct kd_node_t *t, int len, int i, int dim)
+struct kd_node_t* make_tree(struct kd_node_t *t, int len, int i, int dim)
 {
     struct kd_node_t *n;
  
@@ -103,9 +102,9 @@ void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
 
 double WallTime ()
 {
-  struct timeval tmpTime;
-  gettimeofday(&tmpTime,NULL);
-  return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
+    struct timeval tmpTime;
+    gettimeofday(&tmpTime,NULL);
+    return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
 }
  
 #define N 1000000
