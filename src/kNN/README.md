@@ -1,7 +1,13 @@
 The quest for a fast KNN search
 ===============================
 
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The following papers, available in the resources folder, forms the literary basis for our current work.
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. 
+
+Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
+
+In order to make the document more readable, we have included short descriptions of the algorithms used, a short reference to theoretical time complexity. We then go on to list our current results, problematic areas and possible improvements.
+
+The following papers, available in the resources folder, forms the literary basis for our current work.
 
 Related to the brute force approach:
 * _Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
@@ -11,7 +17,6 @@ Related to the brute force approach:
 Related to the k-d tree based approach:
 * _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
 
-Something general about kNN search. We will study for three dimensions.
 
 Brute force based effort
 ------------------------
