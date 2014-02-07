@@ -9,6 +9,8 @@ Brute force based effort
 ### Garcia
 
 _Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
+_Fast k Nearest Neighbor Search using GPU - Garcia et al._
+_K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al._
 
 Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
 
@@ -72,6 +74,8 @@ Steps:
 
 KD-tree based effort
 --------------------
+
+_Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
 
 * General overview of the method.
 * Reference to literature.
