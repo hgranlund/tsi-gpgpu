@@ -72,7 +72,7 @@ KD-tree based effort
 
 ![2d-k-d-tree](Kdtree_2d.svg.png)
 
-![corresponding-binary-tree](Tree_0001.svg.png)
+![corresponding-binary-tree](Tree_0001.svg.png =600x)
 
 #### The serial base algorithm
 
