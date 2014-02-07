@@ -8,7 +8,7 @@ Brute force based effort
 
 ### Garcia
 
-___Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan___
+_Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
 
 Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
 
