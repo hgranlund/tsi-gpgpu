@@ -11,7 +11,7 @@ bitonic-sort-serial: bitonic-sort-serial.c
 
 # Still needs gcc to compile due to compatibility problems
 knn-serial: knn-serial.c
-	gcc -o knn-serial knn-serial.c
+	gcc -o knn-serial knn-serial.c -lm
 
 clean:
 	rm *.exe
