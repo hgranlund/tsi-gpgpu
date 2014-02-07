@@ -1,13 +1,17 @@
 
 
 // Includes
-#include <kNN-brute-force.cuh>
+#include <kNN-brute-force-bitonic.cuh>
 #include <stdio.h>
 #include <math.h>
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
+
+#include "helper_cuda.h"
+
 #define SHARED_SIZE_LIMIT 1024U
+#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 __device__ void cuCompare(float &distA, int &indA, float &distB, int &indB, int dir)
 {
@@ -161,7 +165,7 @@ uint factorRadix2(uint *log2L, uint L)
   }
 }
 
-void knn_brute_force(float* ref_host, int ref_nb, float* query_host, int dim, int k, float* dist_host, int* ind_host){
+void knn_brute_force_bitonic(float* ref_host, int ref_nb, float* query_host, int dim, int k, float* dist_host, int* ind_host){
 
   unsigned int size_of_float = sizeof(float);
   unsigned int size_of_int   = sizeof(int);
@@ -175,13 +179,14 @@ void knn_brute_force(float* ref_host, int ref_nb, float* query_host, int dim, in
   uint factorizationRemainder = factorRadix2(&log2L, ref_nb);
   // assert(factorizationRemainder == 1);
 
-  cudaMalloc( (void **) &dist_dev, ref_nb * size_of_float);
-  cudaMalloc( (void **) &ind_dev, ref_nb * size_of_int);
-  cudaMalloc( (void **) &ref_dev, ref_nb * size_of_float * dim);
+  checkCudaErrors(cudaMalloc( (void **) &dist_dev, ref_nb * size_of_float));
+  checkCudaErrors(cudaMalloc( (void **) &ind_dev, ref_nb * size_of_int));
+  checkCudaErrors(cudaMalloc( (void **) &ref_dev, ref_nb * size_of_float * dim));
 
-  cudaMemcpy(ref_dev, ref_host, ref_nb*dim*size_of_float, cudaMemcpyHostToDevice);
-  cudaMemcpyToSymbol(query_dev, query_host, dim*size_of_float);
+  checkCudaErrors(cudaMemcpy(ref_dev, ref_host, ref_nb*dim*size_of_float, cudaMemcpyHostToDevice));
 
+
+  checkCudaErrors(cudaMemcpyToSymbol(query_dev, query_host, dim*size_of_float));
   int threadCount = min(ref_nb, SHARED_SIZE_LIMIT);
   int blockCount = ref_nb/threadCount;
   blockCount = min(blockCount, 65000);
@@ -189,12 +194,11 @@ void knn_brute_force(float* ref_host, int ref_nb, float* query_host, int dim, in
   bitonic_sort(dist_dev,ind_dev, ref_nb, 1);
   cuParallelSqrt<<<k,1>>>(dist_dev, k);
 
-  cudaMemcpy(dist_host, dist_dev, k*size_of_float, cudaMemcpyDeviceToHost);
-  cudaMemcpy(ind_host,  ind_dev,  k*size_of_int, cudaMemcpyDeviceToHost);
+  checkCudaErrors(cudaMemcpy(dist_host, dist_dev, k*size_of_float, cudaMemcpyDeviceToHost));
+  checkCudaErrors(cudaMemcpy(ind_host,  ind_dev,  k*size_of_int, cudaMemcpyDeviceToHost));
 
-  cudaFree(ref_dev);
-  cudaFree(ind_dev);
-  cudaFree(query_dev);
+  checkCudaErrors(cudaFree(ref_dev));
+  checkCudaErrors(cudaFree(ind_dev));
 }
 
 

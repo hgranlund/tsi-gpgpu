@@ -26,7 +26,7 @@
   *
   */
 
-
+#include <unistd.h>
 // If the code is used in Matlab, set MATLAB_CODE to 1. Otherwise, set MATLAB_CODE to 0.
 #define MATLAB_CODE 0
 
@@ -521,60 +521,67 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]){
 /**
   * Example of use of kNN search CUDA.
   */
-int main(void){
-
+  void  run_iteration(int ref_nb, int k, int iterations){
     // Variables and parameters
     float* ref;                 // Pointer to reference point array
     float* query;               // Pointer to query point array
     float* dist;                // Pointer to distance array
-	int*   ind;                 // Pointer to index array
-	int    ref_nb     = 4096;   // Reference point number, max=65535
-	int    query_nb   = 4096;   // Query point number,     max=65535
-	int    dim        = 32;     // Dimension of points
-	int    k          = 20;     // Nearest neighbors to consider
-	int    iterations = 100;
-	int    i;
+    int*   ind;                 // Pointer to index array
+    int    query_nb   = 1;   // Query point number,     max=65535
+    int    dim        = 3;     // Dimension of points
+    int    i;
 
-	// Memory allocation
-	ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
-	query  = (float *) malloc(query_nb * dim * sizeof(float));
-	dist   = (float *) malloc(query_nb * k * sizeof(float));
-	ind    = (int *)   malloc(query_nb * k * sizeof(float));
+    // Memory allocation
+    ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
+    query  = (float *) malloc(query_nb * dim * sizeof(float));
+    dist   = (float *) malloc(query_nb * k * sizeof(float));
+    ind    = (int *)   malloc(query_nb * k * sizeof(float));
 
-	// Init
-	srand(time(NULL));
-	for (i=0 ; i<ref_nb   * dim ; i++) ref[i]    = (float)rand() / (float)RAND_MAX;
-	for (i=0 ; i<query_nb * dim ; i++) query[i]  = (float)rand() / (float)RAND_MAX;
+    // Init
+    srand(time(NULL));
+    for (i=0 ; i<ref_nb   * dim ; i++){
+        ref[i]    = (float)rand() / (float)RAND_MAX;
+    }
+    for (i=0 ; i<query_nb * dim ; i++){
+        query[i]  = (float)rand() / (float)RAND_MAX;
+    }
 
-	// Variables for duration evaluation
-	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
-	float elapsed_time;
+    // Variables for duration evaluation
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float elapsed_time=0;
 
-	// Display informations
-	printf("Number of reference points      : %6d\n", ref_nb  );
-	printf("Number of query points          : %6d\n", query_nb);
-	printf("Dimension of points             : %4d\n", dim     );
-	printf("Number of neighbors to consider : %4d\n", k       );
-	printf("Processing kNN search           :"                );
+    // Display informations
 
-	// Call kNN search CUDA
-	cudaEventRecord(start, 0);
-	for (i=0; i<iterations; i++)
-		knn(ref, ref_nb, query, query_nb, dim, k, dist, ind);
-	cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&elapsed_time, start, stop);
-	printf(" done in %f s for %d iterations (%f s by iteration)\n", elapsed_time/1000, iterations, elapsed_time/(iterations*1000));
+    // Call kNN search CUDA
+    cudaEventRecord(start, 0);
+    for (i=0; i<iterations; i++){
+        knn(ref, ref_nb, query, query_nb, dim, k, dist, ind);
+    }
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+    printf("%d, %d, %f \n", k, ref_nb, elapsed_time/iterations);
 
-	// Destroy cuda event object and free memory
-	cudaEventDestroy(start);
-	cudaEventDestroy(stop);
-	free(ind);
-	free(dist);
-	free(query);
-	free(ref);
+        // Destroy cuda event object and free memory
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    free(ind);
+    free(dist);
+    free(query);
+    free(ref);
+}
+
+int main(void){
+  printf("Running Garcias Knn-brute-force \n");
+  printf("k, n, time(ms) \n");
+  for (int i = 10000; i < 10850000; i+=250000)
+  {
+    cudaDeviceSynchronize();
+    usleep(100000);
+    run_iteration(i,10,10);
+    }
 }
 
 #endif

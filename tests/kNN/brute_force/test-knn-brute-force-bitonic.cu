@@ -1,7 +1,7 @@
 
 
 // Includes
-#include <kNN-brute-force.cuh>
+#include <kNN-brute-force-bitonic.cuh>
 #include <knn_gpgpu.h>
 #include <stdio.h>
 #include "gtest/gtest.h"
@@ -10,12 +10,12 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#include "../../../common/common-debug.c"
+#include "../../../common/common-debug.h"
 
 
 
 
-TEST(knn_brute_force, test_knn_correctness){
+TEST(knn_brute_force_bitonic, test_knn_correctness){
 
   float* ref;                 // Pointer to reference point array
   float* query;               // Pointer to query point array
@@ -52,7 +52,7 @@ TEST(knn_brute_force, test_knn_correctness){
   fclose(file);
 
   for (i=0; i<iterations; i++){
-    knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
+    knn_brute_force_bitonic(ref, ref_nb, query, dim, k, dist, ind);
   }
   int correct_ind[] = {119, 3309, 3515, 2455, 3172, 1921, 3803, 919, 1048, 244};
   for (int i = 0; i < k; ++i)
@@ -67,7 +67,7 @@ TEST(knn_brute_force, test_knn_correctness){
 }
 
 
-TEST(knn_brute_force, test_bitonic_sort){
+TEST(knn_brute_force_bitonic, test_bitonic_sort){
 
   float *h_dist,*h_dist_orig, *d_dist;
   int *h_ind,*h_ind_orig, *d_ind;
@@ -92,12 +92,12 @@ TEST(knn_brute_force, test_bitonic_sort){
 
     cudaMemcpy(d_dist, h_dist_orig, n*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_ind, h_ind_orig, n*sizeof(int), cudaMemcpyHostToDevice);
-    printArray(h_dist,n);
+    printFloatArray(h_dist,n);
 
     bitonic_sort(d_dist,d_ind, n, 1);
     cudaMemcpy(h_dist,d_dist, n*sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_ind,d_ind , n*sizeof(int), cudaMemcpyDeviceToHost);
-    printArray(h_dist,n);
+    printFloatArray(h_dist,n);
 
     float last_value = h_dist[0];
     for (i = 0; i < n; ++i)

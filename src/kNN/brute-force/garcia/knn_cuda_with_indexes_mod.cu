@@ -65,7 +65,7 @@ __global__ void cuComputeDistanceGlobal( float* A, int wA, int pA, float* B, int
     end_A   = begin_A + (dim-1) * pA;
 
     // Conditions
-	int cond0 = (begin_A + tx < wA); // used to write in shared memory
+    int cond0 = (begin_A + tx < wA); // used to write in shared memory
     int cond1 = (begin_B + tx < wB); // used to write in shared memory & to computations and to write in output matrix
     int cond2 = (begin_A + ty < wA); // used to computations and to write in output matrix
 
@@ -127,19 +127,19 @@ __global__ void cuInsertionSort(float *dist, int dist_pitch, int *ind, int ind_p
             if (curr_dist<max_dist){
                 i=l-1;
                 for (int a=0; a<l-1; a++){
-                   if (p_dist[a*dist_pitch]>curr_dist){
-                      i=a;
-                      break;
-                  }
+                 if (p_dist[a*dist_pitch]>curr_dist){
+                  i=a;
+                  break;
               }
-              for (j=l; j>i; j--){
-               p_dist[j*dist_pitch] = p_dist[(j-1)*dist_pitch];
-               p_ind[j*ind_pitch]   = p_ind[(j-1)*ind_pitch];
-           }
-           p_dist[i*dist_pitch] = curr_dist;
-           p_ind[i*ind_pitch]   = l+1;
-       }
-       else
+          }
+          for (j=l; j>i; j--){
+             p_dist[j*dist_pitch] = p_dist[(j-1)*dist_pitch];
+             p_ind[j*ind_pitch]   = p_ind[(j-1)*ind_pitch];
+         }
+         p_dist[i*dist_pitch] = curr_dist;
+         p_ind[i*ind_pitch]   = l+1;
+     }
+     else
         p_ind[l*ind_pitch] = l+1;
     max_dist = p_dist[curr_row];
 }
@@ -147,18 +147,18 @@ __global__ void cuInsertionSort(float *dist, int dist_pitch, int *ind, int ind_p
         // Part 2 : insert element in the k-th first lines
 max_row = (k-1)*dist_pitch;
 for (l=k; l<height; l++){
- curr_dist = p_dist[l*dist_pitch];
- if (curr_dist<max_dist){
+   curr_dist = p_dist[l*dist_pitch];
+   if (curr_dist<max_dist){
     i=k-1;
     for (int a=0; a<k-1; a++){
-       if (p_dist[a*dist_pitch]>curr_dist){
-          i=a;
-          break;
-      }
+     if (p_dist[a*dist_pitch]>curr_dist){
+      i=a;
+      break;
   }
-  for (j=k-1; j>i; j--){
-   p_dist[j*dist_pitch] = p_dist[(j-1)*dist_pitch];
-   p_ind[j*ind_pitch]   = p_ind[(j-1)*ind_pitch];
+}
+for (j=k-1; j>i; j--){
+ p_dist[j*dist_pitch] = p_dist[(j-1)*dist_pitch];
+ p_ind[j*ind_pitch]   = p_ind[(j-1)*ind_pitch];
 }
 p_dist[i*dist_pitch] = curr_dist;
 p_ind[i*ind_pitch]   = l+1;
@@ -388,64 +388,69 @@ void knn(float* ref_host, int ref_width, float* query_host, int query_width, int
 /**
   * Example of use of kNN search CUDA.
   */
-  int main(void){
 
+  void  run_iteration(int ref_nb, int k, int iterations){
     // Variables and parameters
     float* ref;                 // Pointer to reference point array
     float* query;               // Pointer to query point array
     float* dist;                // Pointer to distance array
-	int*   ind;                 // Pointer to index array
-	int    ref_nb     = 1;   // Reference point number, max=65535
-	int    query_nb   = 4096;   // Query point number,     max=65535
-	int    dim        = 3;     // Dimension of points
-	int    k          = 20;     // Nearest neighbors to consider
-	int    iterations = 100;
-	int    i;
+    int*   ind;                 // Pointer to index array
+    int    query_nb   = 4096;   // Query point number,     max=65535
+    int    dim        = 3;      // Dimension of points
+    int    i;
 
-	// Memory allocation
-	ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
-	query  = (float *) malloc(query_nb * dim * sizeof(float));
-	dist   = (float *) malloc(query_nb * k * sizeof(float));
-	ind    = (int *)   malloc(query_nb * k * sizeof(float));
+    // Memory allocation
+    ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
+    query  = (float *) malloc(query_nb * dim * sizeof(float));
+    dist   = (float *) malloc(query_nb * k * sizeof(float));
+    ind    = (int *)   malloc(query_nb * k * sizeof(float));
 
-	// Init
-	srand(time(NULL));
-	for (i=0 ; i<ref_nb   * dim ; i++){
+    // Init
+    srand(time(NULL));
+    for (i=0 ; i<ref_nb   * dim ; i++){
         ref[i]    = (float)rand() / (float)RAND_MAX;
     }
     for (i=0 ; i<query_nb * dim ; i++){
-       query[i]  = (float)rand() / (float)RAND_MAX;
-   }
+        query[i]  = (float)rand() / (float)RAND_MAX;
+    }
 
-	// Variables for duration evaluation
-   cudaEvent_t start, stop;
-   cudaEventCreate(&start);
-   cudaEventCreate(&stop);
-   float elapsed_time;
+    // Variables for duration evaluation
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    float elapsed_time=0;
 
-	// Display informations
-   printf("Number of reference points      : %6d\n", ref_nb  );
-   printf("Number of query points          : %6d\n", query_nb);
-   printf("Dimension of points             : %4d\n", dim     );
-   printf("Number of neighbors to consider : %4d\n", k       );
-   printf("Processing kNN search           :"                );
+    // Display informations
 
-	// Call kNN search CUDA
-   cudaEventRecord(start, 0);
-   for (i=0; i<iterations; i++)
-      knn(ref, ref_nb, query, query_nb, dim, k, dist, ind);
-  cudaEventRecord(stop, 0);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsed_time, start, stop);
-  printf(" done in %f s for %d iterations (%f s by iteration)\n", elapsed_time/1000, iterations, elapsed_time/(iterations*1000));
+    // Call kNN search CUDA
+    cudaEventRecord(start, 0);
+    for (i=0; i<iterations; i++){
+        knn(ref, ref_nb, query, query_nb, dim, k, dist, ind);
+    }
+    cudaEventRecord(stop, 0);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+    printf("%d, %d, %f \n", k, ref_nb, elapsed_time/iterations);
 
-	// Destroy cuda event object and free memory
-  cudaEventDestroy(start);
-  cudaEventDestroy(stop);
-  free(ind);
-  free(dist);
-  free(query);
-  free(ref);
+        // Destroy cuda event object and free memory
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+    free(ind);
+    free(dist);
+    free(query);
+    free(ref);
+}
+
+int main(void){
+  printf("Running Garcias Knn-brute-force \n");
+  printf("k, n, time(ms) \n");
+  for (int i = 100000; i < 10850000; i+=250000)
+  {
+
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+    run_iteration(i,10,1);
+    }
 }
 
 #endif

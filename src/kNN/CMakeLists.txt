@@ -3,18 +3,22 @@ set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -lcuda)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../../include
+  ${CMAKE_CURRENT_SOURCE_DIR}/brute-force
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common
   ${CMAKE_CURRENT_SOURCE_DIR}/garcia
   )
 
 set(CUHFILES
-kNN-brute-force-garcia.cuh
-kNN-brute-force.cuh
+brute-force/kNN-brute-force-garcia.cuh
+brute-force/kNN-brute-force.cuh
+brute-force/kNN-brute-force-bitonic.cuh
 )
 
 set(CUFILES
-kNN-brute-force-garcia.cu
-kNN-brute-force.cu
+brute-force/kNN-brute-force-garcia.cu
+brute-force/kNN-brute-force.cu
+brute-force/kNN-brute-force-bitonic.cu
 )
 
 set(CFILES

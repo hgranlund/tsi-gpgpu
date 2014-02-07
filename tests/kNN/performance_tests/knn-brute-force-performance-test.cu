@@ -1,7 +1,7 @@
 
 
 // Includes
-#include <kNN-brute-force.cuh>
+#include <kNN-brute-force-bitonic.cuh>
 #include <knn_gpgpu.h>
 #include <stdio.h>
 
@@ -9,7 +9,7 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#include "../../../common/common-debug.c"
+#include "../../../common/common-debug.h"
 
 
 void  run_iteration(int ref_nb, int k, int iterations){
@@ -50,7 +50,7 @@ void  run_iteration(int ref_nb, int k, int iterations){
   cudaEventRecord(start, 0);
   for (int i = 0; i < iterations; ++i)
   {
-    knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
+    knn_brute_force_bitonic(ref, ref_nb, query, dim, k, dist, ind);
   }
   cudaEventRecord(stop, 0);
   cudaEventSynchronize(start);
@@ -73,11 +73,10 @@ int main(int argc, char const *argv[])
 
   printf("Running Knn-brute-force with no memory optimalisations\n");
   printf("k, n, time(ms) \n");
-  for (int i = 10600000; i < 83886080; i+=250000)
+  for (int i = 100000; i < 20850000; i+=250000)
   {
-
     cudaDeviceSynchronize();
+    cudaDeviceReset();
     run_iteration(i,10,1);
   }
-
 }
