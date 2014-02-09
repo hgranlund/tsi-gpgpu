@@ -1,7 +1,7 @@
 The quest for a fast KNN search
 ===============================
 
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. 
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm.
 
 Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
 
@@ -52,7 +52,7 @@ Steps:
 
 Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
 
-![knn-brute-force-vs-serial-k-d-tree](knn-brute-force-vs-serial-k-d-tree.png)
+![knn-brute-force-vs-serial-k-d-tree](./images/knn-brute-force-vs-serial-k-d-tree.png)
 
 We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
 
@@ -61,7 +61,7 @@ The results for the serial k-d implementation will be discussed in the next sect
 #### Possible improvements
 
 * Memory improvements. Use shared memory and texture memory.
-* Modify bitonic sort, so do not need to sort all the points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block(constant), n= number of reference points
+* Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
 * Replace bitonic sort with min reduce. O(k*log²(n)).
 
 
@@ -70,15 +70,15 @@ KD-tree based effort
 
 #### k-d trees
 
-A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the 
+A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
 
-![2d-k-d-tree](Kdtree_2d.svg.png)
+![2d-k-d-tree](./images/Kdtree_2d.png)
 
 In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
 
 Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from [Wikipedia](http://en.wikipedia.org/wiki/K-d_tree))
 
-![corresponding-binary-tree](Tree_0001.svg.png)
+![corresponding-binary-tree](./images/Tree_0001.png)
 
 Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log² n) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log² n) time.
 
@@ -96,9 +96,9 @@ Steps:
 
 #### Results
 
-Referring to the previous result graph, we are going to break down 
+Referring to the previous result graph, we are going to break down
 
-![serial-k-d-tree-breakdown](serial-k-d-tree-breakdown.png)
+![serial-k-d-tree-breakdown](./images/serial-k-d-tree-breakdown.png)
 
 As expected, almost all the time is spent building the tree. Querying for the closest neighbor in the largest tree took less than 0.0015 ms, but 9 seconds is a long time to wait for the tree to build.
 
