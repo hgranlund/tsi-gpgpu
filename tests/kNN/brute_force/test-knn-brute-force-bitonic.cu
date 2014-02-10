@@ -15,7 +15,7 @@
 
 
 
-TEST(knn_brute_force_bitonic, test_knn_correctness){
+TEST(knn_brute_force, test_knn_bitonic_correctness){
 
   float* ref;                 // Pointer to reference point array
   float* query;               // Pointer to query point array
@@ -67,12 +67,12 @@ TEST(knn_brute_force_bitonic, test_knn_correctness){
 }
 
 
-TEST(knn_brute_force_bitonic, test_bitonic_sort){
+TEST(knn_brute_force, test_bitonic_sort){
 
   float *h_dist,*h_dist_orig, *d_dist;
   int *h_ind,*h_ind_orig, *d_ind;
   int i,n;
-  for (n = 8; n <=16777216; n <<=1)
+  for (n = 16384; n <=16384; n <<=1)
   {
 
     h_dist = (float*) malloc(n*sizeof(float));
@@ -92,12 +92,10 @@ TEST(knn_brute_force_bitonic, test_bitonic_sort){
 
     cudaMemcpy(d_dist, h_dist_orig, n*sizeof(float), cudaMemcpyHostToDevice);
     cudaMemcpy(d_ind, h_ind_orig, n*sizeof(int), cudaMemcpyHostToDevice);
-    printFloatArray(h_dist,n);
 
     bitonic_sort(d_dist,d_ind, n, 1);
     cudaMemcpy(h_dist,d_dist, n*sizeof(float), cudaMemcpyDeviceToHost);
     cudaMemcpy(h_ind,d_ind , n*sizeof(int), cudaMemcpyDeviceToHost);
-    printFloatArray(h_dist,n);
 
     float last_value = h_dist[0];
     for (i = 0; i < n; ++i)
