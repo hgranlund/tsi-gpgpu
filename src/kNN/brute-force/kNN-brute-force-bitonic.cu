@@ -13,7 +13,7 @@
 #define SHARED_SIZE_LIMIT 1024U
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
-__device__ void cuCompare(float &distA, int &indA, float &distB, int &indB, int dir)
+__device__ void cuCompare_b(float &distA, int &indA, float &distB, int &indB, int dir)
 {
   float f;
   int i;
@@ -57,7 +57,7 @@ __global__ void cuBitonicSortOneBlock(float* dist, int* ind, int n,int dir){
     {
       __syncthreads();
       uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
-      cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
+      cuCompare_b(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
     }
   }
 }
@@ -74,7 +74,7 @@ __global__ void cuBitonicSort(float* dist, int* ind, int n,int dir){
     {
       __syncthreads();
       uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
-      cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
+      cuCompare_b(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
     }
   }
 
@@ -84,7 +84,7 @@ __global__ void cuBitonicSort(float* dist, int* ind, int n,int dir){
     {
       __syncthreads();
       uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
-      cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
+      cuCompare_b(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
     }
   }
 }
@@ -96,11 +96,11 @@ __global__ void cuBitonicMergeGlobal(float* dist, int* ind, int n, int size, int
 
   int ddd = dir ^ ((comparatorI & (size / 2)) != 0);
   int pos = 2 * global_comparatorI - (global_comparatorI & (stride - 1));
-  cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
+  cuCompare_b(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
 }
 
 
-__global__ void cuParallelSqrt(float *dist, int k){
+__global__ void cuParallelSqrt_b(float *dist, int k){
   unsigned int xIndex = blockIdx.x;
   if (xIndex < k){
     dist[xIndex] = sqrt(dist[xIndex]);
@@ -120,7 +120,7 @@ __global__ void cuBitonicMergeShared(float* dist, int* ind, int n, int size, int
   {
     __syncthreads();
     uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
-    cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
+    cuCompare_b(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride],ddd);
   }
 }
 
@@ -192,7 +192,7 @@ void knn_brute_force_bitonic(float* ref_host, int ref_nb, float* query_host, int
   blockCount = min(blockCount, 65536);
   cuComputeDistanceGlobal<<<blockCount,threadCount>>>(ref_dev, ref_nb, dim, dist_dev, ind_dev);
   bitonic_sort(dist_dev,ind_dev, ref_nb, 1);
-  cuParallelSqrt<<<k,1>>>(dist_dev, k);
+  cuParallelSqrt_b<<<k,1>>>(dist_dev, k);
 
   checkCudaErrors(cudaMemcpy(dist_host, dist_dev, k*size_of_float, cudaMemcpyDeviceToHost));
   checkCudaErrors(cudaMemcpy(ind_host,  ind_dev,  k*size_of_int, cudaMemcpyDeviceToHost));
