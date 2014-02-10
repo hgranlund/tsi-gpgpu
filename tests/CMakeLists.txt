@@ -4,9 +4,9 @@ project(tests)
 
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/kNN
+ ${CMAKE_SOURCE_DIR}/src/kNN/kernels
  ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
- ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
-  ${CMAKE_CURRENT_SOURCE_DIR}/common
+${CMAKE_CURRENT_SOURCE_DIR}/common
 
 )
 
@@ -22,17 +22,22 @@ if (BUILD_TESTS)
 
   set(test_files
     kNN/test-kNN-brute-force.cpp
-    kNN/brute_force/test-knn-brute-force.cu
+    kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
-    common/common-debug.c
+    kNN/kernels/test_redution.cu
+  )
+
+  add_library(common_debug
+      common/common-debug.h
+      common/common-debug.c
   )
 
   cuda_add_executable(runUnitTests
   ${test_files}
   )
-  # add_executable(runUnitTests kNN/test.cpp)
 
-  target_link_libraries(runUnitTests gtest gtest_main)
+  target_link_libraries(runUnitTests gtest gtest_main )
+  target_link_libraries(runUnitTests common_debug )
 
   target_link_libraries(runUnitTests knn_gpgpu -lcuda)
 
@@ -40,8 +45,8 @@ if (BUILD_TESTS)
   add_custom_target(test runUnitTests)
 
 
-  cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
-  target_link_libraries(performance knn_gpgpu -lcuda)
-  add_custom_target(time performance)
+  # cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
+  # target_link_libraries(performance knn_gpgpu -lcuda)
+  # add_custom_target(time performance)
 
 endif()
