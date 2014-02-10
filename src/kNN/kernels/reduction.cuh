@@ -1,5 +1,3 @@
-// Reduction (min/max/avr/sum), works for any blockDim.x:
-
 #ifndef _REDUCTION_
 #define _REDUCTION_
 
