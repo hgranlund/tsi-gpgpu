@@ -48,6 +48,8 @@ Steps:
 1. O(n).
 2. Bitonic sort: worst case = O(n*log²(n)), average time ( parallel) = O(log²(n)).
 
+
+
 #### Results
 
 Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
@@ -56,6 +58,13 @@ Testing the different algorithms for a range of point cloud sizes and a fixed va
 
 We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
 
+
+Test with n =8388608:
+
+* Memory transfer:  18.3 ms.
+* Calculate all distances: 3 ms.
+* Bitonic sort:  176 ms.
+* Total: 206 ms.
 
 ### Min-Reduce
 
@@ -67,6 +76,17 @@ Steps:
 
 1. O(n).
 2. Min-reduce: k* log²(n)).
+
+#### Results
+
+
+Test results of n = 10 000 000:
+
+*  Memory transfer : 23 ms.
+*  One min-reduce step : 5 ms.
+*  Calculate all distances: 2.5 ms
+*  Total time: (25.7 + k*5) ms.
+
 
 
 ![knn-brute-force-vs-serial-k-d-tree](./images/BitonicVSreduce.png)
