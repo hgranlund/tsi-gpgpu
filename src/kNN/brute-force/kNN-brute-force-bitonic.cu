@@ -41,7 +41,7 @@ __global__ void cuComputeDistanceGlobal( float* ref, int ref_nb , int dim,  floa
     dz=ref[index*dim + 2] - query_dev[2];
     dist[index] = (dx*dx)+(dy*dy)+(dz*dz);
     ind[index] = index;
-    index += gridDim.x;
+    index += gridDim.x*blockDim.x;
   }
 }
 
