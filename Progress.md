@@ -12,6 +12,16 @@
 
 
 
+## Week 7
+
+### Done
+* Implemented a min reduce.
+* Implemented a knn brute-force with reduce. T
+    * The reduce part had a time complexity of k*log^2(n).
+* Made plot.
+*
+
+
 ## Week 6
 
 ### Done
