@@ -4,6 +4,7 @@
 
 #define SHARED_SIZE_LIMIT 1024U
 
+// Can be optimized
 __device__ int nearestPowerOf2 (int n)
 {
   if (!n){
@@ -55,7 +56,8 @@ __global__ void min_reduction(float *list,int *ind, int n, int threadOffset)
 
   int  thread1, halfPoint, index1,index2,offset;
   int threadOffset1 = max(1, threadOffset);
-  int elements_in_block = nearestPowerOf2(n);
+  // int elements_in_block = nearestPowerOf2(n);
+  int elements_in_block = n;
   offset = elements_in_block-n;
   list += blockIdx.x*n;
   ind += blockIdx.x*n;
@@ -131,7 +133,6 @@ void min_reduce(float *h_list, int *h_ind, int n){
 
   cudaMemcpy(d_list,h_list, n*sizeof(float), cudaMemcpyHostToDevice);
   cudaMemcpy(d_ind,h_ind, n*sizeof(int), cudaMemcpyHostToDevice);
-  // printf("elements = %d, BlockCount = %d, threadCoun = %d, element_in_block = %d\n",n, blockCount, threadCount, elements_in_block );
   min_reduction<<<blockCount,threadCount>>>(d_list,d_ind,elements_in_block,0);
   min_reduction<<<1,blockCount>>>(d_list,d_ind,blockCount,elements_in_block);
 

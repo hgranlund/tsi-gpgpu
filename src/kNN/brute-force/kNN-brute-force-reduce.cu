@@ -11,7 +11,8 @@
 #include "helper_cuda.h"
 
 
-#define SHARED_SIZE_LIMIT 1024U
+// #define SHARED_SIZE_LIMIT 1024U
+#define SHARED_SIZE_LIMIT 5012U
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
     __device__ void cuCompare(float &distA, int &indA, float &distB, int &indB, int dir)
@@ -60,7 +61,6 @@
       float        *ref_dev;
       float        *dist_dev;
       int          *ind_dev;
-
 
 
       checkCudaErrors(cudaMalloc( (void **) &dist_dev, ref_nb * size_of_float));
