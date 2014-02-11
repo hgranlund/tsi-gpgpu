@@ -12,7 +12,8 @@
 
 
 // #define SHARED_SIZE_LIMIT 1024U
-#define SHARED_SIZE_LIMIT 5012U
+#define SHARED_SIZE_LIMIT 512U
+// #define SHARED_SIZE_LIMIT 5012U
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
     __device__ void cuCompare(float &distA, int &indA, float &distB, int &indB, int dir)
@@ -42,7 +43,7 @@
         dz=ref[index*dim + 2] - query_dev[2];
         dist[index] = (dx*dx)+(dy*dy)+(dz*dz);
         ind[index] = index;
-        index += gridDim.x;
+        index += gridDim.x*blockDim.x;
       }
     }
     __global__ void cuParallelSqrt(float *dist, int k){
@@ -79,10 +80,8 @@
         knn_min_reduce(dist_dev+i, ind_dev+i, ref_nb-i);
       }
       cuParallelSqrt<<<k,1>>>(dist_dev, k);
-
-      checkCudaErrors(cudaMemcpy(dist_host, dist_dev, k*size_of_float, cudaMemcpyDeviceToHost));
       checkCudaErrors(cudaMemcpy(ind_host,  ind_dev,  k*size_of_int, cudaMemcpyDeviceToHost));
-
+      checkCudaErrors(cudaMemcpy(dist_host, dist_dev, k*size_of_float, cudaMemcpyDeviceToHost));
       checkCudaErrors(cudaFree(ref_dev));
       checkCudaErrors(cudaFree(dist_dev));
       checkCudaErrors(cudaFree(ind_dev));
