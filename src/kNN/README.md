@@ -1,5 +1,4 @@
-The quest for a fast KNN search
-===============================
+#The quest for a fast KNN search
 
 This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm.
 
@@ -18,10 +17,9 @@ Related to the k-d tree based approach:
 * _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
 
 
-Brute force based effort
-------------------------
+# Brute force based effort
 
-#### Garcia's base algorithm
+## Garcia's base algorithm
 
 Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
 
@@ -37,7 +35,9 @@ Steps:
 1. O(n). Every reference point must be evaluated once. Since all calculations are independent, we have a large potential for parallelizing.
 2. Insertion sort: O(n^2).
 
-#### Our reimplementation
+## Our reimplementation
+
+### Bitonic-sort
 
 Graham Nolan discusses the possibility of improving Garcia's algorithm by reimplementing step two with a bitonic sort. His source code has not been available to us, but he states that the run-time improvements was significant. As well as choosing bitonic sort for the sorting stage of our algorithm, our implementation supports up to 15 000 000 points before memory errors occur, and we have limited the number of dimensions to three.
 
@@ -56,19 +56,34 @@ Testing the different algorithms for a range of point cloud sizes and a fixed va
 
 We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
 
-The results for the serial k-d implementation will be discussed in the next section.
 
-#### Possible improvements
+### Min-Reduce
+
+An other possibility to improve step 2 is to use a reduce operation to get the smallest distances. This can be done k times to get the k smallest values.
+
+#### Time complexity
+
+Steps:
+
+1. O(n).
+2. Min-reduce: k* log²(n)).
+
+
+![knn-brute-force-vs-serial-k-d-tree](./images/BitonicVSreduce.png)
+
+
+
+### Possible improvements
 
 * Memory improvements. Use shared memory and texture memory.
 * Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
 * Replace bitonic sort with min reduce. O(k*log²(n)).
 
+The results for the serial k-d implementation will be discussed in the next section.
 
 KD-tree based effort
---------------------
 
-#### k-d trees
+# k-d trees
 
 A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
 
@@ -82,7 +97,7 @@ Given the previous splits and selection of nodes, the resulting binary tree woul
 
 Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log² n) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log² n) time.
 
-#### The serial base algorithm
+## The serial base algorithm
 
 1. Build a balanced k-d tree from the point cloud.
 2. Query the tree for different sets of neighbors.
@@ -118,6 +133,5 @@ Another option could be to build several small trees on different processes, but
 
 
 Final thoughts
---------------
 
 We have discovered a possible relevant paper, [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5382329), behind a pay-wall we cannot access with our student accounts. Maybe you have access to this Ole Ivar?
