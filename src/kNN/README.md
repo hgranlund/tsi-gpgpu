@@ -59,12 +59,12 @@ Testing the different algorithms for a range of point cloud sizes and a fixed va
 We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
 
 
-Test with n =8388608:
+Test with n =8 388 608:
 
-* Memory transfer:  18.3 ms.
-* Calculate all distances: 3 ms.
+* Memory transfer:  21.1 ms.
+* Calculate all distances: 2.5 ms.
 * Bitonic sort:  176 ms.
-* Total: 206 ms.
+* Total: 200 ms.
 
 ### Min-Reduce
 
@@ -80,12 +80,12 @@ Steps:
 #### Results
 
 
-Test results of n = 10 000 000:
+Test results of n = 8 388 608:
 
-*  Memory transfer : 23 ms.
-*  One min-reduce step : 5 ms.
+*  Memory transfer:  21.1 ms.
 *  Calculate all distances: 2.5 ms
-*  Total time: (25.7 + k*5) ms.
+*  One min-reduce step : 4.8 ms.
+*  Total time: (23.7 + k*4.8) ms.
 
 
 
