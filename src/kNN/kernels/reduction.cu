@@ -2,7 +2,8 @@
 #include "cuda.h"
 #include "stdio.h"
 
-#define SHARED_SIZE_LIMIT 1024U
+// #define SHARED_SIZE_LIMIT 8U
+#define SHARED_SIZE_LIMIT 512U
 
 // Can be optimized
 __device__ int nearestPowerOf2 (int n)
@@ -11,7 +12,7 @@ __device__ int nearestPowerOf2 (int n)
    return n;  //(0 == 2^0)
  }
  int x = 1;
- while(x < n)
+ while(x <= n)
  {
   x <<= 1;
 }
@@ -56,8 +57,7 @@ __global__ void min_reduction(float *list,int *ind, int n, int threadOffset)
 
   int  thread1, halfPoint, index1,index2,offset;
   int threadOffset1 = max(1, threadOffset);
-  // int elements_in_block = nearestPowerOf2(n);
-  int elements_in_block = n;
+  int elements_in_block = nearestPowerOf2(n);
   offset = elements_in_block-n;
   list += blockIdx.x*n;
   ind += blockIdx.x*n;
@@ -92,7 +92,6 @@ void knn_min_reduce(float* dist_dev, int* ind_dev, int n){
   }
   threadCount = elements_in_block /2;
   threadCount = min(SHARED_SIZE_LIMIT, threadCount);
-
   elements_out_of_block = n - blockCount * elements_in_block;
   if (elements_out_of_block > 0 )
   {
