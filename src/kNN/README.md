@@ -89,7 +89,7 @@ Test results of n = 8 388 608:
 
 
 
-![knn-brute-force-vs-serial-k-d-tree](./images/BitonicVSreduce.png)
+![knn-brute-force-vs-serial-k-d-tree - k=10](./images/BitonicVSreduce.png)
 
 
 
