@@ -100,9 +100,6 @@ fig: Brute-force - k = 10
 * Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
 * Replace bitonic sort with min reduce. O(k*log²(n)).
 
-The results for the serial k-d implementation will be discussed in the next section.
-
-KD-tree based effort
 
 # k-d trees
 
