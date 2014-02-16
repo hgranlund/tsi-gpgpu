@@ -15,10 +15,7 @@
 #define MAX_PART_OF_FREE_MEMORY_USED   0.9
 #define BLOCK_DIM                      16
 
-#ifndef max
-#define max(a,b) (((a) (b)) ? (a) : (b))
-#define min(a,b) (((a) < (b)) ? (a) : (b))
-#endif
+
 
 
 // Texture containing the reference points (if it is possible)
