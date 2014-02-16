@@ -10,7 +10,7 @@ include_directories(
   )
 
 set(CUHFILES
-brute-force/kNN-brute-force-garcia.cuh
+# brute-force/kNN-brute-force-garcia.cuh
 brute-force/kNN-brute-force-reduce.cuh
 # brute-force/kNN-brute-force.cuh
 brute-force/kNN-brute-force-bitonic.cuh
@@ -18,7 +18,7 @@ kernels/reduction.cuh
 )
 
 set(CUFILES
-brute-force/kNN-brute-force-garcia.cu
+# brute-force/kNN-brute-force-garcia.cu
 brute-force/kNN-brute-force-reduce.cu
 # brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-bitonic.cu
@@ -95,12 +95,22 @@ endif (CUDA_VERBOSE_PTXAS)
 
 
 
+
+cuda_add_library(knn_reduce ${LIB_TYPE}
+  brute-force/kNN-brute-force-reduce.cu
+  brute-force/kNN-brute-force-reduce.cuh
+  kernels/reduction.cuh
+  kernels/reduction.cu
+  OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
+  )
+
+
 cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${CUHFILES}
   ${HFILES_PUBLIC}
   ${CUFILES}
   ${CFILES}
-  OPTIONS ${GENCODE} ${CUDA_NVCC_FLAGS} ${VERBOSE_PTXAS}
+  OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
   )
 
 

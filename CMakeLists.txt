@@ -4,9 +4,9 @@ project(tsi_gpgpu)
 
 find_package(CUDA REQUIRED)
 
-option(TSI_GPGPU_BUILD_SHARED_LIBS
-  "TSI_GPGPUOn to build shared libraries, off for static libraries."
-  ON
+option(BUILD_SHARED_LIBS
+  "BUILD_SHARED_LIBS On to build shared libraries, off for static libraries."
+  OFF
   )
 
 option(CUDA_VERBOSE_PTXAS
@@ -42,16 +42,17 @@ set(CMAKE_MODULE_PATH
 set(tsi_gpgpu_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/include
   )
-
+STRING(REPLACE "INCREMENTAL:YES" "INCREMENTAL:NO" replacementFlags
+${CMAKE_EXE_LINKER_FLAGS_DEBUG})
+SET(CMAKE_EXE_LINKER_FLAGS_DEBUG "/INCREMENTAL:NO ${replacementFlags}" )
 include_directories(${tsi_gpgpu_INCLUDE_DIRS})
 
-if(TSI_GPGPU_BUILD_SHARED_LIBS)
-  # User wants to build Dynamic Libraries, so change the LIB_TYPE variable to CMake keyword 'SHARED'
+if(BUILD_SHARED_LIBS)
   set(LIB_TYPE SHARED)
 else()
   set(LIB_TYPE STATIC)
-  set(TSI_GPGPU_STATIC_LIB 1)
-endif(TSI_GPGPU_BUILD_SHARED_LIBS)
+  set(STATIC_LIB 1)
+endif(BUILD_SHARED_LIBS)
 
 file(COPY tests/data DESTINATION tests)
 
