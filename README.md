@@ -35,6 +35,14 @@ To get up and running, open the Visual Studio Command Prompt, or any other shell
 All executables will be in ```/build/bin``` and all libraries will be in ```/build/lib/```.
 
 
+Folder layout
+-------------
+
+Code and documentation for different experiments are placed under the ```/src``` folder. Some source folders are supplies with informative README.md files. Visit [tsi-gpgpu/src/kNN](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN) for the most recent update on the kNN effort.
+
+Relevant papers and other background material is placed in the ```/resources``` folder.
+
+
 Installation notes for Windows
 ------------------------------
 
@@ -81,11 +89,3 @@ Installation notes for Ubuntu
     make
 
 All executables will be in ```/build/bin``` and all libraries will be in ```/build/lib/```.
-
-
-Folder layout
--------------
-
-Code and documentation for different experiments are placed under the ```/src``` folder. Some source folders are supplies with informative README.md files. Visit [tsi-gpgpu/src/kNN](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN) for the most recent update on the kNN effort.
-
-Relevant papers and other background material is placed in the ```/resources``` folder.
