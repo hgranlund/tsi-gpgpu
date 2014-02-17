@@ -84,8 +84,8 @@ Installation notes for Ubuntu
 
 #### Build with
 
-    mkdir build $$ cd build
-    cmake ../
-    make
+    tsi-gpu> mkdir build $$ cd build
+    tsi-gpu/build> cmake ../
+    tsi-gpu/build> make
 
 All executables will be in ```/build/bin``` and all libraries will be in ```/build/lib/```.
