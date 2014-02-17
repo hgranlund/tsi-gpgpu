@@ -4,33 +4,32 @@ project(tests)
 
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/common
+ ${CMAKE_SOURCE_DIR}/include
  ${CMAKE_SOURCE_DIR}/src/kNN
  ${CMAKE_SOURCE_DIR}/src/kNN/kernels
  ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
-${CMAKE_CURRENT_SOURCE_DIR}/common
+ # ${CMAKE_CURRENT_SOURCE_DIR}/common
+)
 
+link_directories(
+${CMAKE_SOURCE_DIR}/lib/
 )
 
 ################################
 # Testing
 ################################
 if (BUILD_TESTS)
-  add_subdirectory(lib/gtest-1.6.0)
+  add_subdirectory(lib/gtest-1.7.0)
   enable_testing()
 
   # Include the gtest library. gtest_SOURCE_DIR is available due to
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
   set(test_files
-    kNN/test-kNN-brute-force.cpp
+    #kNN/test-kNN-brute-force.cpp
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
     kNN/kernels/test_redution.cu
-  )
-
-  add_library(common_debug
-      common/common-debug.h
-      common/common-debug.c
   )
 
   cuda_add_executable(runUnitTests
@@ -38,16 +37,16 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(runUnitTests gtest gtest_main )
-  target_link_libraries(runUnitTests common_debug )
+  # target_link_libraries(runUnitTests common_debug )
 
-  target_link_libraries(runUnitTests knn_gpgpu -lcuda)
+  target_link_libraries(runUnitTests knn_gpgpu)
 
   add_test(run_test runUnitTests)
   add_custom_target(test runUnitTests)
 
 
-  cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
-  target_link_libraries(performance knn_gpgpu -lcuda)
+cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
+  target_link_libraries(performance knn_gpgpu)
   add_custom_target(time performance)
 
 endif()
