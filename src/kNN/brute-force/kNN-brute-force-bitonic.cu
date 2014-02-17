@@ -199,6 +199,7 @@ void knn_brute_force_bitonic(float* ref_host, int ref_nb, float* query_host, int
   checkCudaErrors(cudaMemcpy(ind_host,  ind_dev,  k*size_of_int, cudaMemcpyDeviceToHost));
 
   checkCudaErrors(cudaFree(ref_dev));
+  checkCudaErrors(cudaFree(dist_dev));
   checkCudaErrors(cudaFree(ind_dev));
 }
 
