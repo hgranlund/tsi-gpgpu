@@ -4,12 +4,12 @@
 
 struct Distance {
  float value;
- int index;
+ unsigned int index;
 };
 
- void min_reduce(Distance *dist, int n);
-__global__ void min_reduction(Distance *dist, int n, int threadOffset);
-void knn_min_reduce(Distance* dist_dev, int n);
+ void min_reduce(Distance *dist, unsigned int n);
+__global__ void min_reduction(Distance *dist, unsigned int n, unsigned int threadOffset);
+void knn_min_reduce(Distance* dist_dev, unsigned int n);
 
 #endif
 

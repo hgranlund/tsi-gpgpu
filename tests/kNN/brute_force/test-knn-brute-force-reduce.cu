@@ -14,22 +14,22 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
   float* ref;
   float* query;
   Distance* dist;
-  int    ref_nb = 131072;
-  int    query_nb = 1;
-  int    dim=3;
-  int    k          = 50;
-  int    iterations = 1;
-  int    i;
+  unsigned int    ref_nb = 131072;
+  unsigned int    query_nb = 1;
+  unsigned int    dim=3;
+  unsigned int    k          = 50;
+  unsigned int    iterations = 1;
+  unsigned int    i;
 
   ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
   query  = (float *) malloc(query_nb * dim * sizeof(float));
   dist   = (Distance *) malloc(query_nb * k * sizeof(Distance));
 
-  for (int count = 0; count < ref_nb*dim; count++)
+  for (unsigned int count = 0; count < ref_nb*dim; count++)
   {
     ref[count] = ref_nb*dim-count;
   }
-  for (int count = 0; count < query_nb*dim; count++)
+  for (unsigned int count = 0; count < query_nb*dim; count++)
   {
     query[count] = 0;
   }
@@ -38,7 +38,7 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
     knn_brute_force_reduce(ref, ref_nb, query, dim, k, dist);
   }
 
-  for (int i = 0; i < k; ++i)
+  for (unsigned int i = 0; i < k; ++i)
   {
     ASSERT_EQ(dist[i].index, ref_nb-1-i)<< "Faild with i = "<<i << " and n = " << ref_nb;;
   }

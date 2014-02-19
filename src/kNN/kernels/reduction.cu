@@ -7,6 +7,18 @@
 // #define SHARED_SIZE_LIMIT 8U
 #define SHARED_SIZE_LIMIT 512U
 
+__device__ unsigned int nextPow2(unsigned int x)
+{
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+}
+
+
 // Can be optimized
 __device__ int nearestPowerOf2 (int n)
 {
@@ -21,22 +33,18 @@ __device__ int nearestPowerOf2 (int n)
 return x;
 }
 
-void compare(float &distA, int &indA, float &distB, int &indB, int dir)
+void compare(Distance &distA,  Distance &distB, unsigned int dir)
 {
-  float f;
-  int i;
-  if ((distA  >= distB) == dir)
+  Distance f;
+  if ((distA.value  >= distB.value) == dir)
   {
     f = distA;
     distA  = distB;
     distB = f;
-    i = indA;
-    indA = indB;
-    indB = i;
   }
 }
 
-__device__ void cuCompare_r(Distance &distA,  Distance &distB, int dir)
+__device__ void cuCompare_r(Distance &distA,  Distance &distB, unsigned int dir)
 {
   Distance f;
   if ((distA.value  >= distB.value) == dir)
@@ -49,12 +57,12 @@ __device__ void cuCompare_r(Distance &distA,  Distance &distB, int dir)
 
 
 
-__global__ void min_reduction(Distance *dist, int n, int threadOffset)
+__global__ void min_reduction(Distance *dist, unsigned int n, unsigned int threadOffset)
 {
 
-  int  thread1, halfPoint, index1,index2,offset;
-  int threadOffset1 = max(1, threadOffset);
-  int elements_in_block = nearestPowerOf2(n);
+  unsigned int  thread1, halfPoint, index1,index2,offset;
+  unsigned int threadOffset1 = max(1, threadOffset);
+  unsigned int elements_in_block = nextPow2(n);
   offset = elements_in_block-n;
   dist += blockIdx.x*n;
   while(elements_in_block > 1)
@@ -77,8 +85,8 @@ __global__ void min_reduction(Distance *dist, int n, int threadOffset)
 }
 }
 
-void knn_min_reduce(Distance* d_dist, int n){
-  int blockCount, threadCount, elements_in_block, elements_out_of_block, offset;
+void knn_min_reduce(Distance* d_dist, unsigned int n){
+  unsigned int blockCount, threadCount, elements_in_block, elements_out_of_block, offset;
   blockCount = ceil((float)n/SHARED_SIZE_LIMIT );
   elements_in_block = n/blockCount;
   if (blockCount == 0)
@@ -100,10 +108,10 @@ void knn_min_reduce(Distance* d_dist, int n){
 
 
 
-void min_reduce(float *h_dist, int *h_ind, int n){
+void min_reduce(Distance *h_dist, int *h_ind, unsigned int n){
 
   Distance *d_dist;
-  int blockCount, threadCount, elements_in_block;
+  unsigned int blockCount, threadCount, elements_in_block;
 
 
 
@@ -119,7 +127,7 @@ void min_reduce(float *h_dist, int *h_ind, int n){
 
   for (int i = n-1; i >= elements_in_block * blockCount; --i)
   {
-    compare(h_dist[0], h_ind[0], h_dist[i], h_ind[i], 1);
+    compare(h_dist[0], h_dist[i], 1);
 
   }
   cudaMalloc( (void **) &d_dist, n* sizeof(Distance));

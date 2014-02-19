@@ -16,7 +16,7 @@
 #define SHARED_SIZE_LIMIT 512U
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
-    __device__ void cuCompare(Distance &distA,  Distance &distB, int dir)
+    __device__ void cuCompare(Distance &distA,  Distance &distB,unsigned int dir)
     {
       Distance f;
       if ((distA.value  >= distB.value) == dir)
@@ -28,11 +28,11 @@
     }
     __constant__  float d_query[3];
 
-    __global__ void cuComputeDistance( float* ref, int ref_nb , int dim,  Distance* dist){
+    __global__ void cuComputeDistance( float* ref, unsigned int ref_nb , unsigned int dim,  Distance* dist){
 
       float dx,dy,dz;
 
-      int index = blockIdx.x*blockDim.x+threadIdx.x;
+      unsigned int index = blockIdx.x*blockDim.x+threadIdx.x;
       while (index < ref_nb){
         dx=ref[index*dim] - d_query[0];
         dy=ref[index*dim + 1] - d_query[1];
@@ -42,7 +42,7 @@
         index += gridDim.x*blockDim.x;
       }
     }
-    __global__ void cuParallelSqrt(Distance *dist, int k){
+    __global__ void cuParallelSqrt(Distance *dist, unsigned int k){
       unsigned int xIndex = blockIdx.x;
       if (xIndex < k){
         dist[xIndex].value = sqrt(dist[xIndex].value);
@@ -50,7 +50,7 @@
     }
 
 
-    void knn_brute_force_reduce(float* h_ref, int ref_nb, float* h_query, int dim, int k, Distance* h_dist){
+    void knn_brute_force_reduce(float* h_ref, unsigned int ref_nb, float* h_query, unsigned int dim, unsigned int k, Distance* h_dist){
 
       float        *d_ref;
       Distance        *d_dist;
@@ -62,11 +62,11 @@
       checkCudaErrors(cudaMemcpy(d_ref, h_ref, ref_nb*dim*sizeof(float), cudaMemcpyHostToDevice));
       checkCudaErrors(cudaMemcpyToSymbol(d_query, h_query, dim*sizeof(float)));
 
-      int threadCount = min(ref_nb, SHARED_SIZE_LIMIT);
-      int blockCount = ref_nb/threadCount;
+      unsigned int threadCount = min(ref_nb, SHARED_SIZE_LIMIT);
+      unsigned int blockCount = ref_nb/threadCount;
       blockCount = min(blockCount, 65536);
       cuComputeDistance<<<blockCount,threadCount>>>(d_ref, ref_nb, dim, d_dist);
-      for (int i = 0; i < k; ++i)
+      for (unsigned int i = 0; i < k; ++i)
       {
         knn_min_reduce(d_dist+i, ref_nb-i);
       }
