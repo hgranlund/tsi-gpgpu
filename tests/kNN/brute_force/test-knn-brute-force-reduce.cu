@@ -13,8 +13,7 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
 
   float* ref;
   float* query;
-  float* dist;
-  int*   ind;
+  Distance* dist;
   int    ref_nb = 131072;
   int    query_nb = 1;
   int    dim=3;
@@ -24,8 +23,8 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
 
   ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
   query  = (float *) malloc(query_nb * dim * sizeof(float));
-  dist   = (float *) malloc(query_nb * k * sizeof(float));
-  ind    = (int *)   malloc(query_nb * k * sizeof(int));
+  dist   = (Distance *) malloc(query_nb * k * sizeof(Distance));
+
   for (int count = 0; count < ref_nb*dim; count++)
   {
     ref[count] = ref_nb*dim-count;
@@ -36,15 +35,14 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
   }
 
   for (i=0; i<iterations; i++){
-    knn_brute_force_reduce(ref, ref_nb, query, dim, k, dist, ind);
+    knn_brute_force_reduce(ref, ref_nb, query, dim, k, dist);
   }
 
   for (int i = 0; i < k; ++i)
   {
-    ASSERT_EQ(ind[i], ref_nb-1-i)<< "Faild with i = "<<i << " and n = " << ref_nb;;
+    ASSERT_EQ(dist[i].index, ref_nb-1-i)<< "Faild with i = "<<i << " and n = " << ref_nb;;
   }
 
-  free(ind);
   free(dist);
   free(query);
   free(ref);

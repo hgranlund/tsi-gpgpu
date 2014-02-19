@@ -24,7 +24,8 @@ float cpu_min(float* in, int num_els)
   return min;
 }
 
-void printFloatArray(float* l, int n){
+void printFloatArray(float* l, int n)
+{
   int i;
   if (debug)
   {
@@ -53,45 +54,38 @@ void printFloatArray(float* l, int n){
 
     TEST(kernels, min_reduce){
 
-      float *h_list;
-      int *h_ind;
+      Distance *h_dist;
       int i,n;
       for (n = 11; n <=11; n +=2)
       {
 
-        h_list = (float*) malloc(n*sizeof(float));
-        h_ind = (int*) malloc(n*sizeof(int));
+        h_dist = (Distance*) malloc(n*sizeof(Distance));
+
         srand(time(NULL));
         for (i=0 ; i<n; i++)
         {
-          h_list[i]    = n-i-1;
-          h_ind[i]=i;
+          h_dist[i].value    = n-i-1;
+          h_dist[i].value=i;
         }
         // printf("########\n");
         // printFloatArray(list,n);
         // printIntArray(ind_1,n);
 
-        float *d_list;
-        int *d_ind;
+        Distance *d_dist;
 
-        cudaMalloc( (void **) &d_list, n* sizeof(float));
-        cudaMalloc( (void **) &d_ind, n* sizeof(int));
+        cudaMalloc( (void **) &d_dist, n* sizeof(Distance));
 
-        cudaMemcpy(d_list,h_list, n*sizeof(float), cudaMemcpyHostToDevice);
-        cudaMemcpy(d_ind,h_ind, n*sizeof(int), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
 
-        knn_min_reduce(d_list, d_ind, n);
+        knn_min_reduce(d_dist, n);
 
-        cudaMemcpy(h_list,d_list, n*sizeof(float), cudaMemcpyDeviceToHost);
-        cudaMemcpy(h_ind,d_ind, n*sizeof(int), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);
 
-        ASSERT_LE(h_list[0], 0)  << "Faild with n = " << n;
-        ASSERT_LE(h_ind[0], n-1)  << "Faild with n = " << n;
+        ASSERT_LE(h_dist[0].value, 0)  << "Faild with n = " << n;
+        ASSERT_LE(h_dist[0].index, n-1)  << "Faild with n = " << n;
 
-        cudaFree(d_list);
-        cudaFree(d_ind);
-        free(h_list);
-        free(h_ind);
+        cudaFree(d_dist);
+        free(h_dist);
       }
     }
 
