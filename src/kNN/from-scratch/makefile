@@ -1,7 +1,7 @@
 all: kd-tree knn-serial
 
 kd-tree: kd-tree.c
-	gcc -o kd-tree kd-tree.c
+	gcc -o kd-tree kd-tree.c -lm
 
 knn-serial: knn-serial.c
 	gcc -o knn-serial knn-serial.c -lm

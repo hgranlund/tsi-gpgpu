@@ -1,25 +1,95 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <math.h>
 #include <time.h>
 
 struct node
 {
-    double x, y, z;
+    double x[3];
     struct node *left, *right;
 };
 
-void randomPoint(struct node v)
+struct node* median(struct node *start, struct node *end, int idx)
 {
-    v.x = rand();
-    v.y = rand();
-    v.z = rand();
+    if (end <= start)
+    {
+        return NULL;
+    } if (end == start + 1)
+    {
+        return start;
+    }
+ 
+    inline void swap(struct node *x, struct node *y) {
+        double tmp[3];
+        memcpy(tmp,  x->x, sizeof(tmp));
+        memcpy(x->x, y->x, sizeof(tmp));
+        memcpy(y->x, tmp,  sizeof(tmp));
+    }
+ 
+    struct node *p, *store, *md = start + (end - start) / 2;
+    double pivot;
+    while (1) {
+        pivot = md->x[idx];
+ 
+        swap(md, end - 1);
+        for (store = p = start; p < end; p++) {
+            if (p->x[idx] < pivot) {
+                if (p != store)
+                {
+                    swap(p, store);
+                }
+                store++;
+            }
+        }
+        swap(store, end - 1);
+
+        if (store->x[idx] == md->x[idx])
+        {
+            return md;
+        }
+ 
+        if (store > md)
+        {
+            end = store;
+        } else
+        {
+            start = store;
+        }
+    }
+}
+ 
+struct node* makeKdTree(struct node *t, int len, int i)
+{
+    struct node *n;
+ 
+    if (!len) return 0;
+ 
+    if ((n = median(t, t + len, i))) {
+        i = (i + 1) % 3;
+        n->left  = makeKdTree(t, n - t, i);
+        n->right = makeKdTree(n + 1, t + len - (n + 1), i);
+    }
+    return n;
+}
+
+double euclidDistance(struct node a, struct node b)
+{
+    return sqrt(pow((a.x[0] - b.x[0]), 2) + pow((a.x[1] - b.x[1]), 2) + pow((a.x[2] - b.x[2]), 2));
+}
+
+void randomPoint(struct node *v)
+{
+    v->x[0] = rand();
+    v->x[1] = rand();
+    v->x[2] = rand();
 }
 
 void printTree(struct node *root, int height)
 {
     if (root)
     {
-        printf("Level %d: %lf, %lf, %lf\n", height, root->x, root->y, root->z);
+        printf("Level %d: %lf, %lf, %lf\n", height, root->x[0], root->x[1], root->x[2]);
         printTree(root->left, (height + 1));
         printTree(root->right, (height + 1));
     }
@@ -36,18 +106,20 @@ int main(void)
 {
     srand(time(NULL));
 
-    int i, N = 10;
-    struct node *root, *left, *right;
+    int i, N = pow(2, 2 + 1) - 1;
+    struct node *tree, *root;
 
-    root = calloc(N, sizeof(struct node));
+    tree = calloc(N, sizeof(struct node));
 
     for (i = 0; i < N; i++)
     {
-        randomPoint(root[i]);
+        randomPoint(&tree[i]);
     }
 
+    printf("k-d tree:\n");
+    root = makeKdTree(tree, N, 0);
     printTree(root, 0);
 
-    free(root);
+    free(tree);
     return 0;
 }
