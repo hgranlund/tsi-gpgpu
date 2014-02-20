@@ -1,3 +1,5 @@
+
+#include "stdio.h"
 #include "common-debug.h"
 
 void printFloatArray(float* l, int n){
