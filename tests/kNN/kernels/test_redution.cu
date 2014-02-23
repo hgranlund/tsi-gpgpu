@@ -12,7 +12,7 @@
 #include <helper_functions.h>
 #include <helper_cuda.h>
 
-
+#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
 #define debug 1
 float cpu_min(float* in, int num_els)
@@ -134,8 +134,6 @@ void printDistArray(Distance* l, int n)
       Distance *d_dist;
       unsigned int i,n;
       n=8388608;
-      unsigned int bytes = n * (sizeof(Distance)+sizeof(int));
-      double throughput;
       h_dist = (Distance*) malloc(n*sizeof(Distance));
 
       srand(time(NULL));
@@ -150,6 +148,7 @@ void printDistArray(Distance* l, int n)
       cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
 
       cudaEvent_t start, stop;
+      unsigned int bytes = n * (sizeof(Distance)+sizeof(int));
       checkCudaErrors(cudaEventCreate(&start));
       checkCudaErrors(cudaEventCreate(&stop));
       float elapsed_time=0;
@@ -158,12 +157,13 @@ void printDistArray(Distance* l, int n)
 
 
       dist_min_reduce(d_dist, n);
+
       checkCudaErrors(cudaEventRecord(stop, 0));
       cudaEventSynchronize(start);
       cudaEventSynchronize(stop);
       cudaEventElapsedTime(&elapsed_time, start, stop);
       elapsed_time = elapsed_time * 1e-3;
-      throughput = 1.0e-9 * ((double)bytes)/elapsed_time;
+      float throughput = 1.0e-9 * ((float)bytes)/elapsed_time;
       printf("Reduction_mod, Throughput = %.4f GB/s, Time = %.5f s, Size = %u Elements, NumDevsUsed = %d\n",
        throughput, elapsed_time, n, 1);
 
