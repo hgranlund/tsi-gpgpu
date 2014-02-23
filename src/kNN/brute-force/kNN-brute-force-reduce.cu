@@ -17,16 +17,6 @@
 #define SHARED_SIZE_LIMIT 512U
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
-    __device__ void cuCompare(Distance &distA,  Distance &distB,unsigned int dir)
-    {
-      Distance f;
-      if ((distA.value  >= distB.value) == dir)
-      {
-        f = distA;
-        distA  = distB;
-        distB = f;
-      }
-    }
     __constant__  float d_query[3];
 
     __global__ void cuComputeDistance( float* ref, unsigned int ref_nb , unsigned int dim,  Distance* dist){
@@ -46,7 +36,7 @@
     __global__ void cuParallelSqrt(Distance *dist, unsigned int k){
       unsigned int xIndex = blockIdx.x;
       if (xIndex < k){
-        dist[xIndex].value = sqrt(dist[xIndex].value);
+        dist[xIndex].value = rsqrt(dist[xIndex].value);
       }
     }
 
