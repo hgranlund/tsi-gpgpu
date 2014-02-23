@@ -51,12 +51,12 @@
     }
 
 
-    void knn_brute_force_reduce(float* h_ref, unsigned int ref_nb, float* h_query, unsigned int dim, unsigned int k, Distance* h_dist){
+    void knn_brute_force_reduce(float* h_ref, unsigned int ref_nb, float* h_query, unsigned int dim, unsigned int k, float* dist, int* ind){
 
       float        *d_ref;
-      Distance        *d_dist;
+      Distance        *d_dist, *h_dist;
 
-
+      h_dist = (Distance*) malloc(k*sizeof(Distance));
       checkCudaErrors(cudaMalloc( (void **) &d_dist, ref_nb * sizeof(Distance)));
       checkCudaErrors(cudaMalloc( (void **) &d_ref, ref_nb * sizeof(float) * dim));
 
@@ -73,6 +73,11 @@
       }
       cuParallelSqrt<<<k,1>>>(d_dist, k);
       checkCudaErrors(cudaMemcpy(h_dist, d_dist, k*sizeof(Distance), cudaMemcpyDeviceToHost));
+      for (int i = 0; i < k; ++i)
+      {
+        dist[i]=h_dist[i].value;
+        ind[i]=h_dist[i].index;
+      }
       checkCudaErrors(cudaFree(d_ref));
       checkCudaErrors(cudaFree(d_dist));
     }
