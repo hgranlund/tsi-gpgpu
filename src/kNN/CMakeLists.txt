@@ -14,7 +14,8 @@ set(CUHFILES
 brute-force/kNN-brute-force-reduce.cuh
 # brute-force/kNN-brute-force.cuh
 brute-force/kNN-brute-force-bitonic.cuh
-kernels/reduction.cuh
+kernels/reduction-mod.cuh
+# kernels/reduction.cuh
 )
 
 set(CUFILES
@@ -22,7 +23,8 @@ set(CUFILES
 brute-force/kNN-brute-force-reduce.cu
 # brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-bitonic.cu
-kernels/reduction.cu
+kernels/reduction-mod.cu
+# kernels/reduction.cu
 )
 
 set(CFILES
