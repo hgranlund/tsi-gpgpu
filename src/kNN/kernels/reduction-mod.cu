@@ -3,14 +3,15 @@
 #include "stdio.h"
 #include "helper_cuda.h"
 
+#define CUDART_INF_F  __int_as_float(0x7f800000)
 #define THREADS_PER_BLOCK 512U
 #define MAX_BLOCK_DIM_SIZE 65535u
+
 
 bool isPow2(unsigned int x)
 {
   return ((x&(x-1))==0);
 }
-
 
 __device__ void cuMinR(Distance &distA, Distance &distB, unsigned int &min_index, unsigned int index, unsigned int dir)
 {
@@ -94,7 +95,7 @@ template <unsigned int blockSize, bool nIsPow2>
       unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
       unsigned int gridSize = blockSize*2*gridDim.x;
 
-      Distance min_dist = {1,1.0/0.0};
+      Distance min_dist = {1,CUDART_INF_F};
       unsigned int min_index = 0;
     // we reduce multiple elements per thread.  The number is determin_listed by the
     // number of active thread blocks (via gridDim).  More blocks will result
@@ -107,7 +108,6 @@ template <unsigned int blockSize, bool nIsPow2>
           cuMinR(min_dist,  g_dist[i+blockSize], min_index, i+blockSize ,dir);
         }
         // ensure we don't read out of bounds -- this is optimized away for powerOf2 sized arrays
-
         i += gridSize;
       }
 
@@ -139,7 +139,6 @@ template <unsigned int blockSize, bool nIsPow2>
           s_ind[tid] = min_index;
           s_dist[tid] = min_dist;
         }
-
         __syncthreads();
       }
 
