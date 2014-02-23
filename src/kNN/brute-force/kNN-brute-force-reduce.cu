@@ -2,7 +2,8 @@
 
 // Includes
 #include <kNN-brute-force-bitonic.cuh>
-#include "../kernels/reduction.cuh"
+// #include "../kernels/reduction.cuh"
+#include "../kernels/reduction-mod.cuh"
 
 #include <stdio.h>
 #include <math.h>
@@ -68,7 +69,7 @@
       cuComputeDistance<<<blockCount,threadCount>>>(d_ref, ref_nb, dim, d_dist);
       for (unsigned int i = 0; i < k; ++i)
       {
-        knn_min_reduce(d_dist+i, ref_nb-i);
+        dist_min_reduce(d_dist+i, ref_nb-i);
       }
       cuParallelSqrt<<<k,1>>>(d_dist, k);
       checkCudaErrors(cudaMemcpy(h_dist, d_dist, k*sizeof(Distance), cudaMemcpyDeviceToHost));
