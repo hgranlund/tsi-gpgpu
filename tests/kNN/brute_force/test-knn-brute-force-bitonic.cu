@@ -64,6 +64,8 @@ TEST(knn_brute_force, test_knn_bitonic_correctness){
   free(dist);
   free(query);
   free(ref);
+  cudaDeviceSynchronize();
+  cudaDeviceReset();
 }
 
 
@@ -112,6 +114,7 @@ TEST(knn_brute_force, test_bitonic_sort){
     free(h_dist);
     cudaFree(d_dist);
     cudaFree(d_ind);
-
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
   }
 }

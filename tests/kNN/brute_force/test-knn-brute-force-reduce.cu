@@ -20,7 +20,7 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
   unsigned int    ref_nb = 131072;
   unsigned int    query_nb = 1;
   unsigned int    dim=3;
-  unsigned int    k          = 50;
+  unsigned int    k          = 100;
   unsigned int    iterations = 1;
   unsigned int    i;
 
@@ -51,6 +51,8 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
   free(ind);
   free(query);
   free(ref);
+  cudaDeviceSynchronize();
+  cudaDeviceReset();
 }
 
 TEST(knn_brute_force, test_knn_reduce_time){
@@ -61,7 +63,7 @@ TEST(knn_brute_force, test_knn_reduce_time){
   unsigned int    ref_nb = 131072;
   unsigned int    query_nb = 1;
   unsigned int    dim=3;
-  unsigned int    k          = 50;
+  unsigned int    k          = 100;
 
   ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
   query  = (float *) malloc(query_nb * dim * sizeof(float));
@@ -107,5 +109,7 @@ TEST(knn_brute_force, test_knn_reduce_time){
   free(ind);
   free(query);
   free(ref);
+  cudaDeviceReset();
+  cudaDeviceSynchronize();
 }
 

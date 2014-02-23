@@ -125,6 +125,8 @@ void printDistArray(Distance* l, int n)
 
         cudaFree(d_dist);
         free(h_dist);
+        cudaDeviceSynchronize();
+        cudaDeviceReset();
       }
     }
 
@@ -174,5 +176,6 @@ void printDistArray(Distance* l, int n)
 
       cudaFree(d_dist);
       free(h_dist);
-
+      cudaDeviceSynchronize();
+      cudaDeviceReset();
     }
