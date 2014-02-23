@@ -103,8 +103,8 @@ Test results of n = 8 388 608 with memory optimization:
 
 *  Memory transfer:  21.1 ms.
 *  Calculate all distances: 2.5 ms
-*  One min-reduce step : 2.0 ms.
-*  Total time: (23.7 + k*2.0) ms.
+*  One min-reduce step : 1.7 ms.
+*  Total time: (23.7 + k*1.7) ms.
 
 
 
