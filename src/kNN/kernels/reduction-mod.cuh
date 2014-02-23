@@ -1,6 +1,6 @@
 #ifndef _REDUCTION_MOD
 #define _REDUCTION_MOD
-#include <knn_gpgpu.h>
+#include <data_types.h>
 
 
 
