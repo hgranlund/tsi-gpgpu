@@ -79,7 +79,7 @@ Steps:
 
 #### Memory optimalisation
 
-We have done some memory optimization based on a [presentationn](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf) from Nvidia.
+We have done some memory optimization based on a [presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf) from Nvidia.
 
 The optimizations include:
 
