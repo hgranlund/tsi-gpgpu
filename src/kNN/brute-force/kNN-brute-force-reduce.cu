@@ -28,7 +28,7 @@
         dx=ref[index*dim] - d_query[0];
         dy=ref[index*dim + 1] - d_query[1];
         dz=ref[index*dim + 2] - d_query[2];
-        dist[index].value = (dx*dx)+(dy*dy)+(dz*dz);
+        dist[index].value = pow(dx,2)+pow(dy,2)+pow(dz,2);
         dist[index].index = index;
         index += gridDim.x*blockDim.x;
       }
@@ -44,7 +44,7 @@
     void knn_brute_force_reduce(float* h_ref, unsigned int ref_nb, float* h_query, unsigned int dim, unsigned int k, float* dist, int* ind){
 
       float        *d_ref;
-      Distance        *d_dist, *h_dist;
+      Distance     *d_dist, *h_dist;
 
       h_dist = (Distance*) malloc(k*sizeof(Distance));
       checkCudaErrors(cudaMalloc( (void **) &d_dist, ref_nb * sizeof(Distance)));
