@@ -5,7 +5,7 @@
 
 #define CUDART_INF_F  __int_as_float(0x7f800000)
 #define THREADS_PER_BLOCK 512U
-#define MAX_BLOCK_DIM_SIZE 65535u
+#define MAX_BLOCK_DIM_SIZE 65535U
 
 
 bool isPow2(unsigned int x)
@@ -89,14 +89,14 @@ template <unsigned int blockSize, bool nIsPow2>
       __shared__ int s_ind[blockSize];
       unsigned int dir = 1;
 
+      Distance min_dist = {1,CUDART_INF_F};
+      unsigned int min_index = 0;
+
     // perform first level of reduction,
     // reading from global memory, writing to shared memory
       unsigned int tid = threadIdx.x;
       unsigned int i = blockIdx.x*blockSize*2 + threadIdx.x;
       unsigned int gridSize = blockSize*2*gridDim.x;
-
-      Distance min_dist = {1,CUDART_INF_F};
-      unsigned int min_index = 0;
     // we reduce multiple elements per thread.  The number is determin_listed by the
     // number of active thread blocks (via gridDim).  More blocks will result
     // in a larger gridSize and therefore fewer elements per thread
@@ -305,12 +305,14 @@ template <unsigned int blockSize, bool nIsPow2>
       int numBlocks = 0;
       int numThreads = 0;
       getNumBlocksAndThreads(n, MAX_BLOCK_DIM_SIZE, THREADS_PER_BLOCK, numBlocks, numThreads);
+
       reduce(n, numThreads, numBlocks, g_dist);
       n=numBlocks;
-      if (n >1)
+      while (n >1)
       {
         getNumBlocksAndThreads(n, MAX_BLOCK_DIM_SIZE, THREADS_PER_BLOCK, numBlocks, numThreads);
-        reduce(n, numThreads,1,g_dist);
+        reduce(n, numThreads,numBlocks,g_dist);
+        n=numBlocks;
       }
     }
 

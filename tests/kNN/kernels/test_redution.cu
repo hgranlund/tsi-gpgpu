@@ -91,10 +91,11 @@ void printDistArray(Distance* l, int n)
     // }
 
     TEST(kernels, min_reduce_mod){
+      cudaDeviceReset();
 
       Distance *h_dist;
       unsigned int i,n;
-      for (n = 64; n <=67000000; n <<=1)
+      for (n = 2; n <=30000000; n <<=1)
       {
 
         h_dist = (Distance*) malloc(n*sizeof(Distance));
@@ -120,9 +121,9 @@ void printDistArray(Distance* l, int n)
         cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);
 
         // printDistArray(h_dist,n);
-        ASSERT_LE(h_dist[0].value, 0)  << "Faild with n = " << n;
-        ASSERT_LE(h_dist[0].index, n-1)  << "Faild with n = " << n;
 
+        ASSERT_EQ(h_dist[0].value, 0)  << "Faild with n = " << n;
+        ASSERT_EQ(h_dist[0].index, n-1)  << "Faild with n = " << n;
         cudaFree(d_dist);
         free(h_dist);
         cudaDeviceSynchronize();
@@ -131,7 +132,8 @@ void printDistArray(Distance* l, int n)
     }
 
     TEST(kernels, min_reduce_mod_time){
-
+      cudaDeviceSynchronize();
+      cudaDeviceReset();
       Distance *h_dist;
       Distance *d_dist;
       unsigned int i,n;
