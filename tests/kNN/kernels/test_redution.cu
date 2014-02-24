@@ -166,9 +166,9 @@ void printDistArray(Distance* l, int n)
       cudaEventSynchronize(start);
       cudaEventSynchronize(stop);
       cudaEventElapsedTime(&elapsed_time, start, stop);
-      elapsed_time = elapsed_time * 1e-3;
-      float throughput = 1.0e-9 * ((float)bytes)/elapsed_time;
-      printf("Reduction_mod, Throughput = %.4f GB/s, Time = %.5f s, Size = %u Elements, NumDevsUsed = %d\n",
+      elapsed_time = elapsed_time ;
+      float throughput = 1.0e-9 * ((float)bytes)/(elapsed_time* 1e-3);
+      printf("Reduction_mod, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
        throughput, elapsed_time, n, 1);
 
       cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);

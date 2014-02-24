@@ -60,7 +60,7 @@ TEST(knn_brute_force, test_knn_reduce_time){
   float *ref, *dist;
   float *query;
   int *ind;
-  unsigned int    ref_nb = 131072;
+  unsigned int    ref_nb = 8388608;
   unsigned int    query_nb = 1;
   unsigned int    dim=3;
   unsigned int    k          = 100;
@@ -94,9 +94,9 @@ TEST(knn_brute_force, test_knn_reduce_time){
   cudaEventSynchronize(start);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsed_time, start, stop);
-  elapsed_time = elapsed_time * 1e-3;
-  float throughput = 1.0e-9 * ((float)bytes)/elapsed_time;
-  printf("kNN-brute-force-reduce, Throughput = %.4f GB/s, Time = %.5f s, Size = %u Elements, k = %u NumDevsUsed = %d\n",
+  elapsed_time = elapsed_time ;
+  float throughput = 1.0e-9 * ((float)bytes)/(elapsed_time* 1e-3);
+  printf("kNN-brute-force-reduce, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, k = %u NumDevsUsed = %d\n",
    throughput, elapsed_time, ref_nb,k, 1);
 
 
