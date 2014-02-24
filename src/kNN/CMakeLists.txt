@@ -102,7 +102,7 @@ cuda_add_library(knn_reduce ${LIB_TYPE}
   brute-force/kNN-brute-force-reduce.cu
   brute-force/kNN-brute-force-reduce.cuh
   kernels/reduction.cuh
-  kernels/reduction.cu
+  # kernels/reduction.cu
   OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
   )
 

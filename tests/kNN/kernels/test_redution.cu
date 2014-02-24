@@ -62,7 +62,7 @@ void printDistArray(Distance* l, int n)
 
     //     h_dist = (Distance*) malloc(n*sizeof(Distance));
 
-    //     srand(time(NULL));
+    //     srand ( (unsigned int)time(NULL) );
     //     for (i=0 ; i<n; i++)
     //     {
     //       h_dist[i].value    = n-i-1;
@@ -100,10 +100,10 @@ void printDistArray(Distance* l, int n)
 
         h_dist = (Distance*) malloc(n*sizeof(Distance));
 
-        srand(time(NULL));
+        srand ( (unsigned int)time(NULL) );
         for (i=0 ; i<n; i++)
         {
-          h_dist[i].value    = n-i-1;
+          h_dist[i].value    =(float) n-i-1;
           h_dist[i].index=i;
         }
         // printf("########\n");
@@ -140,13 +140,12 @@ void printDistArray(Distance* l, int n)
       n=8388608;
       h_dist = (Distance*) malloc(n*sizeof(Distance));
 
-      srand(time(NULL));
+      srand ( (unsigned int)time(NULL) );
       for (i=0 ; i<n; i++)
       {
-        h_dist[i].value    = n-i-1;
+        h_dist[i].value    = (float)n-i-1;
         h_dist[i].index=i;
       }
-
 
       cudaMalloc( (void **) &d_dist, n* sizeof(Distance));
       cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
@@ -167,7 +166,7 @@ void printDistArray(Distance* l, int n)
       cudaEventSynchronize(stop);
       cudaEventElapsedTime(&elapsed_time, start, stop);
       elapsed_time = elapsed_time ;
-      float throughput = 1.0e-9 * ((float)bytes)/(elapsed_time* 1e-3);
+      double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
       printf("Reduction_mod, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
        throughput, elapsed_time, n, 1);
 

@@ -31,7 +31,7 @@ TEST(knn_brute_force, test_knn_reduce_correctness){
 
   for (unsigned int count = 0; count < ref_nb*dim; count++)
   {
-    ref[count] = ref_nb*dim-count;
+    ref[count] = (float)ref_nb*dim-count;
   }
   for (unsigned int count = 0; count < query_nb*dim; count++)
   {
@@ -72,7 +72,7 @@ TEST(knn_brute_force, test_knn_reduce_time){
 
   for (unsigned int count = 0; count < ref_nb*dim; count++)
   {
-    ref[count] = ref_nb*dim-count;
+    ref[count] = (float)ref_nb*dim-count;
   }
   for (unsigned int count = 0; count < query_nb*dim; count++)
   {
@@ -94,8 +94,7 @@ TEST(knn_brute_force, test_knn_reduce_time){
   cudaEventSynchronize(start);
   cudaEventSynchronize(stop);
   cudaEventElapsedTime(&elapsed_time, start, stop);
-  elapsed_time = elapsed_time ;
-  float throughput = 1.0e-9 * ((float)bytes)/(elapsed_time* 1e-3);
+  double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
   printf("kNN-brute-force-reduce, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, k = %u NumDevsUsed = %d\n",
    throughput, elapsed_time, ref_nb,k, 1);
 

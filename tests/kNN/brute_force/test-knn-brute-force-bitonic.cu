@@ -81,11 +81,10 @@ TEST(knn_brute_force, test_bitonic_sort){
     h_dist_orig = (float*) malloc(n*sizeof(float));
     h_ind= (int*) malloc(n*sizeof(int));
     h_ind_orig= (int*) malloc(n*sizeof(int));
-    srand(time(NULL));
+    srand ( (unsigned int)time(NULL) );
     for (i=0 ; i<n; i++)
     {
-      // h_dist[i]    = n-i-1  ;
-      h_dist_orig[i]    = (int)rand();
+      h_dist_orig[i]    = (float)rand();
       h_ind_orig[i]=i;
     }
 

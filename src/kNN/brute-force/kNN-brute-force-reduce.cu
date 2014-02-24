@@ -45,7 +45,7 @@
 
       float        *d_ref;
       Distance     *d_dist, *h_dist;
-
+      unsigned int i;
       h_dist = (Distance*) malloc(k*sizeof(Distance));
       checkCudaErrors(cudaMalloc( (void **) &d_dist, ref_nb * sizeof(Distance)));
       checkCudaErrors(cudaMalloc( (void **) &d_ref, ref_nb * sizeof(float) * dim));
@@ -57,13 +57,13 @@
       unsigned int blockCount = ref_nb/threadCount;
       blockCount = min(blockCount, 65536);
       cuComputeDistance<<<blockCount,threadCount>>>(d_ref, ref_nb, dim, d_dist);
-      for (unsigned int i = 0; i < k; ++i)
+      for (i = 0; i < k; ++i)
       {
         dist_min_reduce(d_dist+i, ref_nb-i);
       }
       cuParallelSqrt<<<k,1>>>(d_dist, k);
       checkCudaErrors(cudaMemcpy(h_dist, d_dist, k*sizeof(Distance), cudaMemcpyDeviceToHost));
-      for (int i = 0; i < k; ++i)
+      for (i = 0; i < k; ++i)
       {
         dist[i]=h_dist[i].value;
         ind[i]=h_dist[i].index;

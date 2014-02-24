@@ -30,7 +30,7 @@ void  run_iteration(int ref_nb, int k, int iterations){
   dist   = (float *) malloc( k * sizeof(float));
   ind    = (int *)   malloc( k * sizeof(int));
 
-  srand(time(NULL));
+  srand ( (unsigned int)time(NULL) );
   for (i=0 ; i<ref_nb   * dim ; i++)
   {
     ref[i]    = (float)rand() / (float)1000;
