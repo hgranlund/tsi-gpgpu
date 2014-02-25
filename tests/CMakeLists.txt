@@ -4,6 +4,7 @@ project(tests)
 
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/common
+ ${CMAKE_SOURCE_DIR}/tests/common/inc
  ${CMAKE_SOURCE_DIR}/include
  ${CMAKE_SOURCE_DIR}/src/kNN
  ${CMAKE_SOURCE_DIR}/src/kNN/kernels
@@ -12,7 +13,7 @@ include_directories(
 )
 
 link_directories(
-${CMAKE_SOURCE_DIR}/lib/
+  ${CMAKE_SOURCE_DIR}/lib/
 )
 
 ################################
@@ -27,13 +28,13 @@ if (BUILD_TESTS)
 
   set(test_files
     #kNN/test-kNN-brute-force.cpp
+    kNN/kernels/test_redution.cu
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kernels/test_redution.cu
   )
 
   cuda_add_executable(runUnitTests
-  ${test_files}
+    ${test_files}
   )
 
   target_link_libraries(runUnitTests gtest gtest_main )
@@ -45,8 +46,8 @@ if (BUILD_TESTS)
   add_custom_target(test runUnitTests)
 
 
-cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
+  cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
   target_link_libraries(performance knn_gpgpu)
   add_custom_target(time performance)
 
-endif()
+  endif()

@@ -77,19 +77,38 @@ Steps:
 1. O(n).
 2. Min-reduce: k* log²(n)).
 
+#### Memory optimalisation
+
+We have done some memory optimization based on a [presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf) from Nvidia.
+
+The optimizations include:
+
+* Shared memory utilization.
+* Sequential Addressing.
+* Complete for-loop Unrolling.
+
+![Comparison between knn-brute-force-reduce with and without memory optimizations (k=10).](./images/knn-brute-force-reduce-memory-opt.png)
+
 #### Results
 
 
-Test results of n = 8 388 608:
+Test results of n = 8 388 608 with no memory optimization:
 
 *  Memory transfer:  21.1 ms.
 *  Calculate all distances: 2.5 ms
 *  One min-reduce step : 4.8 ms.
 *  Total time: (23.7 + k*4.8) ms.
 
+Test results of n = 8 388 608 with memory optimization:
+
+*  Memory transfer:  21.1 ms.
+*  Calculate all distances: 2.5 ms
+*  One min-reduce step : 1.7 ms.
+*  Total time: (23.7 + k*1.7) ms.
 
 
-![knn-brute-force-vs-serial-k-d-tree - k=10](./images/BitonicVSreduce.png)
+
+![Comparison between bitonic and reduce (k=10).](./images/BitonicVSreduce.png)
 
 fig: Brute-force - k = 10
 
