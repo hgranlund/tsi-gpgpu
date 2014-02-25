@@ -121,11 +121,11 @@ void build_kd_tree(float *points, int n)
     for (i = 0; i < h; ++i)
     {
         p = pow(2, i);
-        step = (int) floor(n / p);
+        step = (int) floor(n / p) + 1;
 
-        for (j = 0; j < p; ++j)
+        for (j = 0; j < n; j+=step)
         {
-            balance_branch(points, (1 + step) * j, step + (1 + j) + j, i%3, n);
+            balance_branch(points, j, j+step-1, i%3, n);
         }
         printf("p = %d,  i=%d \n", p,i);
         print_tree1(points, 0, 0, n, n);
