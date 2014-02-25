@@ -5,6 +5,10 @@
 #include <helper_cuda.h>
 #include "gtest/gtest.h"
 
+
+
+
+
 void print_tree(float *tree, int level, int lower, int upper, int n)
 {
 	if (lower >= upper)
@@ -26,9 +30,8 @@ void print_tree(float *tree, int level, int lower, int upper, int n)
 }
 
 TEST(kd_tree_naive, kd_tree_naive_correctness){
-	int i, j,
-		n = 15;
-
+	int debug = 0;
+	int i, j, n = 15;
 	float *points, *expected_points;
 	points = (float*) malloc(n * 3 * sizeof(float));
 	expected_points = (float*) malloc(n * 3 * sizeof(float));
@@ -42,27 +45,28 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
 		}
 	}
 
-	printf("initial list:\n");
-	print_tree(points, 0, 0, n, n);
-	printf("==================\n");
-
-	printf("expected points:\n");
-	print_tree(expected_points, 0, 0, n, n);
-	printf("==================\n");
-
-	printf("kd tree:\n");
 	build_kd_tree(points, n);
-	print_tree(points, 0, 0, n, n);
-	printf("==================\n");
 
-/*	for ( i = 0; i < n; ++i)
+	for ( i = 0; i < n; ++i)
 	{
 		for ( j = 0; j < 3; ++j)
 		{
-			ASSERT_EQ(points[index(i, j, n)] ,i + 1) << "Faild with i = " << i << " j = " <<j ;
+			ASSERT_EQ(points[index(i, j, n)] ,i) << "Faild with i = " << i << " j = " <<j ;
 		}
-	}*/
+	}
 
+	if (debug)
+	{
+
+		printf("expected points:\n");
+		print_tree(expected_points, 0, 0, n, n);
+		printf("==================\n");
+
+		printf("kd tree:\n");
+		print_tree(points, 0, 0, n, n);
+		printf("==================\n");
+
+	}
 
 	free(points);
 	free(expected_points);

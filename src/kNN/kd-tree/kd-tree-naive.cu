@@ -6,25 +6,6 @@
 #include <helper_cuda.h>
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
-void print_tree1(float *tree, int level, int lower, int upper, int n)
-{
-    if (lower >= upper)
-    {
-        return;
-    }
-
-    int i, r = midpoint(lower, upper);
-
-    printf("|");
-    for (i = 0; i < level; ++i)
-    {
-        printf("--");
-    }
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[index(r, 0, n)], tree[index(r, 1, n)], tree[index(r, 2, n)]);
-
-    print_tree1(tree, 1 + level, lower, r, n);
-    print_tree1(tree, 1 + level, r + 1, upper, n);
-}
 
 int index(int i, int j, int n)
 {
@@ -92,7 +73,6 @@ void center_median(float *points, int lower, int upper, int dim, int n)
 
 void balance_branch(float *points, int lower, int upper, int dim, int n)
 {
-    printf("n=%d, lower = %d, upper =%d\n", n, lower, upper);
     if (lower >= upper) return;
 
     int i, r = midpoint(lower, upper);
@@ -116,21 +96,14 @@ void balance_branch(float *points, int lower, int upper, int dim, int n)
 
 void build_kd_tree(float *points, int n)
 {
-    int i, j, p, step,
+    int i, j, step,
     h = ceil(log2((float)n + 1) - 1);
     for (i = 0; i < h; ++i)
     {
-        p = pow(2, i);
-        step = (int) floor(n / p) + 1;
-
+        step = (int) floor(n / pow(2, i)) + 1;
         for (j = 0; j < n; j+=step)
         {
             balance_branch(points, j, j+step-1, i%3, n);
         }
-        printf("p = %d,  i=%d \n", p,i);
-        print_tree1(points, 0, 0, n, n);
-        printf("==================\n");
-
     }
-    return;
 }
