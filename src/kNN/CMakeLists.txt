@@ -7,24 +7,28 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../common
   ${CMAKE_CURRENT_SOURCE_DIR}/garcia
+  ${CMAKE_CURRENT_SOURCE_DIR}/kd-tree
   )
 
 set(CUHFILES
 # brute-force/kNN-brute-force-garcia.cuh
-brute-force/kNN-brute-force-reduce.cuh
 # brute-force/kNN-brute-force.cuh
+# kernels/reduction.cuh
+brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 kernels/reduction-mod.cuh
-# kernels/reduction.cuh
+kd-tree/kd-tree-naive.cuh
+
 )
 
 set(CUFILES
 # brute-force/kNN-brute-force-garcia.cu
-brute-force/kNN-brute-force-reduce.cu
 # brute-force/kNN-brute-force.cu
+# kernels/reduction.cu
+brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
 kernels/reduction-mod.cu
-# kernels/reduction.cu
+kd-tree/kd-tree-naive.cu
 )
 
 set(CFILES
@@ -129,3 +133,13 @@ install(EXPORT knn_gpgpu-targets
   DESTINATION lib
   )
 
+
+add_executable(kd-tree-iterative
+kd-tree/kd-tree-iterative.c
+)
+
+target_link_libraries(kd-tree-iterative
+-lm
+)
+
+add_custom_target(run-kd-tree-iterative kd-tree-iterative)
