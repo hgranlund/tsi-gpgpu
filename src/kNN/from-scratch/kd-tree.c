@@ -102,11 +102,11 @@ double WallTime()
     return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
     srand(time(NULL));
 
-    int i, N = pow(2, 2 + 1) - 1;
+    int i, N = atoi(argv[1]);//pow(2, 2 + 1) - 1;
     struct node *tree, *root;
 
     tree = calloc(N, sizeof(struct node));
@@ -116,9 +116,12 @@ int main(void)
         randomPoint(&tree[i]);
     }
 
-    printf("k-d tree:\n");
+    double time = WallTime();
     root = makeKdTree(tree, N, 0);
-    printTree(root, 0);
+    
+    printf("Build duration for %d points: %lf (ms)\n", N, (WallTime() - time) * 1000);
+    // printf("k-d tree:\n");
+    // printTree(root, 0);
 
     free(tree);
     return 0;

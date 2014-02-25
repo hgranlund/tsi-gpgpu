@@ -127,6 +127,8 @@ int main(int argc, char *argv[])
     // Building the KD-tree
     double time = WallTime();
     root = make_tree(million, N, 0, 3);
+
+    printf("Build duration for %d points: %lf (ms)\n", N, (WallTime() - time) * 1000);
     double build_duration = (WallTime() - time);
 
     // Timing awerage query time over 100 000 queries.
@@ -139,7 +141,7 @@ int main(int argc, char *argv[])
     double awg_query_duration = (WallTime() - time) / test_runs;
 
     // printf("For %d random points: tree build time - %lf, awg query time - %lf\n", N, build_duration * 1000, awg_query_duration * 1000);
-    printf("%d %lf %lf\n", N, build_duration * 1000, awg_query_duration * 1000);
+    // printf("%d %lf %lf\n", N, build_duration * 1000, awg_query_duration * 1000);
 
     free(million);
     return 0;
