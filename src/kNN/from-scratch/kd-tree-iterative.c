@@ -7,7 +7,6 @@ struct node
     double x[3];
 };
 
-
 void swap(double *x, int a, int b)
 {
     double t = x[a];
@@ -21,8 +20,10 @@ int midpoint(int lower, int upper)
 
 double quick_select(int k, double *x, int lower, int upper)
 {
-    int left = lower, right = upper - 1;
-    int pos, i;
+    int pos, i,
+        left = lower, 
+        right = upper - 1;
+
     double pivot;
 
     while (left < right)
@@ -50,8 +51,7 @@ int center_median(double *x, int lower, int upper)
     int i,
         r = midpoint(lower, upper);
 
-    double temp,
-        median = quick_select(r, x, lower, upper);
+    double median = quick_select(r, x, lower, upper);
 
     for (i = lower; i < upper; ++i)
     {
@@ -72,16 +72,13 @@ void build_kd_tree(double *x, int lower, int upper)
 
     center_median(x, lower, upper);
 
-    double piv = x[r],
-           temp;
-
     upper--;
 
     for (i = lower; i < r; ++i)
     {
-        if (x[i] > piv)
+        if (x[i] > x[r])
         {
-            while (x[upper] > piv)
+            while (x[upper] > x[r])
             {
                 upper--;
             }
@@ -98,7 +95,6 @@ void kd_tree(double *x, int lower, int upper)
 {
     return;
 }
-
  
 void print_tree(double tree[], int level, int lower, int upper)
 {
