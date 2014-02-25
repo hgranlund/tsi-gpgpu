@@ -143,7 +143,7 @@ Given that the resulting binary tree is balanced, we get an average search time 
 
 Steps:
 
-1. O(kn log² n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
+1. O(n log² n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
 2. Approximately O(log² n), but dependent on size of k.
 
 #### Results
