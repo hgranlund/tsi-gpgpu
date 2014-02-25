@@ -8,6 +8,7 @@ include_directories(
  ${CMAKE_SOURCE_DIR}/include
  ${CMAKE_SOURCE_DIR}/src/kNN
  ${CMAKE_SOURCE_DIR}/src/kNN/kernels
+ ${CMAKE_SOURCE_DIR}/src/kNN/kd-tree
  ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
  # ${CMAKE_CURRENT_SOURCE_DIR}/common
 )
@@ -31,6 +32,7 @@ if (BUILD_TESTS)
     kNN/kernels/test_redution.cu
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
+    kNN/kd-tree/test-kd-tree-naive.cu
   )
 
   cuda_add_executable(runUnitTests
