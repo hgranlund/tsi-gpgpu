@@ -8,11 +8,10 @@
 
 
 
-__constant__  size_t* pitch;
+__constant__  size_t pitch;
 
 
 
-__device__ __host__
 int index(int i, int j, int n)
 {
     return i + j * n;
@@ -100,37 +99,160 @@ void balance_branch(float *points, int lower, int upper, int dim, int n)
     }
 }
 
+__device__
+unsigned int nextPowerOf2(unsigned int x)
+{
+  --x;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  return ++x;
+}
+
+
+__device__
+int index(int i, int j)
+{
+    return i + j * pitch;
+}
+
+
+__device__
+void printMatrix(float* points, int n){
+#if __CUDA_ARCH__>=200
+
+    if (threadIdx.x ==0)
+    {
+    /* code */
+        for (int i = 0; i < n; ++i)
+        {
+            printf("i = %3d", i );
+            for (int j = 0; j < 3; ++j)
+            {
+                printf(  " %3.1f ", points[index(i,j)] );
+            }
+            printf("\n" );
+        }
+    }
+#endif
+}
+
+__device__
+void swap(float *points, int a, int b)
+{
+    float tx = points[index(a, 0)],
+    ty = points[index(a, 1)],
+    tz = points[index(a, 2)];
+    points[index(a, 0)] = points[index(b, 0)], points[index(b, 0)] = tx;
+    points[index(a, 1)] = points[index(b, 1)], points[index(b, 1)] = ty;
+    points[index(a, 2)] = points[index(b, 2)], points[index(b, 2)] = tz;
+}
+
+
+__device__
+void cuCompare(float* points, int a, int b, int ddd, int n, int dir){
+    if (b < n)
+    {
+        // #if __CUDA_ARCH__>=200
+        // printf("block/Thread: %d/%d, swap:%1d,  %4d <--> %4d #### %3.1f  <--> %3.1f\n", blockIdx.x, threadIdx.x, (points[index(a,dir)] >=points[index(b,dir)]) == ddd, a, b, points[index(a, 0)], points[index(b, 0)]  );
+        // #endif
+        if ((points[index(a,dir)] >=points[index(b,dir)]) == ddd)
+        {
+            swap(points, a, b);
+        }
+    }
+}
+
+__global__
+void cuBalanceBranch(float* points, int n, int numBranch, int dir){
+
+// int blockoffset = blockIdx.x * blockDim.x *2;
+// dist+=blockoffset;
+// ind+=blockoffset;
+
+
+    unsigned int size, m, i, stride,ddd;
+
+
+    for (size = 2; size <= nextPowerOf2(n); size <<= 1)
+    {
+        ddd = 1 ^ ((threadIdx.x & (size / 2)) != 0);
+        if (size > n)
+        {
+            i = threadIdx.x;
+            while(i < size-n)
+            {
+                m=size;
+                m >>=1;
+                cuCompare(points, i, i+m-1, !ddd, n, dir);
+                i+=blockDim.x;
+            }
+        }
+        __syncthreads();
+        for (stride = size / 2; stride > 0; stride >>= 1)
+        {
+            __syncthreads();
+            int pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
+            cuCompare(points, pos, pos+stride, ddd, n, dir);
+        }
+    }
+}
+
+
+
 void build_kd_tree(float *h_points, int n)
 {
     float* d_points;
-    int i, j, step, h, dim = 3;
-    size_t d_pitch, h_pitch = n*sizeof(float);
+    int step, h, dim = 3;
+    size_t d_pitch_in_bytes,d_pitch, h_pitch_in_bytes = n*sizeof(float);
 
     h = ceil(log2((float)n + 1) - 1);
 
+    for (int i = 0; i < n; ++i)
+    {
+        printf("i = %3d", i );
+        for (int j = 0; j < 3; ++j)
+        {
+            printf(  " %3.1f ", h_points[index(i,j,n)] );
+        }
+        printf("\n" );
+    }
     checkCudaErrors(
-        cudaMallocPitch(&d_points, &d_pitch, sizeof(float)*n, dim));
+        cudaMallocPitch(&d_points, &d_pitch_in_bytes, n*sizeof(float), dim));
+    d_pitch    = d_pitch_in_bytes/sizeof(float);
     checkCudaErrors(cudaMemcpyToSymbol(pitch, &d_pitch, sizeof(size_t)));
 
 
     checkCudaErrors(
-            cudaMemcpy2D(d_points, d_pitch, h_points, h_pitch, n*sizeof(float), dim, cudaMemcpyHostToDevice));
+        cudaMemcpy2D(d_points, d_pitch_in_bytes, h_points, h_pitch_in_bytes, n*sizeof(float), dim, cudaMemcpyHostToDevice));
 
-
-
+    cuBalanceBranch<<<1,n/2>>>(d_points, n, 1, 0);
 
     checkCudaErrors(
-            cudaMemcpy2D(h_points, h_pitch, d_points, d_pitch, n*sizeof(float), dim, cudaMemcpyDeviceToHost));
+        cudaMemcpy2D(h_points, h_pitch_in_bytes, d_points, d_pitch_in_bytes, n*sizeof(float), dim, cudaMemcpyDeviceToHost));
 
-
-    for (i = 0; i < h; ++i)
+    printf("#################\n");
+    for (int i = 0; i < n; ++i)
     {
-        step = (int) floor(n / pow(2, i)) + 1;
-        for (j = 0; j < n; j+=step)
+        printf("i = %3d", i );
+        for (int j = 0; j < 3; ++j)
         {
-            balance_branch(h_points, j, j+step-1, i%dim, n);
+            printf(  " %3.1f ", h_points[index(i,j,n)] );
         }
+        printf("\n" );
     }
+    // for (i = 0; i < h; ++i)
+    // {
+    //     step = (int) floor(n / pow(2, i)) + 1;
+    //     for (j = 0; j < n; j+=step)
+    //     {
+    //         balance_branch(h_points, j, j+step-1, i%dim, n);
+    //     }
+    // }
 
     checkCudaErrors(cudaFree(d_points));
 }
+
+
