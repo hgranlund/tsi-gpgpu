@@ -7,6 +7,12 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 
+
+__constant__  size_t* pitch;
+
+
+
+__device__ __host__
 int index(int i, int j, int n)
 {
     return i + j * n;
@@ -94,16 +100,37 @@ void balance_branch(float *points, int lower, int upper, int dim, int n)
     }
 }
 
-void build_kd_tree(float *points, int n)
+void build_kd_tree(float *h_points, int n)
 {
-    int i, j, step,
+    float* d_points;
+    int i, j, step, h, dim = 3;
+    size_t d_pitch, h_pitch = n*sizeof(float);
+
     h = ceil(log2((float)n + 1) - 1);
+
+    checkCudaErrors(
+        cudaMallocPitch(&d_points, &d_pitch, sizeof(float)*n, dim));
+    checkCudaErrors(cudaMemcpyToSymbol(pitch, &d_pitch, sizeof(size_t)));
+
+
+    checkCudaErrors(
+            cudaMemcpy2D(d_points, d_pitch, h_points, h_pitch, n*sizeof(float), dim, cudaMemcpyHostToDevice));
+
+
+
+
+    checkCudaErrors(
+            cudaMemcpy2D(h_points, h_pitch, d_points, d_pitch, n*sizeof(float), dim, cudaMemcpyDeviceToHost));
+
+
     for (i = 0; i < h; ++i)
     {
         step = (int) floor(n / pow(2, i)) + 1;
         for (j = 0; j < n; j+=step)
         {
-            balance_branch(points, j, j+step-1, i%3, n);
+            balance_branch(h_points, j, j+step-1, i%dim, n);
         }
     }
+
+    checkCudaErrors(cudaFree(d_points));
 }
