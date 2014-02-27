@@ -72,6 +72,41 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
 	free(expected_points);
 }
 
+TEST(kd_tree_naive, kd_tree_naive_step_correctness){
+  int debug = 0;
+  int i, j, n;
+
+  for (int n = 16; n <= 100; n++)
+  {
+    float *points, *expected_points;
+    points = (float*) malloc(n * 3 * sizeof(float));
+    srand(time(NULL));
+    for ( i = 0; i < n; ++i)
+    {
+      for ( j = 0; j < 3; ++j)
+      {
+        points[index(i, j, n)] = (float)rand()/100000000;
+      }
+    }
+
+    build_kd_tree(points, n);
+
+    for ( i = 0; i < n/2; ++i)
+    {
+      ASSERT_LE(points[index(i,0,n)], points[index(i+n/2,0,n)]) << "Faild with n = "<< n<< " i = " << i  ;
+    }
+
+    if (debug)
+    {
+      printf("kd tree:\n");
+      print_tree(points, 0, 0, n, n);
+      printf("==================\n");
+    }
+
+    free(points);
+  }
+}
+
   // float *ref, *dist;
   // float *query;
   // int *ind;
