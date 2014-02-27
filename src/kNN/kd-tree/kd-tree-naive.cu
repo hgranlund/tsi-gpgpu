@@ -4,8 +4,12 @@
 #include <math.h>
 #include <cuda.h>
 #include <helper_cuda.h>
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
+#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
+// #define THREADS_PER_BLOCK 512U
+// #define MAX_BLOCK_DIM_SIZE 65535U
+#define THREADS_PER_BLOCK 4U
+#define MAX_BLOCK_DIM_SIZE 8U
 
 
 __constant__  size_t pitch;
@@ -99,7 +103,7 @@ void balance_branch(float *points, int lower, int upper, int dim, int n)
     }
 }
 
-__device__
+__device__ __host__
 unsigned int nextPowerOf2(unsigned int x)
 {
   --x;
@@ -155,9 +159,9 @@ __device__
 void cuCompare(float* points, int a, int b, int ddd, int n, int dir){
     if (b < n)
     {
-        // #if __CUDA_ARCH__>=200
+        #if __CUDA_ARCH__>=200
         // printf("block/Thread: %d/%d, swap:%1d,  %4d <--> %4d #### %3.1f  <--> %3.1f\n", blockIdx.x, threadIdx.x, (points[index(a,dir)] >=points[index(b,dir)]) == ddd, a, b, points[index(a, 0)], points[index(b, 0)]  );
-        // #endif
+        #endif
         if ((points[index(a,dir)] >=points[index(b,dir)]) == ddd)
         {
             swap(points, a, b);
@@ -173,52 +177,57 @@ void cuBalanceBranch(float* points, int n, int numBranch, int dir){
 // ind+=blockoffset;
 
 
-    unsigned int size, m, i, stride,ddd;
-
+    unsigned int size, m, i, stride, ddd, pos,
+    tid = threadIdx.x;
 
     for (size = 2; size <= nextPowerOf2(n); size <<= 1)
     {
-        ddd = 1 ^ ((threadIdx.x & (size / 2)) != 0);
+        tid=threadIdx.x;
+        ddd = 1 ^ ((tid & (size / 2)) != 0);
+
         if (size > n)
         {
-            i = threadIdx.x;
-            while(i < size-n)
+            i = tid;
+            m=size;
+            m >>=1;
+            while(i < n-m)
             {
-                m=size;
-                m >>=1;
-                cuCompare(points, i, i+m-1, !ddd, n, dir);
+                ddd = 1 ^ ((tid & (size / 2)) != 0);
+                cuCompare(points, i, m-i-1, !ddd, n, dir);
                 i+=blockDim.x;
             }
         }
+
         __syncthreads();
         for (stride = size / 2; stride > 0; stride >>= 1)
         {
+            tid = threadIdx.x;
             __syncthreads();
-            int pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
-            cuCompare(points, pos, pos+stride, ddd, n, dir);
+            while(tid < n/2){
+                ddd = 1 ^ ((tid & (size / 2)) != 0);
+                pos = 2 * tid - (tid & (stride - 1));
+                cuCompare(points, pos, pos+stride, ddd, n, dir);
+                tid+=blockDim.x;
+            }
         }
     }
 }
 
-
+void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
+{
+    blocks = min(MAX_BLOCK_DIM_SIZE, p);
+    threads = min(THREADS_PER_BLOCK, n/2);
+}
 
 void build_kd_tree(float *h_points, int n)
 {
     float* d_points;
-    int step, h, dim = 3;
+    int step, h,p, numBlocks, numThreads,
+    dim = 3;
     size_t d_pitch_in_bytes,d_pitch, h_pitch_in_bytes = n*sizeof(float);
 
     h = ceil(log2((float)n + 1) - 1);
 
-    for (int i = 0; i < n; ++i)
-    {
-        printf("i = %3d", i );
-        for (int j = 0; j < 3; ++j)
-        {
-            printf(  " %3.1f ", h_points[index(i,j,n)] );
-        }
-        printf("\n" );
-    }
     checkCudaErrors(
         cudaMallocPitch(&d_points, &d_pitch_in_bytes, n*sizeof(float), dim));
     d_pitch    = d_pitch_in_bytes/sizeof(float);
@@ -227,22 +236,23 @@ void build_kd_tree(float *h_points, int n)
 
     checkCudaErrors(
         cudaMemcpy2D(d_points, d_pitch_in_bytes, h_points, h_pitch_in_bytes, n*sizeof(float), dim, cudaMemcpyHostToDevice));
-
-    cuBalanceBranch<<<1,n/2>>>(d_points, n, 1, 0);
+    p=1;
+    getThreadAndBlockCount(n, p, numBlocks, numThreads);
+    cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, n, 1, 0);
 
     checkCudaErrors(
         cudaMemcpy2D(h_points, h_pitch_in_bytes, d_points, d_pitch_in_bytes, n*sizeof(float), dim, cudaMemcpyDeviceToHost));
 
-    printf("#################\n");
-    for (int i = 0; i < n; ++i)
-    {
-        printf("i = %3d", i );
-        for (int j = 0; j < 3; ++j)
-        {
-            printf(  " %3.1f ", h_points[index(i,j,n)] );
-        }
-        printf("\n" );
-    }
+    // printf("#################\n");
+    // for (int i = 0; i < n; ++i)
+    // {
+    //     printf("i = %2d:   ", i );
+    //     for (int j = 0; j < 3; ++j)
+    //     {
+    //         printf(  " %5.0f ", h_points[index(i,j,n)] );
+    //     }
+    //     printf("\n" );
+    // }
     // for (i = 0; i < h; ++i)
     // {
     //     step = (int) floor(n / pow(2, i)) + 1;
