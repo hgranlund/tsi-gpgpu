@@ -2,9 +2,14 @@
 #include <stdio.h>
 #include <math.h>
 
-void swap(double **x, int a, int b)
+int index(int i, int j, int n)
 {
-    double *t = x[a];
+    return i + j * n;
+}
+
+void swap(float **x, int a, int b)
+{
+    float *t = x[a];
     x[a] = x[b], x[b] = t;
 }
 
@@ -13,13 +18,13 @@ int midpoint(int lower, int upper)
     return (int) floor((upper - lower) / 2) + lower;
 }
 
-double quick_select(int k, double **x, int lower, int upper, int dim)
+float quick_select(int k, float **x, int lower, int upper, int dim)
 {
     int pos, i,
     left = lower,
     right = upper - 1;
 
-    double pivot;
+    float pivot;
 
     while (left < right)
     {
@@ -41,11 +46,11 @@ double quick_select(int k, double **x, int lower, int upper, int dim)
     return x[k][dim];
 }
 
-int center_median(double **x, int lower, int upper, int dim)
+int center_median(float **x, int lower, int upper, int dim)
 {
     int i, r = midpoint(lower, upper);
 
-    double median = quick_select(r, x, lower, upper, dim);
+    float median = quick_select(r, x, lower, upper, dim);
 
     for (i = lower; i < upper; ++i)
     {
@@ -57,7 +62,7 @@ int center_median(double **x, int lower, int upper, int dim)
     }
 }
 
-void balance_branch(double **x, int lower, int upper, int dim)
+void balance_branch(float **x, int lower, int upper, int dim)
 {
     if (lower >= upper) return;
 
@@ -84,7 +89,7 @@ void balance_branch(double **x, int lower, int upper, int dim)
     // balance_branch(x, r + 1, upper, 0);
 }
 
-void build_kd_tree(double **x, int len)
+void build_kd_tree(float **x, int len)
 {
     int i, j, p, step,
     h = ceil(log2(len + 1) - 1);
@@ -101,7 +106,7 @@ void build_kd_tree(double **x, int len)
     return;
 }
 
-void print_tree(double **tree, int level, int lower, int upper)
+void print_tree(float **tree, int level, int lower, int upper)
 {
     if (lower >= upper)
     {
@@ -115,7 +120,7 @@ void print_tree(double **tree, int level, int lower, int upper)
     {
         printf("--");
     }
-    printf("(%lf, %lf, %lf)\n", tree[r][0], tree[r][1], tree[r][2]);
+    printf("(%3.1f, %3.1f, %3.1f)\n", tree[r][0], tree[r][1], tree[r][2]);
 
     print_tree(tree, 1 + level, lower, r);
     print_tree(tree, 1 + level, r + 1, upper);
@@ -126,12 +131,13 @@ int main(int argc, char *argv[])
 
 
     int i,j,len = 15, wlen = 6;
-    double **points, **wiki;
-    points = (double**) malloc(len * sizeof(double*));
+    float *h_points;
+    float **points, **wiki;
+    points = (float**) malloc(len * sizeof(float*));
 
     for ( i = 0; i < len; ++i)
     {
-        points[i] = (double*) malloc(3 * sizeof(double));
+        points[i] = (float*) malloc(3 * sizeof(float));
 
         for ( j = 0; j < 3; ++j)
         {
@@ -140,10 +146,10 @@ int main(int argc, char *argv[])
     }
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
-    wiki = (double**) malloc(len * sizeof(double*));
+    wiki = (float**) malloc(len * sizeof(float*));
     for ( i = 0; i < wlen; ++i)
     {
-        wiki[i] = (double*) malloc(3 * sizeof(double));
+        wiki[i] = (float*) malloc(3 * sizeof(float));
     }
 
     wiki[0][0] = 2, wiki[0][1] = 3, wiki[0][2] = 0;
@@ -186,8 +192,3 @@ int main(int argc, char *argv[])
     free(wiki);
     return 0;
 }
-
-// TODO:
-// Thurrow testing, including non-perfect binary trees.
-// Add support for three-dimentional points.
-// Paralellize all the things.
