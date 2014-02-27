@@ -75,8 +75,7 @@ make_tree(struct kd_node_t *t, int len, int i, int dim)
 
 int visited;
  
-void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
-        struct kd_node_t **best, double *best_dist)
+void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim, struct kd_node_t **best, double *best_dist)
 {
     double d, dx, dx2;
  
