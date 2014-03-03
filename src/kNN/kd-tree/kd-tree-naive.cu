@@ -146,11 +146,10 @@ __device__
 void cuBitonicSortOneBlock(float *points, unsigned int n, unsigned int offset, int dir)
 {
     unsigned int size, stride, ddd, pos, tid;
-    unsigned int i, m;
 
+    tid=threadIdx.x;
     for (size = 2; size <= nextPowerOf2(n); size <<= 1)
     {
-        tid=threadIdx.x;
         ddd = 1 ^ ((tid & (size / 2)) != 0);
         for (stride = size / 2; stride > 0; stride >>= 1)
         {
@@ -173,7 +172,7 @@ void cuBitonicSortOneBlock(float *points, unsigned int n, unsigned int offset, i
 __global__
 void cuBalanceBranch(float* points, int n, unsigned int p, int dir){
 
-    unsigned int prev_pow_two, i, step, tid, blockoffset, bid;
+    unsigned int prev_pow_two, step, tid, blockoffset, bid;
     tid = threadIdx.x;
     bid = blockIdx.x;
     while(bid < p){

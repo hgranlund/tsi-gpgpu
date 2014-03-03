@@ -32,7 +32,7 @@ void print_tree(float *tree, int level, int lower, int upper, int n)
 }
 
 TEST(kd_tree_naive, kd_tree_naive_correctness){
-  int i, j, n = 8388608;
+  int i, j, n = 1000;
   float *points, *expected_points;
   points = (float*) malloc(n * 3 * sizeof(float));
   expected_points = (float*) malloc(n * 3 * sizeof(float));
@@ -81,7 +81,7 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
 
 TEST(kd_tree_naive, kd_tree_naive_timeing)
 {
-  int i, j, n = 8388608;
+  int i, j, n = 65536;
   float *points;
   points = (float*) malloc(n * 3 * sizeof(float));
   srand(time(NULL));
