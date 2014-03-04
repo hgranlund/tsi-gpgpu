@@ -193,7 +193,7 @@ void print_tree(float *tree, int level, int lower, int upper, int n)
     print_tree(tree, 1 + level, r + 1, upper, n);
 }
 
-double WallTime()
+double wall_time()
 {
     struct timeval tmpTime;
     gettimeofday(&tmpTime, NULL);
@@ -226,8 +226,13 @@ int test_nearest(float *tree, int n, float qx, float qy, float qz, float ex, flo
 
 int main(int argc, char *argv[])
 {
-    int i, j, n = 10, wn = 6, debug = 1;
+    int i, j, n = 1000000, wn = 6, debug = 1;
     float *points, *wiki;
+
+    if (debug)
+    {
+        n = 10;
+    }
 
     points = (float*) malloc(n * 3 * sizeof(float));
 
@@ -242,9 +247,9 @@ int main(int argc, char *argv[])
 
     if (!debug)
     {
-        double time = WallTime();
+        double time = wall_time();
         build_kd_tree(points, n);
-        printf("Build duration for %d points: %lf (ms)\n", n, (WallTime() - time) * 1000);
+        printf("Build duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
     }
 
     if (debug)
