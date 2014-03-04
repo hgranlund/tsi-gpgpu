@@ -159,16 +159,16 @@ int nearest(float *qp, float *tree, int lower, int upper, int n)
 {
     if (lower >= upper)
     {
+        if (lower >= n)
+        {
+            lower = n - 1;
+        }
         return lower;
     }
-
 
     int r = midpoint(lower, upper),
         left_best = nearest(qp, tree, lower, r, n),
         right_best = nearest(qp, tree, r + 1, upper, n);
-
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[ind(r, 0, n)], tree[ind(r, 1, n)], tree[ind(r, 2, n)]);
-    printf("r = %d\n", r);
 
     return closest_point(qp, tree, left_best, right_best, n);
 }
@@ -198,6 +198,30 @@ double WallTime()
     struct timeval tmpTime;
     gettimeofday(&tmpTime, NULL);
     return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
+}
+
+int test_nearest(float *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
+{
+    float query_point[3];
+    query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
+    
+    int best_fit = nearest(query_point, tree, 0, n, n);
+
+    float actual = tree[ind(best_fit, 0, n)] + tree[ind(best_fit, 1, n)] + tree[ind(best_fit, 2, n)];
+    float expected = ex + ey + ez;
+
+    if (actual == expected)
+    {
+        return 0;
+    }
+
+    return 1;
+
+    printf("Closest point to (%3.1f, %3.1f, %3.1f) was (%3.1f, %3.1f, %3.1f) located at %d\n",
+        query_point[0], query_point[1], query_point[2],
+        tree[ind(best_fit, 0, n)], tree[ind(best_fit, 1, n)], tree[ind(best_fit, 2, n)],
+        best_fit);
+    printf("==================\n");
 }
 
 int main(int argc, char *argv[])
@@ -253,20 +277,31 @@ int main(int argc, char *argv[])
         print_tree(wiki, 0, 0, wn, wn);
         printf("==================\n");
 
-        float query_point[] = {0, 0, 0};
-        int best_fit = nearest(query_point, wiki, 0, wn, wn);
-        printf("Closest point to (%3.1f, %3.1f, %3.1f) was (%3.1f, %3.1f, %3.1f) located at %d\n",
-            query_point[0], query_point[1], query_point[2],
-            wiki[ind(best_fit, 0, wn)], wiki[ind(best_fit, 1, wn)], wiki[ind(best_fit, 2, wn)],
-            best_fit);
-        printf("==================\n");
+        int not_passed_test = test_nearest(wiki, wn, 2, 3, 0, 2, 3, 0)
+            + test_nearest(wiki, wn, 5, 4, 0, 5, 4, 0)
+            + test_nearest(wiki, wn, 9, 6, 0, 9, 6, 0)
+            + test_nearest(wiki, wn, 4, 7, 0, 4, 7, 0)
+            + test_nearest(wiki, wn, 8, 1, 0, 8, 1, 0)
+            + test_nearest(wiki, wn, 7, 2, 0, 7, 2, 0)
+            + test_nearest(wiki, wn, 10, 10, 0, 9, 6, 0)
+            + test_nearest(wiki, wn, 0, 0, 0, 2, 3, 0)
+            + test_nearest(wiki, wn, 4, 4, 0, 5, 4, 0)
+            + test_nearest(wiki, wn, 3, 2, 0, 2, 3, 0)
+            + test_nearest(wiki, wn, 2, 6, 0, 4, 7, 0)
+            + test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0)
+            + test_nearest(wiki, wn, 0, 10, 0, 4, 7, 0);
+
+        if (not_passed_test)
+        {
+            printf("nearest function not working right!\n");
+            printf("==================\n");   
+        }
+        else {
+            printf("nearest function still works!\n");
+            printf("==================\n");
+        }
 
         free(wiki);
-
-        printf("euclid_distance test:\n");
-        printf("Should be 3: %f\n", euclid_distance(2, 2, 1, 0, 0, 0));
-        printf("Should be 3: %f\n", euclid_distance(4, -2, 1, 2, -4, 0));
-        printf("==================\n");
     }
     free(points);
     return 0;
