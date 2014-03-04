@@ -88,7 +88,7 @@ __device__ void printArray(float *l, int n, char *s)
     }
 
 
-    __device__ unsigned int cuPartition(float *data, float *data_copy, unsigned int n, int *ones, int *zeros, int *zero_count, int *one_count, unsigned int bit)
+    __device__ unsigned int cuPartition(float *data, float *data_copy, unsigned int n, int *ones, int *zero_count, int *one_count, unsigned int bit)
     {
       unsigned int cut = 0,
       tid = threadIdx.x,
@@ -98,17 +98,14 @@ __device__ void printArray(float *l, int n, char *s)
       one_count[threadIdx.x] = 0;
       while(tid < n)
       {
-        ones[tid] = 0;
-        zeros[tid] = 0;
         data_copy[tid]=data[tid];
         if (((*(int*)&(data[tid]))&radix))
         {
           one_count[threadIdx.x] += 1;
-          ones[tid]=one_count[threadIdx.x];
-          ones[tid]=one_count[threadIdx.x];
+          ones[tid]=1;
         }else{
           zero_count[threadIdx.x]+=1;
-          zeros[tid]=zero_count[threadIdx.x];
+          ones[tid]=0;
         }
         tid+=blockDim.x;
       }
@@ -124,17 +121,18 @@ __device__ void printArray(float *l, int n, char *s)
 
       while(tid<n && i<zero_count[threadIdx.x+1])
       {
-        if (zeros[tid])
+        if (ones[tid]==0)
         {
           data[i]=data_copy[tid];
           i++;
         }
         tid+=blockDim.x;
       }
+
       tid = threadIdx.x;
       i = one_count[threadIdx.x];
       while(tid<n && one_count[threadIdx.x+1]){
-        if (ones[tid])
+        if (ones[tid] ==1)
         {
           data[n-i-1]=data_copy[tid];
           i++;
@@ -146,7 +144,7 @@ __device__ void printArray(float *l, int n, char *s)
     }
 
 //TODO do not need ones and zeroes, only one partitian or store the partition data on dava/datacopy
-    __global__ void cuRadixSelect(float *data, float *data_copy, unsigned int m, unsigned int n, int *ones, int *zeros, float *result)
+    __global__ void cuRadixSelect(float *data, float *data_copy, unsigned int m, unsigned int n, int *ones, float *result)
     {
       __shared__ int one_count[2048];
       __shared__ int zeros_count[2048];
@@ -166,7 +164,7 @@ __device__ void printArray(float *l, int n, char *s)
       }
       do {
 
-        cut = cuPartition(data+l, data_copy, u-l, ones, zeros, one_count, zeros_count, bit++);
+        cut = cuPartition(data+l, data_copy, u-l, ones, one_count, zeros_count, bit++);
         __syncthreads();
         if ((l+cut) <= m)
         {

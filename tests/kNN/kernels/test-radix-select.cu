@@ -36,7 +36,7 @@ void printPoints(float* l, int n){
   TEST(kernels, radix_selection){
     float *h_points;
     unsigned int i,n;
-    for (n = 100; n <=200; n+=10)
+    for (n = 4; n <=200; n+=10)
     {
       h_points = (float*) malloc(n*sizeof(float));
       srand ( (unsigned int)time(NULL) );
@@ -62,14 +62,13 @@ void printPoints(float* l, int n){
         cudaMalloc((void **)&d_ones, n*sizeof(int)));
       checkCudaErrors(
         cudaMalloc((void **)&d_zeros, n*sizeof(int)));
-
       checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(float), cudaMemcpyHostToDevice));
 
 
       float cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
 
-      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, d_ones, d_zeros, d_result);
+      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, d_ones, d_result);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost));
 
@@ -112,7 +111,7 @@ void printPoints(float* l, int n){
     printPoints(h_points,n);
 
     float *d_points, *d_temp, *d_result, h_result;
-    int *d_ones, *d_zeros;
+    int *d_ones;
     h_result = 0;
     checkCudaErrors(
       cudaMalloc((void **)&d_result, sizeof(float)));
@@ -122,8 +121,6 @@ void printPoints(float* l, int n){
       cudaMalloc((void **)&d_temp, n*sizeof(float)));
     checkCudaErrors(
       cudaMalloc((void **)&d_ones, n*sizeof(int)));
-    checkCudaErrors(
-      cudaMalloc((void **)&d_zeros, n*sizeof(int)));
     checkCudaErrors(
       cudaMemcpy(d_points, h_points, n*sizeof(float), cudaMemcpyHostToDevice));
 
@@ -137,7 +134,7 @@ void printPoints(float* l, int n){
 
     checkCudaErrors(cudaEventRecord(start, 0));
 
-    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, d_ones, d_zeros, d_result);
+    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, d_ones, d_result);
 
 
     checkCudaErrors(cudaEventRecord(stop, 0));
@@ -162,8 +159,6 @@ void printPoints(float* l, int n){
       cudaFree(d_points));
     checkCudaErrors(
       cudaFree(d_ones));
-    checkCudaErrors(
-      cudaFree(d_zeros));
     checkCudaErrors(
       cudaFree(d_result));
     free(h_points);
