@@ -90,7 +90,7 @@ void balance_branch(float *x, int lower, int upper, int dim, int n)
         }
     }
 
-    // To enable direct recusive execution.
+    // To enable direct recursive execution.
     // balance_branch(x, lower, r, 0, n);
     // balance_branch(x, r + 1, upper, 0, n);
 }
@@ -254,8 +254,8 @@ int main(int argc, char *argv[])
         printf("Build duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
 
         float query_point[3];
-        time = wall_time();
         int sum = 0, test_runs = 100000;
+        time = wall_time();
 
         for (i = 0; i < test_runs; i++) {
             query_point[0] = rand() % 1000;
@@ -263,6 +263,7 @@ int main(int argc, char *argv[])
             query_point[2] = rand() % 1000;
             nearest(query_point, points, 0, n, 0, n);
         }
+        
         printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
         printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
     }
