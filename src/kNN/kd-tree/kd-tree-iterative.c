@@ -128,7 +128,7 @@ int nearest(float *qp, float *tree, int lower, int upper, int dim, int n)
         return lower;
     }
 
-    int target_best, other_best,
+    int target, other,
 
         r = midpoint(lower, upper),
         d = dim % 3,
@@ -148,31 +148,31 @@ int nearest(float *qp, float *tree, int lower, int upper, int dim, int n)
         other_upper = upper;
     }
 
-    target_best = nearest(qp, tree, target_lower, target_upper, dim, n);
+    target = nearest(qp, tree, target_lower, target_upper, dim, n);
 
-    float target_distance = distance_to_query_point(qp, tree[ind(target_best, 0, n)], tree[ind(target_best, 1, n)], tree[ind(target_best, 2, n)]),
-        current_distance = distance_to_query_point(qp, tree[ind(r, 0, n)], tree[ind(r, 1, n)], tree[ind(r, 2, n)]);
+    float target_dist = distance_to_query_point(qp, tree[ind(target, 0, n)], tree[ind(target, 1, n)], tree[ind(target, 2, n)]),
+        current_dist = distance_to_query_point(qp, tree[ind(r, 0, n)], tree[ind(r, 1, n)], tree[ind(r, 2, n)]);
 
-    if (current_distance < target_distance)
+    if (current_dist < target_dist)
     {
-        target_distance = current_distance;
-        target_best = r;
+        target_dist = current_dist;
+        target = r;
     }
 
-    if ((tree[ind(r, d, n)] - qp[d])*(tree[ind(r, d, n)] - qp[d]) > target_distance)
+    if ((tree[ind(r, d, n)] - qp[d])*(tree[ind(r, d, n)] - qp[d]) > target_dist)
     {
-        return target_best;
+        return target;
     }
 
-    other_best = nearest(qp, tree, other_lower, other_upper, dim, n);
+    other = nearest(qp, tree, other_lower, other_upper, dim, n);
 
-    float other_distance = distance_to_query_point(qp, tree[ind(other_best, 0, n)], tree[ind(other_best, 1, n)], tree[ind(other_best, 2, n)]);
+    float other_distance = distance_to_query_point(qp, tree[ind(other, 0, n)], tree[ind(other, 1, n)], tree[ind(other, 2, n)]);
 
-    if (other_distance > target_distance)
+    if (other_distance > target_dist)
     {
-        return target_best;
+        return target;
     }
-    return other_best;
+    return other;
 }
 
 void print_tree(float *tree, int level, int lower, int upper, int n)
