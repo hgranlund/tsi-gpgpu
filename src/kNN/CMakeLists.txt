@@ -7,6 +7,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../common
   ${CMAKE_CURRENT_SOURCE_DIR}/garcia
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels
   ${CMAKE_CURRENT_SOURCE_DIR}/kd-tree
   )
 
@@ -14,10 +15,10 @@ set(CUHFILES
 # brute-force/kNN-brute-force-garcia.cuh
 # brute-force/kNN-brute-force.cuh
 # kernels/reduction.cuh
-kernels/radix-select.cuh
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 kernels/reduction-mod.cuh
+kernels/radix-select.cuh
 kd-tree/kd-tree-naive.cuh
 
 )
