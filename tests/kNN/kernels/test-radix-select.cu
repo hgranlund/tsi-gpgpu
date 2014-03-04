@@ -38,15 +38,13 @@ void printPoints(float* l, int n){
     unsigned int i,n;
     for (n = 100; n <=200; n+=10)
     {
-
       h_points = (float*) malloc(n*sizeof(float));
-
       srand ( (unsigned int)time(NULL) );
       for (i=0 ; i<n; i++)
       {
         h_points[i]    = n-1-i;
-        h_points[i]    =(float) rand()/10000000;
         h_points[i]    = i;
+        h_points[i]    =(float) rand()/10000000;
       }
 
       printPoints(h_points,n);

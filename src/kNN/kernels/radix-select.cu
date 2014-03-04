@@ -72,8 +72,7 @@ __device__ void printArray(float *l, int n, char *s)
 //TODO must be imporved
     __device__  void cuAccumulateIndex(int *list, int n)
     {
-      int tid = threadIdx.x;
-      if (tid == 0)
+      if (threadIdx.x == 0)
       {
         int sum=0;
         list[n]=list[n-1];
@@ -86,7 +85,6 @@ __device__ void printArray(float *l, int n, char *s)
         }
         list[n]+=list[n-1];
       }
-      __syncthreads();
     }
 
 
@@ -107,6 +105,7 @@ __device__ void printArray(float *l, int n, char *s)
         {
           one_count[threadIdx.x] += 1;
           ones[tid]=one_count[threadIdx.x];
+          ones[tid]=one_count[threadIdx.x];
         }else{
           zero_count[threadIdx.x]+=1;
           zeros[tid]=zero_count[threadIdx.x];
@@ -117,9 +116,10 @@ __device__ void printArray(float *l, int n, char *s)
       int last_zero_count = zero_count[blockDim.x-1];
       cuAccumulateIndex(zero_count, blockDim.x);
       cuAccumulateIndex(one_count, blockDim.x);
+      __syncthreads();
+
 
       tid = threadIdx.x;
-      __syncthreads();
       i = zero_count[threadIdx.x];
 
       while(tid<n && i<zero_count[threadIdx.x+1])
@@ -170,11 +170,11 @@ __device__ void printArray(float *l, int n, char *s)
         __syncthreads();
         if ((l+cut) <= m)
         {
-          l +=(cut);
+          l +=cut;
         }
         else
         {
-          u -=(u-cut-l);
+          u -=u-cut-l;
         }
       }while ((u > l) && (bit<32));
       if (tid == 0)
@@ -183,7 +183,7 @@ __device__ void printArray(float *l, int n, char *s)
       }
     }
 
-    float partition(float *data, int l, int u, int bit)
+    float cpu_partition(float *data, int l, int u, int bit)
     {
       unsigned int radix=(1 << 31-bit);
       float *temp = (float *)malloc(((u-l)+1)*sizeof(float));
@@ -217,7 +217,7 @@ __device__ void printArray(float *l, int n, char *s)
 
       if (l == u) return(data[l]);
       if (bit > 32) {printf("cpu_radixselect fail!\n"); return 0;}
-      int s = partition(data, l, u, bit);
+      int s = cpu_partition(data, l, u, bit);
       if (s>=m) return cpu_radixselect(data, l, s, m, bit+1);
       return cpu_radixselect(data, s+1, u, m, bit+1);
     }
