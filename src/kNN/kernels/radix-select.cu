@@ -90,23 +90,23 @@ __device__ void printArray(float *l, int n, char *s)
 
     __device__ unsigned int cuPartition(float *data, float *data_copy, unsigned int n, int *ones, int *zero_count, int *one_count, unsigned int bit)
     {
-      unsigned int cut = 0,
+      unsigned int
       tid = threadIdx.x,
       i,
+      is_one,
+      one,
+      zero,
       radix = (1 << 31-bit);
+
       zero_count[threadIdx.x] = 0;
       one_count[threadIdx.x] = 0;
+
       while(tid < n)
       {
         data_copy[tid]=data[tid];
-        if (((*(int*)&(data[tid]))&radix))
-        {
-          one_count[threadIdx.x] += 1;
-          ones[tid]=1;
-        }else{
-          zero_count[threadIdx.x]+=1;
-          ones[tid]=0;
-        }
+        is_one = ones[tid]= (bool)((*(int*)&(data[tid]))&radix);
+        one_count[threadIdx.x] += is_one;
+        zero_count[threadIdx.x] += !is_one;
         tid+=blockDim.x;
       }
       __syncthreads();
@@ -115,32 +115,23 @@ __device__ void printArray(float *l, int n, char *s)
       cuAccumulateIndex(one_count, blockDim.x);
       __syncthreads();
 
-
       tid = threadIdx.x;
-      i = zero_count[threadIdx.x];
-
-      while(tid<n && i<zero_count[threadIdx.x+1])
+      zero = zero_count[threadIdx.x];
+      one = one_count[threadIdx.x];
+      while(tid<n)
       {
-        if (ones[tid]==0)
+        if (!ones[tid])
         {
-          data[i]=data_copy[tid];
-          i++;
+          data[zero]=data_copy[tid];
+          zero++;
+        }else
+        {
+          data[n-one-1]=data_copy[tid];
+          one++;
         }
         tid+=blockDim.x;
       }
-
-      tid = threadIdx.x;
-      i = one_count[threadIdx.x];
-      while(tid<n && one_count[threadIdx.x+1]){
-        if (ones[tid] ==1)
-        {
-          data[n-i-1]=data_copy[tid];
-          i++;
-        }
-        tid+=blockDim.x;
-      }
-      cut = zero_count[blockDim.x-1]+last_zero_count;
-      return cut;
+      return zero_count[blockDim.x-1]+last_zero_count;
     }
 
 //TODO do not need ones and zeroes, only one partitian or store the partition data on dava/datacopy
