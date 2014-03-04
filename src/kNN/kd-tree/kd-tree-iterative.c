@@ -112,21 +112,9 @@ void build_kd_tree(float *x, int n)
     return;
 }
 
-float euclid_distance(float ax, float ay, float az, float bx, float by, float bz)
+float distance_to_query_point(float *qp, float x, float y, float z)
 {
-    return pow((ax - bx), 2.0) + pow((ay - by), 2.0) + pow((az - bz), 2.0);
-}
-
-int closest_point(float *qp, float *tree, int a, int b, int n)
-{
-    float a_distance = euclid_distance(qp[0], qp[1], qp[2], tree[ind(a, 0, n)], tree[ind(a, 1, n)], tree[ind(a, 2, n)]),
-        b_distance = euclid_distance(qp[0], qp[1], qp[2], tree[ind(b, 0, n)], tree[ind(b, 1, n)], tree[ind(b, 2, n)]);
-
-    if (a_distance < b_distance)
-    {
-        return a;
-    }
-    return b;
+    return (qp[0] - x)*(qp[0] - x) + (qp[1] - y)*(qp[1] - y) + (qp[2] - z)*(qp[2] - z);
 }
 
 int nearest(float *qp, float *tree, int lower, int upper, int dim, int n)
@@ -162,15 +150,29 @@ int nearest(float *qp, float *tree, int lower, int upper, int dim, int n)
 
     target_best = nearest(qp, tree, target_lower, target_upper, dim, n);
 
-    int target_or_current = closest_point(qp, tree, target_best, r, n);
+    float target_distance = distance_to_query_point(qp, tree[ind(target_best, 0, n)], tree[ind(target_best, 1, n)], tree[ind(target_best, 2, n)]),
+        current_distance = distance_to_query_point(qp, tree[ind(r, 0, n)], tree[ind(r, 1, n)], tree[ind(r, 2, n)]);
 
-    if (pow((tree[ind(r, d, n)] - qp[d]), 2) > euclid_distance(qp[0], qp[1], qp[2], tree[ind(target_best, 0, n)], tree[ind(target_best, 1, n)], tree[ind(target_best, 2, n)]))
+    if (current_distance < target_distance)
     {
-        return target_or_current;
+        target_distance = current_distance;
+        target_best = r;
+    }
+
+    if ((tree[ind(r, d, n)] - qp[d])*(tree[ind(r, d, n)] - qp[d]) > target_distance)
+    {
+        return target_best;
     }
 
     other_best = nearest(qp, tree, other_lower, other_upper, dim, n);
-    return closest_point(qp, tree, target_or_current, other_best, n);
+
+    float other_distance = distance_to_query_point(qp, tree[ind(other_best, 0, n)], tree[ind(other_best, 1, n)], tree[ind(other_best, 2, n)]);
+
+    if (other_distance > target_distance)
+    {
+        return target_best;
+    }
+    return other_best;
 }
 
 void print_tree(float *tree, int level, int lower, int upper, int n)
