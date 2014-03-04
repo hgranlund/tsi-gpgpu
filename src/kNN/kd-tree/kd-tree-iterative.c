@@ -90,7 +90,7 @@ void balance_branch(float *x, int lower, int upper, int dim, int n)
         }
     }
 
-    // To enable direct recusive execution.
+    // To enable direct recursive execution.
     // balance_branch(x, lower, r, 0, n);
     // balance_branch(x, r + 1, upper, 0, n);
 }
@@ -112,65 +112,67 @@ void build_kd_tree(float *x, int n)
     return;
 }
 
-float euclid_distance(float ax, float ay, float az, float bx, float by, float bz)
+float distance_to_query_point(float *qp, float x, float y, float z)
 {
-    return sqrt(pow((ax - bx), 2.0) + pow((ay - by), 2.0) + pow((az - bz), 2.0));
+    return (qp[0] - x)*(qp[0] - x) + (qp[1] - y)*(qp[1] - y) + (qp[2] - z)*(qp[2] - z);
 }
 
-int closest_point(float *qp, float *tree, int a, int b, int n)
+int nearest(float *qp, float *tree, int lower, int upper, int dim, int n)
 {
-    float a_distance = euclid_distance(qp[0], qp[1], qp[2], tree[ind(a, 0, n)], tree[ind(a, 1, n)], tree[ind(a, 2, n)]),
-        b_distance = euclid_distance(qp[0], qp[1], qp[2], tree[ind(b, 0, n)], tree[ind(b, 1, n)], tree[ind(b, 2, n)]);
-
-    if (a_distance < b_distance)
+    if (lower >= upper - 1)
     {
-        return a;
-    }
-    return b;
-}
-
-// Rewrite for new data structure.
-// void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim, struct kd_node_t **best, double *best_dist)
-// {
-//     double d, dx, dx2;
- 
-//     if (!root) return;
-//     d = dist(root, nd, dim);
-//     dx = root->x[i] - nd->x[i];
-//     dx2 = dx * dx;
- 
-//     visited ++;
- 
-//     if (!*best || d < *best_dist) {
-//         *best_dist = d;
-//         *best = root;
-//     }
- 
-//     if (!*best_dist) return;
- 
-//     if (++i >= dim) i = 0;
- 
-//     nearest(dx > 0 ? root->left : root->right, nd, i, dim, best, best_dist);
-//     if (dx2 >= *best_dist) return;
-//     nearest(dx > 0 ? root->right : root->left, nd, i, dim, best, best_dist);
-// }
-
-int nearest(float *qp, float *tree, int lower, int upper, int n)
-{
-    if (lower >= upper)
-    {
+        if (lower >= n)
+        {
+            return n - 1;
+        }
         return lower;
     }
 
+    int target, other,
 
-    int r = midpoint(lower, upper),
-        left_best = nearest(qp, tree, lower, r, n),
-        right_best = nearest(qp, tree, r + 1, upper, n);
+        r = midpoint(lower, upper),
+        d = dim % 3,
+    
+        target_lower = r + 1,
+        target_upper = upper,
+        other_lower = lower,
+        other_upper = r;
+    
+    dim++;
 
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[ind(r, 0, n)], tree[ind(r, 1, n)], tree[ind(r, 2, n)]);
-    printf("r = %d\n", r);
+    if (tree[ind(r, d, n)] > qp[d])
+    {
+        target_lower = lower;
+        target_upper = r;
+        other_lower = r + 1;
+        other_upper = upper;
+    }
 
-    return closest_point(qp, tree, left_best, right_best, n);
+    target = nearest(qp, tree, target_lower, target_upper, dim, n);
+
+    float target_dist = distance_to_query_point(qp, tree[ind(target, 0, n)], tree[ind(target, 1, n)], tree[ind(target, 2, n)]),
+        current_dist = distance_to_query_point(qp, tree[ind(r, 0, n)], tree[ind(r, 1, n)], tree[ind(r, 2, n)]);
+
+    if (current_dist < target_dist)
+    {
+        target_dist = current_dist;
+        target = r;
+    }
+
+    if ((tree[ind(r, d, n)] - qp[d])*(tree[ind(r, d, n)] - qp[d]) > target_dist)
+    {
+        return target;
+    }
+
+    other = nearest(qp, tree, other_lower, other_upper, dim, n);
+
+    float other_distance = distance_to_query_point(qp, tree[ind(other, 0, n)], tree[ind(other, 1, n)], tree[ind(other, 2, n)]);
+
+    if (other_distance > target_dist)
+    {
+        return target;
+    }
+    return other;
 }
 
 void print_tree(float *tree, int level, int lower, int upper, int n)
@@ -193,17 +195,46 @@ void print_tree(float *tree, int level, int lower, int upper, int n)
     print_tree(tree, 1 + level, r + 1, upper, n);
 }
 
-double WallTime()
+double wall_time()
 {
     struct timeval tmpTime;
     gettimeofday(&tmpTime, NULL);
     return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
 }
 
+int test_nearest(float *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
+{
+    float query_point[3];
+    query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
+    
+    int best_fit = nearest(query_point, tree, 0, n, 0, n);
+
+    float actual = tree[ind(best_fit, 0, n)] + tree[ind(best_fit, 1, n)] + tree[ind(best_fit, 2, n)];
+    float expected = ex + ey + ez;
+
+    if (actual == expected)
+    {
+        return 0;
+    }
+
+    return 1;
+
+    printf("Closest point to (%3.1f, %3.1f, %3.1f) was (%3.1f, %3.1f, %3.1f) located at %d\n",
+        query_point[0], query_point[1], query_point[2],
+        tree[ind(best_fit, 0, n)], tree[ind(best_fit, 1, n)], tree[ind(best_fit, 2, n)],
+        best_fit);
+    printf("==================\n");
+}
+
 int main(int argc, char *argv[])
 {
-    int i, j, n = 10, wn = 6, debug = 1;
+    int i, j, n = 1000000, wn = 6, debug = 0;
     float *points, *wiki;
+
+    if (debug)
+    {
+        n = 10;
+    }
 
     points = (float*) malloc(n * 3 * sizeof(float));
 
@@ -218,9 +249,23 @@ int main(int argc, char *argv[])
 
     if (!debug)
     {
-        double time = WallTime();
+        double time = wall_time();
         build_kd_tree(points, n);
-        printf("Build duration for %d points: %lf (ms)\n", n, (WallTime() - time) * 1000);
+        printf("Build duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
+
+        float query_point[3];
+        int sum = 0, test_runs = 100000;
+        time = wall_time();
+
+        for (i = 0; i < test_runs; i++) {
+            query_point[0] = rand() % 1000;
+            query_point[1] = rand() % 1000;
+            query_point[2] = rand() % 1000;
+            nearest(query_point, points, 0, n, 0, n);
+        }
+        
+        printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
+        printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
     }
 
     if (debug)
@@ -253,20 +298,33 @@ int main(int argc, char *argv[])
         print_tree(wiki, 0, 0, wn, wn);
         printf("==================\n");
 
-        float query_point[] = {0, 0, 0};
-        int best_fit = nearest(query_point, wiki, 0, wn, wn);
-        printf("Closest point to (%3.1f, %3.1f, %3.1f) was (%3.1f, %3.1f, %3.1f) located at %d\n",
-            query_point[0], query_point[1], query_point[2],
-            wiki[ind(best_fit, 0, wn)], wiki[ind(best_fit, 1, wn)], wiki[ind(best_fit, 2, wn)],
-            best_fit);
-        printf("==================\n");
+        int not_passed_test = test_nearest(wiki, wn, 2, 3, 0, 2, 3, 0)
+            + test_nearest(wiki, wn, 5, 4, 0, 5, 4, 0)
+            + test_nearest(wiki, wn, 9, 6, 0, 9, 6, 0)
+            + test_nearest(wiki, wn, 4, 7, 0, 4, 7, 0)
+            + test_nearest(wiki, wn, 8, 1, 0, 8, 1, 0)
+            + test_nearest(wiki, wn, 7, 2, 0, 7, 2, 0)
+            + test_nearest(wiki, wn, 10, 10, 0, 9, 6, 0)
+            + test_nearest(wiki, wn, 0, 0, 0, 2, 3, 0)
+            + test_nearest(wiki, wn, 4, 4, 0, 5, 4, 0)
+            + test_nearest(wiki, wn, 3, 2, 0, 2, 3, 0)
+            + test_nearest(wiki, wn, 2, 6, 0, 4, 7, 0)
+            + test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0)
+            + test_nearest(wiki, wn, 0, 10, 0, 4, 7, 0);
+
+        // test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0);
+
+        if (not_passed_test)
+        {
+            printf("nearest function not working right!\n");
+            printf("==================\n");   
+        }
+        else {
+            printf("nearest function still works!\n");
+            printf("==================\n");
+        }
 
         free(wiki);
-
-        printf("euclid_distance test:\n");
-        printf("Should be 3: %f\n", euclid_distance(2, 2, 1, 0, 0, 0));
-        printf("Should be 3: %f\n", euclid_distance(4, -2, 1, 2, -4, 0));
-        printf("==================\n");
     }
     free(points);
     return 0;
