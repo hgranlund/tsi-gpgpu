@@ -1,4 +1,6 @@
-#include "kd-tree-naive.cuh"
+#include <radix-select.cuh>
+#include <kd-tree-naive.cuh>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -13,27 +15,169 @@
 // #define MAX_BLOCK_DIM_SIZE 8U
 
 #include <string.h>
-#define debug 0
+#define debug 1
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug){printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);}
 
 
 
-int h_index(int i, int j, int n)
+__device__ void printArray(Point *l, int n, char *s)
 {
-    return i + j * n;
-}
+  if (debug)
+  {
+        #if __CUDA_ARCH__>=200
+    if (threadIdx.x == 0)
+    {
+      printf("%10s: [ ", s);
+        for (int i = 0; i < n; ++i)
+        {
+          printf("(%3.1f, %3.1f, %3.1f), ", l[i].p[0], l[i].p[1], l[i].p[2]);
+        }
+        printf("]\n");
+      }
+      __syncthreads();
+          #endif
+    }
+  }
 
-void h_swap(Point *points, int a, int b, int n)
-{
-    Point t = points[a];
-    points[a] = points[b], points[b] = t;
-}
+  __device__ void printArrayInt(int *l, int n, char *s)
+  {
+    if (debug)
+    {
+#if __CUDA_ARCH__>=200
+      if (threadIdx.x == 0)
+      {
+        printf("%10s: [ ", s);
+          for (int i = 0; i < n; ++i)
+          {
+            printf("%3d, ", l[i]);
+          }
+          printf("]\n");
+        }
+        __syncthreads();
+#endif
+      }
+    }
 
-int midpoint(int lower, int upper)
-{
-    return (int) floor((upper - lower) / 2) + lower;
-}
+    __device__ unsigned int cuSumReduce(int *list, int n)
+    {
+      int half = n/2;
+      int tid = threadIdx.x;
+      while(tid<half && half > 0)
+      {
+        list[tid] += list[tid+half];
+        half = half/2;
+      }
+      return list[0];
+    }
+
+//TODO must be imporved
+    __device__  void cuAccumulateIndex(int *list, int n)
+    {
+      if (threadIdx.x == 0)
+      {
+        int sum=0;
+        list[n]=list[n-1];
+        int temp=0;
+        for (int i = 0; i < n; ++i)
+        {
+          temp = list[i];
+          list[i] = sum;
+          sum += temp;
+        }
+        list[n]+=list[n-1];
+      }
+    }
+
+
+    __device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int *one_count, unsigned int bit, int dir)
+    {
+      unsigned int
+      tid = threadIdx.x,
+      is_one,
+      one,
+      zero,
+      radix = (1 << 31-bit);
+
+      zero_count[threadIdx.x] = 0;
+      one_count[threadIdx.x] = 0;
+
+      while(tid < n)
+      {
+        data_copy[tid]=data[tid];
+        is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[dir]))&radix);
+        one_count[threadIdx.x] += is_one;
+        zero_count[threadIdx.x] += !is_one;
+        tid+=blockDim.x;
+      }
+      __syncthreads();
+      int last_zero_count = zero_count[blockDim.x-1];
+      cuAccumulateIndex(zero_count, blockDim.x);
+      cuAccumulateIndex(one_count, blockDim.x);
+      __syncthreads();
+
+      tid = threadIdx.x;
+      zero = zero_count[threadIdx.x];
+      one = one_count[threadIdx.x];
+      while(tid<n)
+      {
+        if (!partition[tid])
+        {
+          data[zero]=data_copy[tid];
+          zero++;
+        }else
+        {
+          data[n-one-1]=data_copy[tid];
+          one++;
+        }
+        tid+=blockDim.x;
+      }
+      return zero_count[blockDim.x-1]+last_zero_count;
+    }
+
+    __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
+    {
+      __shared__ int one_count[2048];
+      __shared__ int zeros_count[2048];
+
+      unsigned int l=0,
+      u = n,
+      cut=0,
+      bit = 0,
+      tid = threadIdx.x;
+      if (n<2)
+      {
+        if ((n == 1) && !(tid))
+        {
+          *result = data[0];
+        }
+        return;
+      }
+      do {
+
+        cut = cuPartition(data+l, data_copy, u-l, partition, one_count, zeros_count, bit++, dir);
+        __syncthreads();
+        if ((l+cut) <= m)
+        {
+          l +=cut;
+        }
+        else
+        {
+          u -=u-cut-l;
+        }
+      }while ((u > l) && (bit<32));
+      if (tid == 0)
+      {
+        *result = data[m];
+      }
+    }
+
+    __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
+    {
+      cuRadixSelect(data, data_copy, m, n, partition, dir, result);
+    }
+
+
 
 __device__ __host__
 unsigned int nextPowerOf2(unsigned int x)
@@ -47,13 +191,13 @@ unsigned int nextPowerOf2(unsigned int x)
   return ++x;
 }
 
-__device__
+__device__ __host__
 bool isPowTwo(unsigned int x)
 {
   return ((x&(x-1))==0);
 }
 
-__device__
+__device__ __host__
 unsigned int prevPowerOf2(unsigned int n){
     if (isPowTwo(n))
     {
@@ -107,86 +251,20 @@ void printMatrix(Point* points, int n, int offset){
 #endif
 }
 
-
-__device__
-void swap(Point *points, int a, int b, int offset)
-{
-    Point t = points[a];
-    points[a] = points[b], points[b] = t;
-}
-
-
-
-__device__
-void cuCompare(Point* points, int a, int b, int ddd, int n, int offset, int dir){
-    if (b < n)
-    {
-        if ((points[a].p[dir] >= points[b].p[dir]) == ddd)
-        {
-            swap(points, a, b, offset);
-        }
-    }
-}
-
-__device__
-void cuBitonicSortOneBlock(Point *points, unsigned int n, unsigned int offset, int dir)
-{
-    unsigned int size, stride, ddd, pos, tid;
-
-    tid=threadIdx.x;
-    for (size = 2; size <= nextPowerOf2(n); size <<= 1)
-    {
-        ddd = 1 ^ ((tid & (size / 2)) != 0);
-        for (stride = size / 2; stride > 0; stride >>= 1)
-        {
-            tid = threadIdx.x;
-            __syncthreads();
-            while(tid < n/2)
-            {
-                ddd = 1 ^ ((tid & (size / 2)) != 0);
-                pos = 2 * tid - (tid & (stride - 1));
-                cuCompare(points, pos, pos+stride, ddd, n, offset, dir);
-                tid+=blockDim.x;
-            }
-        }
-    }
-}
-
-
-
 // A shorted bitonic sort is used to find and place the median.
 __global__
-void cuBalanceBranch(Point* points, int n, unsigned int p, int dir){
+void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir){
 
-    unsigned int prev_pow_two, step, tid, blockoffset, bid;
-    tid = threadIdx.x;
+    int step, blockoffset, bid;
+    Point result[1];
     bid = blockIdx.x;
     while(bid < p){
         step = (int) (n / p);
         blockoffset = (step) * bid;
         n=step;
-        prev_pow_two = prevPowerOf2(n);
         points+=blockoffset;
-        cuBitonicSortOneBlock(points, n, blockoffset, dir);
-        if (!isPowTwo(n))
-        {
-        __syncthreads();
-            while(tid < (n-prev_pow_two))
-            {
-                swap(points, prev_pow_two-tid, prev_pow_two+tid, blockoffset);
-                tid+=blockDim.x;
-            }
-            __syncthreads();
-            cuBitonicSortOneBlock(points, n, blockoffset, dir);
-            __syncthreads();
-            while(tid < (n-prev_pow_two))
-            {
-                swap(points, prev_pow_two-tid, prev_pow_two+tid, blockoffset);
-                tid+=blockDim.x;
-            }
-            __syncthreads();
-            cuBitonicSortOneBlock(points, prev_pow_two, (n-prev_pow_two), dir);
-        }
+        // cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result);
+        cuRadixSelect(points, swap, n/2, n, partition, dir, result);
         printMatrix(points, n, blockoffset);
         bid += gridDim.x;
     }
@@ -195,9 +273,12 @@ void cuBalanceBranch(Point* points, int n, unsigned int p, int dir){
 
 void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
 {
+    n = n/p;
+    n = prevPowerOf2(n/2);
     blocks = min(MAX_BLOCK_DIM_SIZE, p);
     blocks = max(1, blocks);
-    threads = min(THREADS_PER_BLOCK, (n/p)/2);
+    threads = min(THREADS_PER_BLOCK, n);
+    threads = max(1, threads);
 }
 
 void build_kd_tree(Point *h_points, int n)
@@ -205,12 +286,23 @@ void build_kd_tree(Point *h_points, int n)
 
     h_print_matrix(h_points, n);
 
-    Point* d_points;
+    Point *d_points, *d_swap;
     int p, h, i, numBlocks, numThreads;
+    int *d_partition;
 
+    Point *d_result;
+
+    checkCudaErrors(
+        cudaMalloc(&d_result, sizeof(Point)));
+
+    checkCudaErrors(
+        cudaMalloc(&d_partition, n*sizeof(int)));
 
     checkCudaErrors(
         cudaMalloc(&d_points, n*sizeof(Point)));
+
+    checkCudaErrors(
+        cudaMalloc(&d_swap, n*sizeof(Point)));
 
     checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
@@ -220,7 +312,9 @@ void build_kd_tree(Point *h_points, int n)
         p = pow(2, i);
         getThreadAndBlockCount(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n, p, numBlocks, numThreads );
-        cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, n, p, i%3);
+        cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n, p, i%3);
+        // cuRadixSelectGlobal<<<1,4>>>(d_points, d_swap, 5, 10, d_partition, 0, d_result);
+
     }
 
     checkCudaErrors(
@@ -228,6 +322,8 @@ void build_kd_tree(Point *h_points, int n)
 
     h_print_matrix(h_points, n);
     checkCudaErrors(cudaFree(d_points));
+    checkCudaErrors(cudaFree(d_swap));
+    checkCudaErrors(cudaFree(d_partition));
 }
 
 

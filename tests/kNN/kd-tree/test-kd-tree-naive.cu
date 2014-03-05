@@ -9,6 +9,22 @@
 
 #define debug 0
 
+int h_index(int i, int j, int n)
+{
+    return i + j * n;
+}
+
+void h_swap(Point *points, int a, int b, int n)
+{
+    Point t = points[a];
+    points[a] = points[b], points[b] = t;
+}
+
+int midpoint(int lower, int upper)
+{
+    return (int) floor((upper - lower) / 2) + lower;
+}
+
 void print_tree(Point *tree, int level, int lower, int upper, int n)
 {
   if (debug)

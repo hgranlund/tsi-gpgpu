@@ -1,5 +1,5 @@
 // Includes
-#include <radix-select.cuh>
+#include <kd-tree-naive.cuh>
 #include <knn_gpgpu.h>
 #include <stdio.h>
 #include <gtest/gtest.h>
@@ -17,6 +17,50 @@
 #define debug 0
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
+
+    float cpu_partition(Point *data, int l, int u, int bit)
+    {
+      unsigned int radix=(1 << 31-bit);
+      Point *temp = (Point *)malloc(((u-l)+1)*sizeof(Point));
+      int pos = 0;
+      for (int i = l; i<=u; i++)
+      {
+        if(((*(int*)&(data[i].p[0]))&radix))
+        {
+          temp[pos++] = data[i];
+        }
+      }
+      int result = u-pos;
+      for (int i = l; i<=u; i++)
+      {
+        if(!((*(int*)&(data[i]))&radix))
+        {
+          temp[pos++] = data[i];
+        }
+      }
+      pos = 0;
+      for (int i = u; i>=l; i--)
+      {
+        data[i] = temp[pos++];
+      }
+
+      free(temp);
+      return result;
+    }
+
+    Point cpu_radixselect(Point *data, int l, int u, int m, int bit){
+
+      if (l == u) return(data[l]);
+      if (bit > 32) {printf("cpu_radixselect fail!\n"); return (Point){0,0,0};}
+      int s = cpu_partition(data, l, u, bit);
+      if (s>=m) return cpu_radixselect(data, l, s, m, bit+1);
+      return cpu_radixselect(data, s+1, u, m, bit+1);
+    }
+
+
+
+
 
 
 void printPoints(Point* l, int n){
@@ -65,7 +109,7 @@ void printPoints(Point* l, int n){
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
 
-      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
+      cuRadixSelectGlobal<<<1,64>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -133,7 +177,7 @@ void printPoints(Point* l, int n){
 
     checkCudaErrors(cudaEventRecord(start, 0));
 
-    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
+    cuRadixSelectGlobal<<<1,1024>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
 
 
     checkCudaErrors(cudaEventRecord(stop, 0));
