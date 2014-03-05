@@ -1,7 +1,7 @@
 #ifndef _POINT_
 #define _POINT_
 
-struct point
+struct Point
 {
   float p[3];
 };
