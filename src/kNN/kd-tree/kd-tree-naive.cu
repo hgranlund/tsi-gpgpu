@@ -9,13 +9,13 @@
 #include <helper_cuda.h>
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
-#define THREADS_PER_BLOCK 512U
+#define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
 // #define THREADS_PER_BLOCK 4U
 // #define MAX_BLOCK_DIM_SIZE 8U
 
 #include <string.h>
-#define debug 1
+#define debug 0
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug){printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);}
 
@@ -32,16 +32,16 @@ __device__ void printArray(Point *l, int n, char *s)
         for (int i = 0; i < n; ++i)
         {
           printf("(%3.1f, %3.1f, %3.1f), ", l[i].p[0], l[i].p[1], l[i].p[2]);
-        }
-        printf("]\n");
       }
-      __syncthreads();
-          #endif
-    }
+      printf("]\n");
   }
+  __syncthreads();
+          #endif
+}
+}
 
-  __device__ void printArrayInt(int *l, int n, char *s)
-  {
+__device__ void printArrayInt(int *l, int n, char *s)
+{
     if (debug)
     {
 #if __CUDA_ARCH__>=200
@@ -51,131 +51,131 @@ __device__ void printArray(Point *l, int n, char *s)
           for (int i = 0; i < n; ++i)
           {
             printf("%3d, ", l[i]);
-          }
-          printf("]\n");
         }
-        __syncthreads();
+        printf("]\n");
+    }
+    __syncthreads();
 #endif
-      }
-    }
+}
+}
 
-    __device__ unsigned int cuSumReduce(int *list, int n)
-    {
-      int half = n/2;
-      int tid = threadIdx.x;
-      while(tid<half && half > 0)
-      {
-        list[tid] += list[tid+half];
-        half = half/2;
-      }
-      return list[0];
-    }
+__device__ unsigned int cuSumReduce(int *list, int n)
+{
+  int half = n/2;
+  int tid = threadIdx.x;
+  while(tid<half && half > 0)
+  {
+    list[tid] += list[tid+half];
+    half = half/2;
+}
+return list[0];
+}
 
 //TODO must be imporved
-    __device__  void cuAccumulateIndex(int *list, int n)
+__device__  void cuAccumulateIndex(int *list, int n)
+{
+    if (threadIdx.x == 0)
     {
-      if (threadIdx.x == 0)
-      {
         int sum=0;
         list[n]=list[n-1];
         int temp=0;
         for (int i = 0; i < n; ++i)
         {
-          temp = list[i];
-          list[i] = sum;
-          sum += temp;
+            temp = list[i];
+            list[i] = sum;
+            sum += temp;
         }
         list[n]+=list[n-1];
-      }
     }
+}
 
 
-    __device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int *one_count, unsigned int bit, int dir)
+__device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int *one_count, unsigned int bit, int dir)
+{
+    unsigned int
+    tid = threadIdx.x,
+    is_one,
+    one,
+    zero,
+    radix = (1 << 31-bit);
+
+    zero_count[threadIdx.x] = 0;
+    one_count[threadIdx.x] = 0;
+
+    while(tid < n)
     {
-      unsigned int
-      tid = threadIdx.x,
-      is_one,
-      one,
-      zero,
-      radix = (1 << 31-bit);
-
-      zero_count[threadIdx.x] = 0;
-      one_count[threadIdx.x] = 0;
-
-      while(tid < n)
-      {
         data_copy[tid]=data[tid];
         is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[dir]))&radix);
         one_count[threadIdx.x] += is_one;
         zero_count[threadIdx.x] += !is_one;
         tid+=blockDim.x;
-      }
-      __syncthreads();
-      int last_zero_count = zero_count[blockDim.x-1];
-      cuAccumulateIndex(zero_count, blockDim.x);
-      cuAccumulateIndex(one_count, blockDim.x);
-      __syncthreads();
+    }
+    __syncthreads();
+    int last_zero_count = zero_count[blockDim.x-1];
+    cuAccumulateIndex(zero_count, blockDim.x);
+    cuAccumulateIndex(one_count, blockDim.x);
+    __syncthreads();
 
-      tid = threadIdx.x;
-      zero = zero_count[threadIdx.x];
-      one = one_count[threadIdx.x];
-      while(tid<n)
-      {
+    tid = threadIdx.x;
+    zero = zero_count[threadIdx.x];
+    one = one_count[threadIdx.x];
+    while(tid<n)
+    {
         if (!partition[tid])
         {
-          data[zero]=data_copy[tid];
-          zero++;
+            data[zero]=data_copy[tid];
+            zero++;
         }else
         {
-          data[n-one-1]=data_copy[tid];
-          one++;
+            data[n-one-1]=data_copy[tid];
+            one++;
         }
         tid+=blockDim.x;
-      }
-      return zero_count[blockDim.x-1]+last_zero_count;
     }
+    return zero_count[blockDim.x-1]+last_zero_count;
+}
 
-    __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
+__device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
+{
+    __shared__ int one_count[1025];
+    __shared__ int zeros_count[1025];
+
+    unsigned int l=0,
+    u = n,
+    cut=0,
+    bit = 0,
+    tid = threadIdx.x;
+    if (n<2)
     {
-      __shared__ int one_count[2048];
-      __shared__ int zeros_count[2048];
-
-      unsigned int l=0,
-      u = n,
-      cut=0,
-      bit = 0,
-      tid = threadIdx.x;
-      if (n<2)
-      {
         if ((n == 1) && !(tid))
         {
-          *result = data[0];
+            *result = data[0];
         }
         return;
-      }
-      do {
+    }
+    do {
 
         cut = cuPartition(data+l, data_copy, u-l, partition, one_count, zeros_count, bit++, dir);
         __syncthreads();
         if ((l+cut) <= m)
         {
-          l +=cut;
+            l +=cut;
         }
         else
         {
-          u -=u-cut-l;
+            u -=u-cut-l;
         }
-      }while ((u > l) && (bit<32));
-      if (tid == 0)
-      {
-        *result = data[m];
-      }
-    }
-
-    __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
+    }while ((u > l) && (bit<32));
+    if (tid == 0)
     {
-      cuRadixSelect(data, data_copy, m, n, partition, dir, result);
+        *result = data[m];
     }
+}
+
+__global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
+{
+  cuRadixSelect(data, data_copy, m, n, partition, dir, result);
+}
 
 
 
@@ -251,20 +251,15 @@ void printMatrix(Point* points, int n, int offset){
 #endif
 }
 
-// A shorted bitonic sort is used to find and place the median.
 __global__
 void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir){
 
-    int step, blockoffset, bid;
+    int blockoffset, bid;
     Point result[1];
     bid = blockIdx.x;
     while(bid < p){
-        step = (int) (n / p);
-        blockoffset = (step) * bid;
-        n=step;
-        points+=blockoffset;
-        // cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result);
-        cuRadixSelect(points, swap, n/2, n, partition, dir, result);
+        blockoffset = n * bid;
+        cuRadixSelect(points+blockoffset, swap+blockoffset, n/2, n, partition+blockoffset, dir, result);
         printMatrix(points, n, blockoffset);
         bid += gridDim.x;
     }
@@ -290,11 +285,6 @@ void build_kd_tree(Point *h_points, int n)
     int p, h, i, numBlocks, numThreads;
     int *d_partition;
 
-    Point *d_result;
-
-    checkCudaErrors(
-        cudaMalloc(&d_result, sizeof(Point)));
-
     checkCudaErrors(
         cudaMalloc(&d_partition, n*sizeof(int)));
 
@@ -306,21 +296,22 @@ void build_kd_tree(Point *h_points, int n)
 
     checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
+
     h = ceil(log2((float)n + 1) - 1);
+    p = 1;
     for (i = 0; i < h; i++)
     {
-        p = pow(2, i);
         getThreadAndBlockCount(n, p, numBlocks, numThreads);
-        debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n, p, numBlocks, numThreads );
-        cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n, p, i%3);
-        // cuRadixSelectGlobal<<<1,4>>>(d_points, d_swap, 5, 10, d_partition, 0, d_result);
-
+        debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
+        cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, i%3);
+        p <<=1;
     }
 
     checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
     h_print_matrix(h_points, n);
+
     checkCudaErrors(cudaFree(d_points));
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));

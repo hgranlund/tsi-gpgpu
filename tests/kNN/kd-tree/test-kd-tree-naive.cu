@@ -81,45 +81,42 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
       ASSERT_EQ(points[i].p[j] ,expected_points[i].p[j]) << "Faild with i = " << i << " j = " <<j ;
     }
   }
-
-
   free(points);
   free(expected_points);
 }
 
-// TEST(kd_tree_naive, kd_tree_naive_timeing)
-// {
-//   int i, j, n = 65536;
-//   point *points;
-//   points = (point*) malloc(n * 3 * sizeof(point));
-//   srand(time(NULL));
-//   for ( i = 0; i < n; ++i)
-//   {
-//     for ( j = 0; j < 3; ++j)
-//     {
-//       points[h_index(i, j, n)] = (point) rand() /100000000;
-//     }
-//   }
+TEST(kd_tree_naive, kd_tree_naive_time){
+  int i, n = 8388608/16;
+  float temp;
+  Point *points;
+  points = (Point*) malloc(n  * sizeof(Point));
+  srand(time(NULL));
+  for ( i = 0; i < n; ++i)
+  {
+      temp = n-i-1;
+      points[i] =(Point) {.p={temp,temp,temp}};
+  }
 
-//   cudaEvent_t start, stop;
-//   unsigned int bytes = n*3 * (sizeof(point));
-//   checkCudaErrors(cudaEventCreate(&start));
-//   checkCudaErrors(cudaEventCreate(&stop));
-//   float elapsed_time=0;
+  cudaEvent_t start, stop;
+  unsigned int bytes = n * (sizeof(Point));
+  checkCudaErrors(cudaEventCreate(&start));
+  checkCudaErrors(cudaEventCreate(&stop));
+  float elapsed_time=0;
 
-//   checkCudaErrors(cudaEventRecord(start, 0));
+  checkCudaErrors(cudaEventRecord(start, 0));
 
-//   build_kd_tree(points, n);
+  build_kd_tree(points, n);
 
-//   checkCudaErrors(cudaEventRecord(stop, 0));
-//   cudaEventSynchronize(start);
-//   cudaEventSynchronize(stop);
-//   cudaEventElapsedTime(&elapsed_time, start, stop);
-//   elapsed_time = elapsed_time ;
-//   double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
-//   printf("build_kd_tree_naive, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
-//     throughput, elapsed_time, n, 1);
+  checkCudaErrors(cudaEventRecord(stop, 0));
+  cudaEventSynchronize(start);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&elapsed_time, start, stop);
+  elapsed_time = elapsed_time ;
+  double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+  printf("build_kd_tree_naive, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+    throughput, elapsed_time, n, 1);
 
-//   free(points);
-// }
+  free(points);
+}
+
 
