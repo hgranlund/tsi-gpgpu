@@ -134,6 +134,8 @@ Given the previous splits and selection of nodes, the resulting binary tree woul
 
 Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log² n) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log² n) time.
 
+Interested readers is encouraged to look at the paper "Multidimensional binary search trees used for associative searching" by Jon Louis Bentley, where kd-trees first was described. 
+
 ## The serial base algorithm
 
 1. Build a balanced k-d tree from the point cloud.
@@ -158,17 +160,31 @@ The paper _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al.
 
 A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by NVIDIA, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
 
+## Parallel implementations
+
+As we noted in the previous section, the kd-tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize this operation. In order to do this, we have to look a bit closer at the different steps of the kd-tree build algorithm.
+
+Steps:
+
+1. Find the median of the points along a specified axis. This median point becomes the value of the current node.
+2. Sort all points with lower values than the median to the left of the median, and all the points with higher values than the median to the right.
+3. Perform this algorithm recursively on the left and right set of nodes.
+
+Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. More writing commence here.
+
+### Implementation details
+
+
+We started by making the algorithm work "in place" on a simple array. This gave us a smaller memory footprint, and made the transfer of the data structures to the GPU a simple task. It also makes merging sub-trees very simple, since you just have to append the different sub-arrays. Then we identified what could be parallelized. When building the tree, you can build each of the sub-trees independent of each other. This is one way we have parallelized the building process. The other way is by re-using the code for the bitonic-sort, in order to determine the mean at each step. This is especially beneficial in the first steps, when we have few sub-trees that can be parallelized. Instead we use the parallel resources to more quickly find the median.
+
+
 Our focus therefore turned to implementing and parallelizing the algorithm our self. This has proven to be a quite challenging task. One might think that you would just would split the workload over new processors every time a split occur in the recursive algorithm. This would give a speed increase, but you still have to process all the nodes in the root node, requiring at least O(n) time.
 
 Another option could be to build several small trees on different processes, but then you would get an large time penalty when trying to combine the different sub-trees.
+
 
 #### Further work
 
 * Try out a heuristic and parallel method for determining the median point.
 * Parallelize the code according to one of the simple strategies.
 * Further investigate the strategies used in _Real-Time KD-Tree Construction on Graphics Hardware_
-
-
-Final thoughts
-
-We have discovered a possible relevant paper, [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5382329), behind a pay-wall we cannot access with our student accounts. Maybe you have access to this Ole Ivar?

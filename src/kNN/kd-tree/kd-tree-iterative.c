@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
             query_point[2] = rand() % 1000;
             nearest(query_point, points, 0, n, 0, n);
         }
-        
+
         printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
         printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
     }
@@ -311,8 +311,6 @@ int main(int argc, char *argv[])
             + test_nearest(wiki, wn, 2, 6, 0, 4, 7, 0)
             + test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0)
             + test_nearest(wiki, wn, 0, 10, 0, 4, 7, 0);
-
-        // test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0);
 
         if (not_passed_test)
         {
