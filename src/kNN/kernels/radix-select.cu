@@ -1,178 +1,216 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cuda.h"
-#include <cuda_runtime_api.h>
+#include <radix-select.cuh>
 
-__device__ int gpu_partition(float *data, float *partition, float *ones, float* zeroes, int bit, int idx, float* warp_ones)
+#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
+#define inf 0x7f800000
+
+#define debug 1
+#define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
+
+
+__device__ void cuSwap(float *data, int a, int b)
 {
-  int one = 0;
-  int valid = 0;
-  int my_one, my_zero;
-  if (partition[idx])
-  {
-    valid = 1;
-    if((*(int*)&(data[idx]))&(1 << (31-bit)))
-    {
-      one=1;
-    }
-  }
-  __syncthreads();
-  if (valid)
-  {
-    if (one)
-    {
-      my_one=1;
-      my_zero=0;
-    }
-    else
-    {
-      my_one=0;
-      my_zero=1;
-    }
-  }
-  else
-  {
-    my_one=0;
-    my_zero=0;
-  }
-  ones[idx]=my_one;
-  zeroes[idx]=my_zero;
-  unsigned int warp_one = __popc(__ballot(my_one));
-  if (!(threadIdx.x & 31))
-  {
-    warp_ones[threadIdx.x>>5] = warp_one;
-  }
-  __syncthreads();
-// reduce
-  for (int i = 16; i > 0; i>>=1)
-  {
-    if (threadIdx.x < i)
-    {
-      warp_ones[threadIdx.x] += warp_ones[threadIdx.x + i];
-    }
-    __syncthreads();
-  }
-  return warp_ones[0];
+  float temp = data[a];
+  data[a]=data[b];
+  data[b]=temp;
 }
 
-__global__ void gpu_radixkernel(float *data, unsigned int m, unsigned int n, float *result)
+__device__ void printArray(float *l, int n, char *s)
 {
-  __shared__ float loc_data[1024];
-  __shared__ float loc_ones[1024];
-  __shared__ float loc_zeroes[1024];
-  __shared__ float loc_warp_ones[32];
-  int l=0;
-  int bit = 0;
-  unsigned int u = n;
-  if (n<2)
+  if (debug)
   {
-    if ((n == 1) && !(threadIdx.x))
+        #if __CUDA_ARCH__>=200
+    if (threadIdx.x == 0)
     {
-      *result = data[0];
+      printf("%10s: [ ", s);
+        for (int i = 0; i < n; ++i)
+        {
+          printf("%3.1f, ", l[i]);
+        }
+        printf("]\n");
+      }
+      __syncthreads();
+          #endif
     }
-    return;
   }
-  loc_data[threadIdx.x] = data[threadIdx.x];
-  loc_ones[threadIdx.x] = (threadIdx.x<n)?1:0;
-  __syncthreads();
-  float *next = loc_ones;
-  do {
-    int s = gpu_partition(loc_data, next, loc_ones, loc_zeroes, bit++, threadIdx.x, loc_warp_ones);
-    if ((u-s) > m)
-    {
-      u = (u-s);
-      next = loc_zeroes;
-    }
-    else
-    {
-      l = (u-s);
-      next = loc_ones;
-    }
-  }while ((u != l) && (bit<32));
-  if (next[threadIdx.x]) *result = loc_data[threadIdx.x];
-}
 
-float partition(float *data, int l, int u, int bit)
-{
-  unsigned int radix=(1 << 31-bit);
-  float *temp = (float *)malloc(((u-l)+1)*sizeof(float));
-  int pos = 0;
-// printf("l = %d, u = %d, bit = %d\n", l,u,bit);
-  for (int i = l; i<=u; i++)
+  __device__ void printArrayInt(int *l, int n, char *s)
   {
-    if(((*(int*)&(data[i]))&radix))
+    if (debug)
     {
-      temp[pos++] = data[i];
+#if __CUDA_ARCH__>=200
+      if (threadIdx.x == 0)
+      {
+        printf("%10s: [ ", s);
+          for (int i = 0; i < n; ++i)
+          {
+            printf("%3d, ", l[i]);
+          }
+          printf("]\n");
+        }
+        __syncthreads();
+#endif
+      }
     }
-  }
-  int result = u-pos;
-  for (int i = l; i<=u; i++)
-  {
-    if(!((*(int*)&(data[i]))&radix))
+
+    __device__ unsigned int cuSumReduce(int *list, int n)
     {
-      temp[pos++] = data[i];
+      int half = n/2;
+      int tid = threadIdx.x;
+      while(tid<half && half > 0)
+      {
+        list[tid] += list[tid+half];
+        half = half/2;
+      }
+      return list[0];
     }
-  }
-  pos = 0;
-  for (int i = u; i>=l; i--)
-  {
-    data[i] = temp[pos++];
-// printf("temp : %2d:  %3.1f\n", i, data[i]);
-  }
 
-  free(temp);
-  return result;
-}
-
-float radixselect(float *data, int l, int u, int m, int bit){
-
-  if (l == u) return(data[l]);
-  if (bit > 32) {printf("radixselect fail!\n"); return 0;}
-  int s = partition(data, l, u, bit);
-  if (s>=m) return radixselect(data, l, s, m, bit+1);
-  return radixselect(data, s+1, u, m, bit+1);
-}
-
-int main(int argc, char const *argv[])
-{
-  int n = 8;
-  float data[8] = {32767, 88.2, 88.1, 44, 99, 101, 0.1, 7};
-  float data1[n];
-
-  for (int i = 0; i<n; i++)
-  {
-    for (int j=0; j<n; j++)
+//TODO must be imporved
+    __device__  void cuAccumulateIndex(int *list, int n)
     {
-      data1[j] = data[j];
+      if (threadIdx.x == 0)
+      {
+        int sum=0;
+        list[n]=list[n-1];
+        int temp=0;
+        for (int i = 0; i < n; ++i)
+        {
+          temp = list[i];
+          list[i] = sum;
+          sum += temp;
+        }
+        list[n]+=list[n-1];
+      }
     }
-    printf("value[%d] = %3.1f\n", i, radixselect(data1, 0, n-1, i, 0));
-  }
 
-  float *d_data;
-  cudaMalloc((void **)&d_data, 1024*sizeof(float));
-  float *d_result;
-  float h_result;
-  cudaMalloc((void **)&d_result, sizeof(float));
-  cudaMemcpy(d_data, data, 8*sizeof(float), cudaMemcpyHostToDevice);
-  for (int i = 0; i < 8; i++){
-    gpu_radixkernel<<<1,1024>>>(d_data, i, 8, d_result);
-    cudaMemcpy(&h_result, d_result, sizeof(float), cudaMemcpyDeviceToHost);
-    printf("gpu result index %d = %3.1f\n", i, h_result);
-  }
 
-// unsigned int data2[1024];
-// unsigned int data3[1024];
+    __device__ unsigned int cuPartition(float *data, float *data_copy, unsigned int n, int *ones, int *zero_count, int *one_count, unsigned int bit)
+    {
+      unsigned int
+      tid = threadIdx.x,
+      i,
+      is_one,
+      one,
+      zero,
+      radix = (1 << 31-bit);
 
-// for (int i = 0; i < 1024; i++) data2[i] = rand();
-// cudaMemcpy(d_data, data2, 1024*sizeof(unsigned int), cudaMemcpyHostToDevice);
-// for (int i = 0; i < 1024; i++){
-//   for (int j = 0; j<1024; j++) data3[j] = data2[j];
-//   // unsigned int cpuresult = radixselect(data3, 0, 1023, i, 0);
-//   gpu_radixkernel<<<1,1024>>>(d_data, i, 1024, d_result);
-//   cudaMemcpy(&h_result, d_result, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-//   if (h_result != cpuresult) {printf("mismatch at index %d, cpu: %d, gpu: %d\n", i, cpuresult, h_result); return 1;}
-//   }
-  printf("Finished\n");
+      zero_count[threadIdx.x] = 0;
+      one_count[threadIdx.x] = 0;
 
-  return 0;
-}
+      while(tid < n)
+      {
+        data_copy[tid]=data[tid];
+        is_one = ones[tid]= (bool)((*(int*)&(data[tid]))&radix);
+        one_count[threadIdx.x] += is_one;
+        zero_count[threadIdx.x] += !is_one;
+        tid+=blockDim.x;
+      }
+      __syncthreads();
+      int last_zero_count = zero_count[blockDim.x-1];
+      cuAccumulateIndex(zero_count, blockDim.x);
+      cuAccumulateIndex(one_count, blockDim.x);
+      __syncthreads();
+
+      tid = threadIdx.x;
+      zero = zero_count[threadIdx.x];
+      one = one_count[threadIdx.x];
+      while(tid<n)
+      {
+        if (!ones[tid])
+        {
+          data[zero]=data_copy[tid];
+          zero++;
+        }else
+        {
+          data[n-one-1]=data_copy[tid];
+          one++;
+        }
+        tid+=blockDim.x;
+      }
+      return zero_count[blockDim.x-1]+last_zero_count;
+    }
+
+//TODO do not need ones and zeroes, only one partitian or store the partition data on dava/datacopy
+    __global__ void cuRadixSelect(float *data, float *data_copy, unsigned int m, unsigned int n, int *ones, float *result)
+    {
+      __shared__ int one_count[2048];
+      __shared__ int zeros_count[2048];
+
+      unsigned int l=0,
+      u = n,
+      cut=0,
+      bit = 0,
+      tid = threadIdx.x;
+      if (n<2)
+      {
+        if ((n == 1) && !(tid))
+        {
+          *result = data[0];
+        }
+        return;
+      }
+      do {
+
+        cut = cuPartition(data+l, data_copy, u-l, ones, one_count, zeros_count, bit++);
+        __syncthreads();
+        if ((l+cut) <= m)
+        {
+          l +=cut;
+        }
+        else
+        {
+          u -=u-cut-l;
+        }
+      }while ((u > l) && (bit<32));
+      if (tid == 0)
+      {
+        *result = data[m];
+      }
+    }
+
+    float cpu_partition(float *data, int l, int u, int bit)
+    {
+      unsigned int radix=(1 << 31-bit);
+      float *temp = (float *)malloc(((u-l)+1)*sizeof(float));
+      int pos = 0;
+      for (int i = l; i<=u; i++)
+      {
+        if(((*(int*)&(data[i]))&radix))
+        {
+          temp[pos++] = data[i];
+        }
+      }
+      int result = u-pos;
+      for (int i = l; i<=u; i++)
+      {
+        if(!((*(int*)&(data[i]))&radix))
+        {
+          temp[pos++] = data[i];
+        }
+      }
+      pos = 0;
+      for (int i = u; i>=l; i--)
+      {
+        data[i] = temp[pos++];
+      }
+
+      free(temp);
+      return result;
+    }
+
+    float cpu_radixselect(float *data, int l, int u, int m, int bit){
+
+      if (l == u) return(data[l]);
+      if (bit > 32) {printf("cpu_radixselect fail!\n"); return 0;}
+      int s = cpu_partition(data, l, u, bit);
+      if (s>=m) return cpu_radixselect(data, l, s, m, bit+1);
+      return cpu_radixselect(data, s+1, u, m, bit+1);
+    }
+
+
+
+

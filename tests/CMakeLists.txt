@@ -30,6 +30,7 @@ if (BUILD_TESTS)
   set(test_files
     #kNN/test-kNN-brute-force.cpp
     kNN/kernels/test_redution.cu
+    kNN/kernels/test-radix-select.cu
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
     kNN/kd-tree/test-kd-tree-naive.cu
