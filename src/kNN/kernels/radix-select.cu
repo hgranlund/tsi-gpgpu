@@ -1,7 +1,7 @@
+#include <radix-select.cuh>
 #include <stdio.h>
 #include <stdlib.h>
 #include "cuda.h"
-#include <radix-select.cuh>
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
@@ -12,14 +12,14 @@
 
 
 
-__device__ void cuSwap(float *data, int a, int b)
+__device__ void cuSwap(Point *data, int a, int b)
 {
-  float temp = data[a];
+  Point temp = data[a];
   data[a]=data[b];
   data[b]=temp;
 }
 
-__device__ void printArray(float *l, int n, char *s)
+__device__ void printArray(Point *l, int n, char *s)
 {
   if (debug)
   {
@@ -29,7 +29,7 @@ __device__ void printArray(float *l, int n, char *s)
       printf("%10s: [ ", s);
         for (int i = 0; i < n; ++i)
         {
-          printf("%3.1f, ", l[i]);
+          printf("(%3.1f, %3.1f, %3.1f), ", l[i].p[0], l[i].p[1], l[i].p[2]);
         }
         printf("]\n");
       }
@@ -88,11 +88,10 @@ __device__ void printArray(float *l, int n, char *s)
     }
 
 
-    __device__ unsigned int cuPartition(float *data, float *data_copy, unsigned int n, int *ones, int *zero_count, int *one_count, unsigned int bit)
+    __device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *ones, int *zero_count, int *one_count, unsigned int bit)
     {
       unsigned int
       tid = threadIdx.x,
-      i,
       is_one,
       one,
       zero,
@@ -104,7 +103,7 @@ __device__ void printArray(float *l, int n, char *s)
       while(tid < n)
       {
         data_copy[tid]=data[tid];
-        is_one = ones[tid]= (bool)((*(int*)&(data[tid]))&radix);
+        is_one = ones[tid]= (bool)((*(int*)&(data[tid].p[0]))&radix);
         one_count[threadIdx.x] += is_one;
         zero_count[threadIdx.x] += !is_one;
         tid+=blockDim.x;
@@ -135,7 +134,7 @@ __device__ void printArray(float *l, int n, char *s)
     }
 
 //TODO do not need ones and zeroes, only one partitian or store the partition data on dava/datacopy
-    __global__ void cuRadixSelect(float *data, float *data_copy, unsigned int m, unsigned int n, int *ones, float *result)
+    __global__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *ones, Point *result)
     {
       __shared__ int one_count[2048];
       __shared__ int zeros_count[2048];
@@ -172,14 +171,14 @@ __device__ void printArray(float *l, int n, char *s)
       }
     }
 
-    float cpu_partition(float *data, int l, int u, int bit)
+    float cpu_partition(Point *data, int l, int u, int bit)
     {
       unsigned int radix=(1 << 31-bit);
-      float *temp = (float *)malloc(((u-l)+1)*sizeof(float));
+      Point *temp = (Point *)malloc(((u-l)+1)*sizeof(Point));
       int pos = 0;
       for (int i = l; i<=u; i++)
       {
-        if(((*(int*)&(data[i]))&radix))
+        if(((*(int*)&(data[i].p[0]))&radix))
         {
           temp[pos++] = data[i];
         }
@@ -202,10 +201,10 @@ __device__ void printArray(float *l, int n, char *s)
       return result;
     }
 
-    float cpu_radixselect(float *data, int l, int u, int m, int bit){
+    Point cpu_radixselect(Point *data, int l, int u, int m, int bit){
 
       if (l == u) return(data[l]);
-      if (bit > 32) {printf("cpu_radixselect fail!\n"); return 0;}
+      if (bit > 32) {printf("cpu_radixselect fail!\n"); return (Point){0,0,0};}
       int s = cpu_partition(data, l, u, bit);
       if (s>=m) return cpu_radixselect(data, l, s, m, bit+1);
       return cpu_radixselect(data, s+1, u, m, bit+1);
