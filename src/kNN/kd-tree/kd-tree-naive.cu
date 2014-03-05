@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <cuda.h>
+#include <point.h>
 #include <helper_cuda.h>
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
@@ -17,23 +18,16 @@
 #define debugf(fmt, ...) if(debug){printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);}
 
 
-__constant__  int pitch;
-
-
 
 int h_index(int i, int j, int n)
 {
     return i + j * n;
 }
 
-void h_swap(float *points, int a, int b, int n)
+void h_swap(Point *points, int a, int b, int n)
 {
-    float tx = points[h_index(a, 0, n)],
-    ty = points[h_index(a, 1, n)],
-    tz = points[h_index(a, 2, n)];
-    points[h_index(a, 0, n)] = points[h_index(b, 0, n)], points[h_index(b, 0, n)] = tx;
-    points[h_index(a, 1, n)] = points[h_index(b, 1, n)], points[h_index(b, 1, n)] = ty;
-    points[h_index(a, 2, n)] = points[h_index(b, 2, n)], points[h_index(b, 2, n)] = tz;
+    Point t = points[a];
+    points[a] = points[b], points[b] = t;
 }
 
 int midpoint(int lower, int upper)
@@ -51,12 +45,6 @@ unsigned int nextPowerOf2(unsigned int x)
   x |= x >> 8;
   x |= x >> 16;
   return ++x;
-}
-
-
-__device__ int index(int i, int j, int offset)
-{
-    return i + (j * pitch) + offset;
 }
 
 __device__
@@ -77,7 +65,7 @@ unsigned int prevPowerOf2(unsigned int n){
 }
 
 
-void h_print_matrix(float* points, int n){
+void h_print_matrix(Point* points, int n){
     if (debug)
     {
         printf("#################\n");
@@ -86,7 +74,7 @@ void h_print_matrix(float* points, int n){
             printf("i = %2d:   ", i );
             for (int j = 0; j < 3; ++j)
             {
-                printf(  " %5.0f ", points[h_index(i,j,n)] );
+                printf(  " %5.0f ", points[i].p[j]);
             }
             printf("\n");
         }
@@ -94,7 +82,7 @@ void h_print_matrix(float* points, int n){
 }
 
 __device__
-void printMatrix(float* points, int n, int offset){
+void printMatrix(Point* points, int n, int offset){
 #if __CUDA_ARCH__>=200
     if (debug)
     {
@@ -108,7 +96,7 @@ void printMatrix(float* points, int n, int offset){
                 printf("i = %3d", i );
                 for (int j = 0; j < 3; ++j)
                 {
-                    printf(  " %3.1f ", points[index(i,j, offset)] );
+                    printf(  " %3.1f ", points[i].p[j]);
                 }
                 printf("\n",1 );
             }
@@ -119,23 +107,21 @@ void printMatrix(float* points, int n, int offset){
 #endif
 }
 
+
 __device__
-void swap(float *points, int a, int b, int offset)
+void swap(Point *points, int a, int b, int offset)
 {
-    float tx = points[index(a, 0, offset)],
-    ty = points[index(a, 1, offset)],
-    tz = points[index(a, 2, offset)];
-    points[index(a, 0, offset)] = points[index(b, 0, offset)], points[index(b, 0, offset)] = tx;
-    points[index(a, 1, offset)] = points[index(b, 1, offset)], points[index(b, 1, offset)] = ty;
-    points[index(a, 2, offset)] = points[index(b, 2, offset)], points[index(b, 2, offset)] = tz;
+    Point t = points[a];
+    points[a] = points[b], points[b] = t;
 }
 
 
+
 __device__
-void cuCompare(float* points, int a, int b, int ddd, int n, int offset, int dir){
+void cuCompare(Point* points, int a, int b, int ddd, int n, int offset, int dir){
     if (b < n)
     {
-        if ((points[index(a,dir,offset)] >= points[index(b,dir,offset)]) == ddd)
+        if ((points[a].p[dir] >= points[b].p[dir]) == ddd)
         {
             swap(points, a, b, offset);
         }
@@ -143,7 +129,7 @@ void cuCompare(float* points, int a, int b, int ddd, int n, int offset, int dir)
 }
 
 __device__
-void cuBitonicSortOneBlock(float *points, unsigned int n, unsigned int offset, int dir)
+void cuBitonicSortOneBlock(Point *points, unsigned int n, unsigned int offset, int dir)
 {
     unsigned int size, stride, ddd, pos, tid;
 
@@ -170,7 +156,7 @@ void cuBitonicSortOneBlock(float *points, unsigned int n, unsigned int offset, i
 
 // A shorted bitonic sort is used to find and place the median.
 __global__
-void cuBalanceBranch(float* points, int n, unsigned int p, int dir){
+void cuBalanceBranch(Point* points, int n, unsigned int p, int dir){
 
     unsigned int prev_pow_two, step, tid, blockoffset, bid;
     tid = threadIdx.x;
@@ -180,29 +166,28 @@ void cuBalanceBranch(float* points, int n, unsigned int p, int dir){
         blockoffset = (step) * bid;
         n=step;
         prev_pow_two = prevPowerOf2(n);
-        printMatrix(points, prev_pow_two, blockoffset);
+        points+=blockoffset;
         cuBitonicSortOneBlock(points, n, blockoffset, dir);
-        // if (!isPowTwo(n))
-        // {
-        // __syncthreads();
-        //     printMatrix(points, n, blockoffset);
-        //     while(tid < (n-prev_pow_two))
-        //     {
-        //         swap(points, prev_pow_two-tid, prev_pow_two+tid, blockoffset);
-        //         tid+=blockDim.x;
-        //     }
-        //     __syncthreads();
-        //     cuBitonicSortOneBlock(points, n, blockoffset, dir);
-        //     __syncthreads();
-        //     while(tid < (n-prev_pow_two))
-        //     {
-        //         swap(points, prev_pow_two-tid, prev_pow_two+tid, blockoffset);
-        //         tid+=blockDim.x;
-        //     }
-        //     __syncthreads();
-        //     cuBitonicSortOneBlock(points, prev_pow_two, (n-prev_pow_two)+blockoffset, dir);
-        //     printMatrix(points, n, blockoffset);
-        // }
+        if (!isPowTwo(n))
+        {
+        __syncthreads();
+            while(tid < (n-prev_pow_two))
+            {
+                swap(points, prev_pow_two-tid, prev_pow_two+tid, blockoffset);
+                tid+=blockDim.x;
+            }
+            __syncthreads();
+            cuBitonicSortOneBlock(points, n, blockoffset, dir);
+            __syncthreads();
+            while(tid < (n-prev_pow_two))
+            {
+                swap(points, prev_pow_two-tid, prev_pow_two+tid, blockoffset);
+                tid+=blockDim.x;
+            }
+            __syncthreads();
+            cuBitonicSortOneBlock(points, prev_pow_two, (n-prev_pow_two), dir);
+        }
+        printMatrix(points, n, blockoffset);
         bid += gridDim.x;
     }
 
@@ -215,24 +200,20 @@ void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
     threads = min(THREADS_PER_BLOCK, (n/p)/2);
 }
 
-void build_kd_tree(float *h_points, int n)
+void build_kd_tree(Point *h_points, int n)
 {
 
     h_print_matrix(h_points, n);
 
-    float* d_points;
-    int p, h, i, numBlocks, numThreads, d_pitch, dim = 3;
-    size_t d_pitch_in_bytes, h_pitch_in_bytes = n*sizeof(float);
+    Point* d_points;
+    int p, h, i, numBlocks, numThreads;
 
 
     checkCudaErrors(
-        cudaMallocPitch(&d_points, &d_pitch_in_bytes, n*sizeof(float), dim));
-    d_pitch    = d_pitch_in_bytes/sizeof(float);
-
-    checkCudaErrors(cudaMemcpyToSymbol(pitch, &d_pitch, sizeof(int)));
+        cudaMalloc(&d_points, n*sizeof(Point)));
 
     checkCudaErrors(
-        cudaMemcpy2D(d_points, d_pitch_in_bytes, h_points, h_pitch_in_bytes, n*sizeof(float), dim, cudaMemcpyHostToDevice));
+        cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
     h = ceil(log2((float)n + 1) - 1);
     for (i = 0; i < h; i++)
     {
@@ -243,7 +224,8 @@ void build_kd_tree(float *h_points, int n)
     }
 
     checkCudaErrors(
-        cudaMemcpy2D(h_points, h_pitch_in_bytes, d_points, d_pitch_in_bytes, n*sizeof(float), dim, cudaMemcpyDeviceToHost));
+        cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
+
     h_print_matrix(h_points, n);
     checkCudaErrors(cudaFree(d_points));
 }
