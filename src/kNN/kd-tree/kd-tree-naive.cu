@@ -31,7 +31,7 @@ __device__ void printArray(Point *l, int n, char *s)
       printf("%10s: [ ", s);
         for (int i = 0; i < n; ++i)
         {
-          printf("(%3.1f, %3.1f, %3.1f), ", l[i].p[0], l[i].p[1], l[i].p[2]);
+          printf("%3.1f, ", l[i].p[0]);
       }
       printf("]\n");
   }
@@ -59,7 +59,7 @@ __device__ void printArrayInt(int *l, int n, char *s)
 }
 }
 
-__device__ unsigned int cuSumReduce(int *list, int n)
+__device__ int cuSumReduce(int *list, int n)
 {
   int half = n/2;
   int tid = threadIdx.x;
@@ -89,8 +89,49 @@ __device__  void cuAccumulateIndex(int *list, int n)
     }
 }
 
+__device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
+{
+    unsigned int
+    tid = threadIdx.x,
+    is_bigger,
+    big,
+    less;
 
-__device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int *one_count, unsigned int bit, int dir)
+    zero_count[threadIdx.x] = 0;
+    one_count[threadIdx.x] = 0;
+
+    while(tid < n)
+    {
+        swap[tid]=data[tid];
+        is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
+        one_count[threadIdx.x] += is_bigger;
+        zero_count[threadIdx.x] += !is_bigger;
+        tid+=blockDim.x;
+    }
+    __syncthreads();
+    cuAccumulateIndex(zero_count, blockDim.x);
+    cuAccumulateIndex(one_count, blockDim.x);
+    printArrayInt(partition, n, "pertirion");
+    tid = threadIdx.x;
+    __syncthreads();
+    less = zero_count[threadIdx.x];
+    big = one_count[threadIdx.x];
+    while(tid<n)
+    {
+        if (!partition[tid])
+        {
+            data[less]=swap[tid];
+            less++;
+        }else
+        {
+            data[n-big-1]=swap[tid];
+            big++;
+        }
+        tid+=blockDim.x;
+    }
+}
+
+__device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
 {
     unsigned int
     tid = threadIdx.x,
@@ -100,51 +141,37 @@ __device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int 
     radix = (1 << 31-bit);
 
     zero_count[threadIdx.x] = 0;
-    one_count[threadIdx.x] = 0;
 
     while(tid < n)
     {
-        data_copy[tid]=data[tid];
-        is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[dir]))&radix);
-        one_count[threadIdx.x] += is_one;
-        zero_count[threadIdx.x] += !is_one;
-        tid+=blockDim.x;
-    }
-    __syncthreads();
-    int last_zero_count = zero_count[blockDim.x-1];
-    cuAccumulateIndex(zero_count, blockDim.x);
-    cuAccumulateIndex(one_count, blockDim.x);
-    __syncthreads();
-
-    tid = threadIdx.x;
-    zero = zero_count[threadIdx.x];
-    one = one_count[threadIdx.x];
-    while(tid<n)
-    {
-        if (!partition[tid])
+        if (partition[tid] == last)
         {
-            data[zero]=data_copy[tid];
-            zero++;
-        }else
-        {
-            data[n-one-1]=data_copy[tid];
-            one++;
+            is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[dir]))&radix);
+            zero_count[threadIdx.x] += !is_one;
+        }else{
+            partition[tid] = 2;
         }
         tid+=blockDim.x;
     }
-    return zero_count[blockDim.x-1]+last_zero_count;
+    __syncthreads();
+    return cuSumReduce(zero_count, blockDim.x);
 }
+
 
 __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
 {
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
+    __shared__ Point median;
 
-    unsigned int l=0,
+    int l=0,
     u = n,
     cut=0,
     bit = 0,
+    last = 2,
     tid = threadIdx.x;
+
+
     if (n<2)
     {
         if ((n == 1) && !(tid))
@@ -153,23 +180,50 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
         }
         return;
     }
-    do {
 
-        cut = cuPartition(data+l, data_copy, u-l, partition, one_count, zeros_count, bit++, dir);
+    while(tid < n)
+    {
+        partition[tid] = last;
+        tid+=blockDim.x;
+    }
+
+    tid = threadIdx.x;
+    do {
         __syncthreads();
+        cut = cuPartition(data, data_copy, n, partition, zeros_count, last, bit++, dir);
         if ((l+cut) <= m)
         {
             l +=cut;
+            last = 1;
         }
         else
         {
+            last = 0;
             u -=u-cut-l;
         }
-    }while ((u > l) && (bit<32));
-    if (tid == 0)
+    }while (((u-l)>1) && (bit<32));
+
+    tid = threadIdx.x;
+
+    __syncthreads();
+    while(tid < n)
     {
-        *result = data[m];
+        if (partition[tid] == last)
+        {
+            median = data[tid];
+            data[tid]=data[0], data[0] = median;
+        }
+        tid+=blockDim.x;
     }
+    printArray(data, n, "data_before_swap");
+    __syncthreads();
+    cuPartitionSwap(data+1, data_copy, n-1, partition, one_count, zeros_count, median, dir);
+    __syncthreads();
+    median = data[m];
+    data[m]=data[0], data[0] = median;
+
+    printArray(data, n, "dataafter_swap");
+
 }
 
 __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)

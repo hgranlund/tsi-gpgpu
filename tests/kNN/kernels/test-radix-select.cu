@@ -67,10 +67,12 @@ void printPoints(Point* l, int n){
   int i;
   if (debug)
   {
-    printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
+    // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
+    printf("[%3.1f, ", l[0].p[0]);
       for (i = 1; i < n; ++i)
       {
-        printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
+        printf(", %3.1f, ", l[i].p[0]);
+        // printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
       }
       printf("]\n");
     }
@@ -81,7 +83,7 @@ void printPoints(Point* l, int n){
     Point *h_points;
     float temp;
     unsigned int i,n;
-    for (n = 4; n <=200; n+=10)
+    for (n = 4; n <=2000; n<<=1)
     {
       h_points = (Point*) malloc(n*sizeof(Point));
       srand ( (unsigned int)time(NULL) );
@@ -109,7 +111,7 @@ void printPoints(Point* l, int n){
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
 
-      cuRadixSelectGlobal<<<1,64>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
+      cuRadixSelectGlobal<<<1,2>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -117,12 +119,23 @@ void printPoints(Point* l, int n){
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
       printPoints(h_points,n);
-      debugf("result = (%3.1f, %3.1f, %3.1f)\n", h_result.p[0], h_result.p[1], h_result.p[2] );
 
+      debugf("result = (%3.1f, %3.1f, %3.1f)\n", h_points[n/2].p[0], h_points[n/2].p[1], h_points[n/2].p[2] );
+      ASSERT_EQ(cpu_result.p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
+      ASSERT_EQ(cpu_result.p[1], h_points[n/2].p[1]) << "Faild with n = " << n;
+      ASSERT_EQ(cpu_result.p[2], h_points[n/2].p[2]) << "Faild with n = " << n;
+
+      for (int i = 0; i < n/2; ++i)
+      {
+        ASSERT_LE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
+        /* code */
+      }
+      for (int i = n/2; i < n; ++i)
+      {
+        ASSERT_GE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
+        /* code */
+      }
         // printDistArray(h_points,n);
-      ASSERT_EQ(cpu_result.p[0], h_result.p[0]) << "Faild with n = " << n;
-      ASSERT_EQ(cpu_result.p[1], h_result.p[1]) << "Faild with n = " << n;
-      ASSERT_EQ(cpu_result.p[2], h_result.p[2]) << "Faild with n = " << n;
       checkCudaErrors(
         cudaFree(d_points));
       checkCudaErrors(
