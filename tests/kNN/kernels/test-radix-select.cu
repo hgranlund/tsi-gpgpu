@@ -65,7 +65,7 @@ void printPoints(Point* l, int n){
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
 
-      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, partition, d_result);
+      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -73,7 +73,7 @@ void printPoints(Point* l, int n){
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
       printPoints(h_points,n);
-      debugf("result = %3.1f\n", h_result);
+      debugf("result = (%3.1f, %3.1f, %3.1f)\n", h_result.p[0], h_result.p[1], h_result.p[2] );
 
         // printDistArray(h_points,n);
       ASSERT_EQ(cpu_result.p[0], h_result.p[0]) << "Faild with n = " << n;
@@ -90,6 +90,7 @@ void printPoints(Point* l, int n){
       cudaDeviceReset();
     }
   }
+
   TEST(kernels, radix_selection_time){
     Point *h_points;
     unsigned int i,n;
@@ -132,7 +133,7 @@ void printPoints(Point* l, int n){
 
     checkCudaErrors(cudaEventRecord(start, 0));
 
-    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, partition, d_result);
+    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
 
 
     checkCudaErrors(cudaEventRecord(stop, 0));

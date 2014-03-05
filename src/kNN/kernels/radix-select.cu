@@ -88,7 +88,7 @@ __device__ void printArray(Point *l, int n, char *s)
     }
 
 
-    __device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int *one_count, unsigned int bit)
+    __device__ unsigned int cuPartition(Point *data, Point *data_copy, unsigned int n, int *partition, int *zero_count, int *one_count, unsigned int bit, int dir)
     {
       unsigned int
       tid = threadIdx.x,
@@ -103,7 +103,7 @@ __device__ void printArray(Point *l, int n, char *s)
       while(tid < n)
       {
         data_copy[tid]=data[tid];
-        is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[0]))&radix);
+        is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[dir]))&radix);
         one_count[threadIdx.x] += is_one;
         zero_count[threadIdx.x] += !is_one;
         tid+=blockDim.x;
@@ -134,7 +134,7 @@ __device__ void printArray(Point *l, int n, char *s)
     }
 
 //TODO do not need partition and zeroes, only one partitian or store the partition data on dava/datacopy
-    __global__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, Point *result)
+    __global__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result)
     {
       __shared__ int one_count[2048];
       __shared__ int zeros_count[2048];
@@ -154,7 +154,7 @@ __device__ void printArray(Point *l, int n, char *s)
       }
       do {
 
-        cut = cuPartition(data+l, data_copy, u-l, partition, one_count, zeros_count, bit++);
+        cut = cuPartition(data+l, data_copy, u-l, partition, one_count, zeros_count, bit++, dir);
         __syncthreads();
         if ((l+cut) <= m)
         {

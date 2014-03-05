@@ -4,7 +4,7 @@
 
 
 __global__
-void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, Point *result);
+void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir, Point *result);
 
 Point cpu_radixselect(Point *data, int l, int u, int m, int bit);
 
