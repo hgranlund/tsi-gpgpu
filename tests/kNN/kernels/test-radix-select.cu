@@ -111,7 +111,7 @@ void printPoints(Point* l, int n){
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
 
-      cuRadixSelectGlobal<<<1,2>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
+      cuRadixSelectGlobal<<<1,2>>>(d_points, d_temp, n/2, n, partition, 0);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -190,7 +190,7 @@ void printPoints(Point* l, int n){
 
     checkCudaErrors(cudaEventRecord(start, 0));
 
-    cuRadixSelectGlobal<<<1,1024>>>(d_points, d_temp, n/2, n, partition, 0, d_result);
+    cuRadixSelectGlobal<<<1,1024>>>(d_points, d_temp, n/2, n, partition, 0);
 
 
     checkCudaErrors(cudaEventRecord(stop, 0));
