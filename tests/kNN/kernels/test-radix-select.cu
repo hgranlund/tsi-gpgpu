@@ -50,7 +50,7 @@ void printPoints(Point* l, int n){
       printPoints(h_points,n);
 
       Point *d_points, *d_temp, *d_result, h_result;
-      int *d_ones;
+      int *partition;
       checkCudaErrors(
         cudaMalloc((void **)&d_result, sizeof(Point)));
       checkCudaErrors(
@@ -58,14 +58,14 @@ void printPoints(Point* l, int n){
       checkCudaErrors(
         cudaMalloc((void **)&d_temp, n*sizeof(Point)));
       checkCudaErrors(
-        cudaMalloc((void **)&d_ones, n*sizeof(int)));
+        cudaMalloc((void **)&partition, n*sizeof(int)));
       checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
 
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
 
-      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, d_ones, d_result);
+      cuRadixSelect<<<1,64>>>(d_points, d_temp, n/2, n, partition, d_result);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -82,7 +82,7 @@ void printPoints(Point* l, int n){
       checkCudaErrors(
         cudaFree(d_points));
       checkCudaErrors(
-        cudaFree(d_ones));
+        cudaFree(partition));
       checkCudaErrors(
         cudaFree(d_result));
       free(h_points);
@@ -110,7 +110,7 @@ void printPoints(Point* l, int n){
     printPoints(h_points,n);
 
     Point *d_points, *d_temp, *d_result, h_result;
-    int *d_ones;
+    int *partition;
     checkCudaErrors(
       cudaMalloc((void **)&d_result, sizeof(Point)));
     checkCudaErrors(
@@ -118,7 +118,7 @@ void printPoints(Point* l, int n){
     checkCudaErrors(
       cudaMalloc((void **)&d_temp, n*sizeof(Point)));
     checkCudaErrors(
-      cudaMalloc((void **)&d_ones, n*sizeof(int)));
+      cudaMalloc((void **)&partition, n*sizeof(int)));
     checkCudaErrors(
       cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
 
@@ -132,7 +132,7 @@ void printPoints(Point* l, int n){
 
     checkCudaErrors(cudaEventRecord(start, 0));
 
-    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, d_ones, d_result);
+    cuRadixSelect<<<1,1024>>>(d_points, d_temp, n/2, n, partition, d_result);
 
 
     checkCudaErrors(cudaEventRecord(stop, 0));
@@ -155,7 +155,7 @@ void printPoints(Point* l, int n){
     checkCudaErrors(
       cudaFree(d_points));
     checkCudaErrors(
-      cudaFree(d_ones));
+      cudaFree(partition));
     checkCudaErrors(
       cudaFree(d_result));
     free(h_points);
