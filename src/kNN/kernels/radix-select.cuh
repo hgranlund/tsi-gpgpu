@@ -1,10 +1,12 @@
 #ifndef _RADIX_SELECT_
 #define _RADIX_SELECT_
+#include "point.h"
+
 
 __global__
-void cuRadixSelect(float *data, float *data_copy, unsigned int m, unsigned int n, int *ones, float *result);
+void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *ones, Point *result);
 
-float cpu_radixselect(float *data, int l, int u, int m, int bit);
+Point cpu_radixselect(Point *data, int l, int u, int m, int bit);
 
 #endif
 
