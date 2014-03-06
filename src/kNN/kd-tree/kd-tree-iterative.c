@@ -236,12 +236,12 @@ void randomPoint(struct Point *x)
 
 int main(int argc, char *argv[])
 {
-    int i, j, n = 100000, wn = 6, debug = 0;
+    int i, j, n = 10, wn = 6, debug = 0;
     struct Point *points, *wiki;
 
-    if (debug)
+    if (!debug)
     {
-        n = 10;
+        n = atoi(argv[1]);
     }
 
     points = malloc(n * sizeof(struct Point));
@@ -259,10 +259,11 @@ int main(int argc, char *argv[])
     {
         double time = wall_time();
         build_kd_tree(points, n);
-        printf("Build duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
+        double build_time = (wall_time() - time) * 1000;
+        // printf("Build duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
 
         float query_point[3];
-        int sum = 0, test_runs = n;
+        int sum = 0, test_runs = 10000;
         time = wall_time();
 
         for (i = 0; i < test_runs; i++) {
@@ -272,8 +273,10 @@ int main(int argc, char *argv[])
             nearest(query_point, points, 0, n, 0, n);
         }
 
-        printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
-        printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
+        // printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
+        // printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
+
+        printf("%lf, %lf\n", ((wall_time() - time) * 1000) / test_runs, build_time);
     }
 
     if (debug)

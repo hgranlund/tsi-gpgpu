@@ -9,7 +9,7 @@ In order to make the document more readable, we have included short descriptions
 The following papers, available in the resources folder, forms the literary basis for our current work.
 
 Related to the brute force approach:
-* _Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
+* _Improving the k-Nearest Neighbor Algorithm with CUDA - Graham Nolan_
 * _Fast k Nearest Neighbor Search using GPU - Garcia et al._
 * _K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al._
 
@@ -155,6 +155,10 @@ The paper _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al.
 
 A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by NVIDIA, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
 
+#### Data structure
+
+Something about out array in place data structure.
+
 ## Parallel implementations
 
 As we noted in the previous section, the kd-tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize this operation. In order to do this, we have to look a bit closer at the different steps of the kd-tree build algorithm.
@@ -176,8 +180,17 @@ __Simen write something about radix select__
 
 __Here we presents graphs of the parallel implementation of kd-tree building__
 
+![gpu-vs-cpu-build-time](./images/gpu-vs-cpu-build-time.png)
+
+![awg-query-time-old-vs-new](./images/awg-query-time-old-vs-new.png)
+
+![n-query-time-old-vs-new](./images/n-query-time-old-vs-new.png)
+
+
 ### Further work
 
-* Look at memory optimization with CUDA.
+* Tune radix select algorithm to better work with the different problem sizes in each iteration.
+* Store children locations in the three, so we do not have to calculate their location when searching.
 * Implement parallel search, where the different queries are performed in parallel.
+* Look at memory optimization with CUDA.
 * More to be included.
