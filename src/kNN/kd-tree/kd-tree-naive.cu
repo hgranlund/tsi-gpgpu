@@ -20,6 +20,47 @@
 #define debugf(fmt, ...) if(debug){printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);}
 
 
+void h_print_matrix(Point* points, int n){
+    if (debug)
+    {
+        printf("#################\n");
+        for (int i = 0; i < n; ++i)
+        {
+            printf("i = %2d:   ", i );
+            for (int j = 0; j < 3; ++j)
+            {
+                printf(  " %5.0f ", points[i].p[j]);
+            }
+            printf("\n");
+        }
+    }
+}
+
+__device__
+void printMatrix(Point* points, int n, int offset){
+#if __CUDA_ARCH__>=200
+    if (debug)
+    {
+        __syncthreads();
+        if (threadIdx.x ==0 && blockIdx.x ==0)
+        {
+            printf("####################\n");
+            printf("block = %d, blockOffset = %d\n", blockIdx.x, offset );
+            for (int i = 0; i < n; ++i)
+            {
+                printf("i = %3d", i );
+                for (int j = 0; j < 3; ++j)
+                {
+                    printf(  " %3.1f ", points[i].p[j]);
+                }
+                printf("\n",1 );
+            }
+            printf("\n####################\n");
+        }
+        __syncthreads();
+    }
+#endif
+}
 
 __device__ void printArray(Point *l, int n, char *s)
 {
@@ -58,6 +99,45 @@ __device__ void printArrayInt(int *l, int n, char *s)
 #endif
 }
 }
+
+__global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
+{
+  cuRadixSelect(data, data_copy, m, n, partition, dir);
+}
+
+
+
+__device__ __host__
+unsigned int nextPowerOf2(unsigned int x)
+{
+  --x;
+  x |= x >> 1;
+  x |= x >> 2;
+  x |= x >> 4;
+  x |= x >> 8;
+  x |= x >> 16;
+  return ++x;
+}
+
+__device__ __host__
+bool isPowTwo(unsigned int x)
+{
+  return ((x&(x-1))==0);
+}
+
+__device__ __host__
+unsigned int prevPowerOf2(unsigned int n)
+{
+    if (isPowTwo(n))
+    {
+        return n;
+    }
+    n = nextPowerOf2(n);
+    return n >>=1;
+
+}
+
+
 
 __device__ int cuSumReduce(int *list, int n)
 {
@@ -207,85 +287,7 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
     data[m]=data[0], data[0] = median;
 }
 
-__global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
-{
-  cuRadixSelect(data, data_copy, m, n, partition, dir);
-}
 
-
-
-__device__ __host__
-unsigned int nextPowerOf2(unsigned int x)
-{
-  --x;
-  x |= x >> 1;
-  x |= x >> 2;
-  x |= x >> 4;
-  x |= x >> 8;
-  x |= x >> 16;
-  return ++x;
-}
-
-__device__ __host__
-bool isPowTwo(unsigned int x)
-{
-  return ((x&(x-1))==0);
-}
-
-__device__ __host__
-unsigned int prevPowerOf2(unsigned int n)
-{
-    if (isPowTwo(n))
-    {
-        return n;
-    }
-    n = nextPowerOf2(n);
-    return n >>=1;
-
-}
-
-
-void h_print_matrix(Point* points, int n){
-    if (debug)
-    {
-        printf("#################\n");
-        for (int i = 0; i < n; ++i)
-        {
-            printf("i = %2d:   ", i );
-            for (int j = 0; j < 3; ++j)
-            {
-                printf(  " %5.0f ", points[i].p[j]);
-            }
-            printf("\n");
-        }
-    }
-}
-
-__device__
-void printMatrix(Point* points, int n, int offset){
-#if __CUDA_ARCH__>=200
-    if (debug)
-    {
-        __syncthreads();
-        if (threadIdx.x ==0 && blockIdx.x ==0)
-        {
-            printf("####################\n");
-            printf("block = %d, blockOffset = %d\n", blockIdx.x, offset );
-            for (int i = 0; i < n; ++i)
-            {
-                printf("i = %3d", i );
-                for (int j = 0; j < 3; ++j)
-                {
-                    printf(  " %3.1f ", points[i].p[j]);
-                }
-                printf("\n",1 );
-            }
-            printf("\n####################\n");
-        }
-        __syncthreads();
-    }
-#endif
-}
 
 __global__
 void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir){
@@ -298,7 +300,6 @@ void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, i
         printMatrix(points, n, blockoffset);
         bid += gridDim.x;
     }
-
 }
 
 void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
