@@ -70,6 +70,12 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
     printf("kd tree:\n");
     print_tree(points, 0, 0, n, n);
     printf("==================\n");
+
+    for (int i = 0; i < n; ++i)
+    {
+      printf("%3.1f, ", points[i].p[0]);
+    }
+    printf("\n");
   }
 
   build_kd_tree(points, n);

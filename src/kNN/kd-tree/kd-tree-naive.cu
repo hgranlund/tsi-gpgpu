@@ -169,6 +169,7 @@ __device__  void cuAccumulateIndex(int *list, int n)
     }
 }
 
+
 __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
 {
     unsigned int
@@ -240,13 +241,13 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
     __shared__ int zeros_count[1025];
     __shared__ Point median;
 
+
     int l=0,
     u = n,
     cut=0,
     bit = 0,
     last = 2,
     tid = threadIdx.x;
-
     while(tid < n)
     {
         partition[tid] = last;
@@ -287,7 +288,28 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
     data[m]=data[0], data[0] = median;
 }
 
-
+__global__
+void cuBalanceBranchLeafs(Point* points, int n, int dir)
+{
+    int
+    step = n/gridDim.x,
+    blockOffset = step*blockIdx.x,
+    tid = threadIdx.x;
+    step=step/2;
+    Point point1;
+    Point point2;
+    points += blockOffset;
+    while(tid < step){
+        point1 = points[tid*2];
+        point2 = points[tid*2+1];
+        if (point1.p[dir]>point2.p[dir])
+        {
+            points[tid*2] = point2;
+            points[tid*2+1] = point1;
+        }
+        tid += blockDim.x;
+    }
+}
 
 __global__
 void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir){
@@ -301,7 +323,6 @@ void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, i
         bid += gridDim.x;
     }
 }
-
 void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
 {
     n = n/p;
@@ -335,13 +356,19 @@ void build_kd_tree(Point *h_points, int n)
 
     h = ceil(log2((float)n + 1) - 1);
     p = 1;
-    for (i = 0; i < h; i++)
+    for (i = 0; i < h-1; i++)
     {
         getThreadAndBlockCount(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
         cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, i%3);
         p <<=1;
     }
+
+    numThreads = min(n, THREADS_PER_BLOCK/2);
+    numBlocks = n/numThreads;
+    numBlocks = min(numBlocks, 65536);
+    debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
+    cuBalanceBranchLeafs<<<numBlocks, numThreads>>>(d_points, n, (h-1)%3);
 
     checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
