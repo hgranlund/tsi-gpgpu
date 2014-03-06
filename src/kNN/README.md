@@ -49,7 +49,6 @@ Steps:
 2. Bitonic sort: worst case = O(n*log²(n)), average time ( parallel) = O(log²(n)).
 
 
-
 #### Results
 
 Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
@@ -91,7 +90,6 @@ The optimizations include:
 
 #### Results
 
-
 Test results of n = 8 388 608 with no memory optimization:
 
 *  Memory transfer:  21.1 ms.
@@ -105,7 +103,6 @@ Test results of n = 8 388 608 with memory optimization:
 *  Calculate all distances: 2.5 ms
 *  One min-reduce step : 1.7 ms.
 *  Total time: (23.7 + k*1.7) ms.
-
 
 
 ![Comparison between bitonic and reduce (k=10).](./images/BitonicVSreduce.png)
@@ -150,8 +147,6 @@ Steps:
 
 #### Results
 
-Referring to the previous result graph, we are going to break down
-
 ![serial-k-d-tree-breakdown](./images/serial-k-d-tree-breakdown.png)
 
 As expected, almost all the time is spent building the tree. Querying for the closest neighbor in the largest tree took less than 0.0015 ms, but 9 seconds is a long time to wait for the tree to build.
@@ -170,21 +165,19 @@ Steps:
 2. Sort all points with lower values than the median to the left of the median, and all the points with higher values than the median to the right.
 3. Perform this algorithm recursively on the left and right set of nodes.
 
-Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. More writing commence here.
+Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. The parallel algorithm for finding the median can be used to speed up the early iterations, where we do not have the possibility of calculating several sub-trees in parallel, as well as speeding up the calculation on lather calculations, by utilizing the large number of concurrent threads available in each parallel process.
 
-### Implementation details
-
-
-We started by making the algorithm work "in place" on a simple array. This gave us a smaller memory footprint, and made the transfer of the data structures to the GPU a simple task. It also makes merging sub-trees very simple, since you just have to append the different sub-arrays. Then we identified what could be parallelized. When building the tree, you can build each of the sub-trees independent of each other. This is one way we have parallelized the building process. The other way is by re-using the code for the bitonic-sort, in order to determine the mean at each step. This is especially beneficial in the first steps, when we have few sub-trees that can be parallelized. Instead we use the parallel resources to more quickly find the median.
+Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. given a sorted list, you can find the median directly, by simply looking at the midmost element of the array. This strategy was quickly abandoned, as re-purposing the bitonic algorithm for such an task proved difficult. Sorting a list, in order to find the median, is also inherently a inefficient strategy, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting. Therefor radix select was chosen as our strategy for finding the median.
 
 
-Our focus therefore turned to implementing and parallelizing the algorithm our self. This has proven to be a quite challenging task. One might think that you would just would split the workload over new processors every time a split occur in the recursive algorithm. This would give a speed increase, but you still have to process all the nodes in the root node, requiring at least O(n) time.
+__Simen write something about radix select__
 
-Another option could be to build several small trees on different processes, but then you would get an large time penalty when trying to combine the different sub-trees.
+### Results
 
+__Here we presents graphs of the parallel implementation of kd-tree building__
 
-#### Further work
+### Further work
 
-* Try out a heuristic and parallel method for determining the median point.
-* Parallelize the code according to one of the simple strategies.
-* Further investigate the strategies used in _Real-Time KD-Tree Construction on Graphics Hardware_
+* Look at memory optimization with CUDA.
+* Implement parallel search, where the different queries are performed in parallel.
+* More to be included.
