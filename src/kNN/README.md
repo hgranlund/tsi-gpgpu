@@ -125,9 +125,6 @@ fig: Brute-force - k = 10
 k-d tree based effort
 =====================
 
-A brief guide to kd-trees
--------------------------
-
 A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
 
 ![2d-k-d-tree](./images/Kdtree_2d.png)
@@ -170,20 +167,48 @@ A more uplifting find was several references to _Real-Time KD-Tree Construction 
 Our reimplementation
 --------------------
 
-_A bit about the array way to represent a kd-tree_
+Finding a way to represent the kd-tree boils down to representing a binary tree. This can be done in several ways, but we had some criteria for our representation:
+
+* The kd-tree should be memory-efficient, at best explicitly storing only the actual point coordinates. This since we want to store the largest possible amount of points on the smaller memory of the GPU.
+* The kd-tree representation should be easy to split, distribute and join, since we want to build it on several independent processes.
+
+After a bit of research and trial and error, we choose to represent the kd-tree as a array of structs, representing points, with an x, y and z coordinate stored in an short array. In order to turn this array into a binary tree, the following scheme was derived. Given an array, the root node of that array is the midmost element (the leftmost of the two, given an even number of elements). To find the left child of the root, you simply find the midmost element of the left sub-array, and likewise for the right child. This representation have some advantages and drawbacks.
+
+Advantages:
+
+* Can represent binary trees where not all leaf-nodes are present. This is the minimal requirement for representing perfectly balanced kd-trees.
+* Joining or splitting subtrees is as simple as appending or splitting arrays.
+* Minimal memory overhead, kd-trees can even be built in-place on the array.
+
+Drawbacks:
+
+* Cannot represent imperfectly balanced kd-trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
+* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree (foreshadowing...)
+
+Given this representation of the kd-tree, the base kd-tree building algorithm can be expanded to the following:
+
+Steps:
+
+1. Find the exact median (of the current split dimension) in this sub-array, and swap it to the midmost place.
+2. Go through all elements in the list, and swap elements, such that all elements lower than the median is placed to the left, and all elements higher than the median is placed to the right.
+3. Repeat for the new sub-arrays, until the entire tree is built.
 
 #### Results
 
+_The serial kd-tree build times was similar or better than the base algorithm, so it is not discussed here_
+
 ![awg-query-time-old-vs-new](./images/awg-query-time-old-vs-new.png)
 
+As we can see from the graph, the need for calculating the location of each child at each step in the search has a negative impact on our search time. We also note the unstable curve traced by our tests. This is probably the result of the calculation overhead, enhancing the lower runtime of cases where the combination of query-points and kd-tree, does not allow for easy pruning of the tree during search. In such cases, a notable amount of extra points has to be traversed and searched, all penalized by the lowered lookup performance.
+
 ![n-query-time-old-vs-new](./images/n-query-time-old-vs-new.png)
+
+This problem is enhanced when we consider N searches, and it is worth to note the long time required to perform all N searches, even given a sub-millisecond runtime for an individual search. This should be an argument for parallelizing large number of searches. In spite of this problem, the search is still a lot faster than the brute force approach, only requiring a search time of ~0.01 ms for one query in 14 million points.
 
 #### Possible improvements
 
 * Store pointers to each child median in parent struct. Easy to implement, but requires more memory.
-* Run several queries in parallel. Easy to implement, as parallelization is trivial due to independent queries, but is dependent on efficient transfear and storage of the kd-tree on the GPU. 
-
-Something about out array in place data structure.
+* Run several queries in parallel. Easy to implement, as parallelization is trivial due to independent queries, but is dependent on efficient transfer and storage of the kd-tree on the GPU.
 
 
 Parallel improvements
@@ -199,22 +224,23 @@ Steps:
 
 Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. The parallel algorithm for finding the median can be used to speed up the early iterations, where we do not have the possibility of calculating several sub-trees in parallel, as well as speeding up the calculation on lather calculations, by utilizing the large number of concurrent threads available in each parallel process.
 
-Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. given a sorted list, you can find the median directly, by simply looking at the midmost element of the array. This strategy was quickly abandoned, as re-purposing the bitonic algorithm for such an task proved difficult. Sorting a list, in order to find the median, is also inherently a inefficient strategy, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting. Therefor radix select was chosen as our strategy for finding the median.
+Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. given a sorted list you can find the median directly, by simply looking at the midmost element of the array. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. We also have the inherent dowside of sorting a list in order to find the median, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting. Instead we chose to continue working with radix select as our strategy for finding the median.
 
-
-__Simen write something about radix select__
+_Simen's brief description of radix select_
 
 #### Results
 
-__Here we presents graphs of the parallel implementation of kd-tree building__
-
 ![gpu-vs-cpu-build-time](./images/gpu-vs-cpu-build-time.png)
 
+We see that the parallel implementation performs better than the base serial implementation, building a tree of 14 million points in just over 5 seconds, compared to just under 10 required by the serial algorithm. Still we regard this as a quite rough implementation, in need of more tuning to really bring out the speed potential. The potential for parallelizing the workload for the first few iterations have not been fully developed. We also see a couple of large "jumps" in the graph. This is due to the implementation forcing one version of the radix select algorithm being to work on all problem sizes. This is not optimal for this algorithm, and as a result, we get high penalties when the problem size reaches "unsuitable" values. Basic tuning has been explored, and the preliminary results look very promising, but this is better discussed on our nest meeting.
 
 #### Further work
 
 * Tune radix select algorithm to better work with the different problem sizes in each iteration.
 * Store children locations in the three, so we do not have to calculate their location when searching.
-* Implement parallel search, where the different queries are performed in parallel.
-* Look at memory optimization with CUDA.
-* More to be included.
+* Always look at that memory optimization.
+
+Work-plan for next week
+-----------------------
+
+Both parallelizing the search, and improving the parallel building implementation is important, so we'll run those two tasks as parallel tracks.
