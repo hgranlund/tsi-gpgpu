@@ -17,4 +17,7 @@ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n
 __global__
 void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir);
 
+__global__
+void cuQuickSelect(Point* points, int n, int p, int *blockSplit, int dir);
+
 #endif

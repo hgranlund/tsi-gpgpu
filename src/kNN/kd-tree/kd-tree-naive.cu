@@ -1,4 +1,3 @@
-#include <radix-select.cuh>
 #include <kd-tree-naive.cuh>
 
 #include <stdio.h>
@@ -8,97 +7,16 @@
 #include <point.h>
 #include <helper_cuda.h>
 
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
 // #define THREADS_PER_BLOCK 4U
 // #define MAX_BLOCK_DIM_SIZE 8U
 
 #include <string.h>
+
 #define debug 0
-#define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#define debugf(fmt, ...) if(debug){printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);}
+#include "common-debug.cuh"
 
-
-void h_print_matrix(Point* points, int n){
-    if (debug)
-    {
-        printf("#################\n");
-        for (int i = 0; i < n; ++i)
-        {
-            printf("i = %2d:   ", i );
-            for (int j = 0; j < 3; ++j)
-            {
-                printf(  " %5.0f ", points[i].p[j]);
-            }
-            printf("\n");
-        }
-    }
-}
-
-__device__
-void printMatrix(Point* points, int n, int offset){
-#if __CUDA_ARCH__>=200
-    if (debug)
-    {
-        __syncthreads();
-        if (threadIdx.x ==0 && blockIdx.x ==0)
-        {
-            printf("####################\n");
-            printf("block = %d, blockOffset = %d\n", blockIdx.x, offset );
-            for (int i = 0; i < n; ++i)
-            {
-                printf("i = %3d", i );
-                for (int j = 0; j < 3; ++j)
-                {
-                    printf(  " %3.1f ", points[i].p[j]);
-                }
-                printf("\n",1 );
-            }
-            printf("\n####################\n");
-        }
-        __syncthreads();
-    }
-#endif
-}
-
-__device__ void printArray(Point *l, int n, char *s)
-{
-  if (debug)
-  {
-        #if __CUDA_ARCH__>=200
-    if (threadIdx.x == 0)
-    {
-      printf("%10s: [ ", s);
-        for (int i = 0; i < n; ++i)
-        {
-          printf("%3.1f, ", l[i].p[0]);
-      }
-      printf("]\n");
-  }
-  __syncthreads();
-          #endif
-}
-}
-
-__device__ void printArrayInt(int *l, int n, char *s)
-{
-    if (debug)
-    {
-#if __CUDA_ARCH__>=200
-      if (threadIdx.x == 0)
-      {
-        printf("%10s: [ ", s);
-          for (int i = 0; i < n; ++i)
-          {
-            printf("%3d, ", l[i]);
-        }
-        printf("]\n");
-    }
-    __syncthreads();
-#endif
-}
-}
 
 __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
 {
@@ -138,6 +56,11 @@ unsigned int prevPowerOf2(unsigned int n)
 }
 
 
+
+__device__ void cuPointSwap(Point *p, int a, int b){
+    Point temp = p[a];
+    p[a]=p[b], p[b]=temp;
+}
 
 __device__ int cuSumReduce(int *list, int n)
 {
@@ -192,7 +115,6 @@ __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *p
     __syncthreads();
     cuAccumulateIndex(zero_count, blockDim.x);
     cuAccumulateIndex(one_count, blockDim.x);
-    printArrayInt(partition, n, "pertirion");
     tid = threadIdx.x;
     __syncthreads();
     less = zero_count[threadIdx.x];
@@ -312,6 +234,59 @@ void cuBalanceBranchLeafs(Point* points, int n, int dir)
 }
 
 __global__
+void cuQuickSelect(Point* points, int n, int p, int *blockOffsets, int dir){
+
+    int pos, i,
+    right = n/p - 1,
+    step=n/p,
+    listInBlock = blockOffsets[blockIdx.x+1]-blockOffsets[blockIdx.x],
+    left = 0,
+    tid = threadIdx.x,
+    m=step/2;
+    Point s_points[32];
+    points += blockOffsets[blockIdx.x]*step;
+    points += step * tid;
+    float pivot;
+    while( tid < listInBlock)
+    {
+        for (i = 0; i < step; ++i)
+        {
+            s_points[i]=points[i];
+        }
+        while (left < right)
+        {
+            pivot = s_points[m].p[dir];
+            cuPointSwap(s_points, m, right);
+            for (i = pos = left; i < right; i++)
+            {
+                if (s_points[i].p[dir] < pivot)
+                {
+                    cuPointSwap(s_points, i, pos);
+                    pos++;
+                }
+            }
+            cuPointSwap(s_points, right, pos);
+            if (pos == m) break;
+            if (pos < m) left = pos + 1;
+            else right = pos - 1;
+        }
+        for (i = 0; i < step; ++i)
+        {
+            points[i]=s_points[i];
+        }
+        tid += blockDim.x;
+        points += step * blockDim.x;
+    }
+    free(s_points);
+}
+
+
+
+// float quick_select(int k, struct Point *x, int lower, int upper, int dir)
+// {
+
+
+__global__
 void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir){
 
     int blockoffset, bid;
@@ -319,7 +294,6 @@ void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, i
     while(bid < p){
         blockoffset = n * bid;
         cuRadixSelect(points+blockoffset, swap+blockoffset, n/2, n, partition+blockoffset, dir);
-        printMatrix(points, n, blockoffset);
         bid += gridDim.x;
     }
 }
@@ -336,7 +310,6 @@ void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
 void build_kd_tree(Point *h_points, int n)
 {
 
-    h_print_matrix(h_points, n);
 
     Point *d_points, *d_swap;
     int p, h, i, numBlocks, numThreads;
@@ -373,7 +346,6 @@ void build_kd_tree(Point *h_points, int n)
     checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
-    h_print_matrix(h_points, n);
 
     checkCudaErrors(cudaFree(d_points));
     checkCudaErrors(cudaFree(d_swap));
