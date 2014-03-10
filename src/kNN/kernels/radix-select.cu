@@ -6,7 +6,7 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
 
-#define debug 1
+#define debug 0
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
