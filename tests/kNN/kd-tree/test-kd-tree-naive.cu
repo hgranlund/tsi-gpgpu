@@ -118,10 +118,10 @@ TEST(kd_tree_naive, kd_tree_naive_step_time){
   int i, n, p, numBlocks, numThreads, *d_partition;
   float temp;
   Point *h_points;
-  h_points = (Point*) malloc(n  * sizeof(Point));
   srand(time(NULL));
   p = 65536;
   n= 4 *p;
+  h_points = (Point*) malloc(n  * sizeof(Point));
   for ( i = 0; i < n; ++i)
   {
     temp = n-i-1;

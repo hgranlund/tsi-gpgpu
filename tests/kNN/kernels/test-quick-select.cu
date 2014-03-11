@@ -37,12 +37,12 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
 
   TEST(kernels, quick_selection){
     Point *h_points, *d_points;
-    int *h_blockOffsets, *d_blockOffsets, numBlocks, numThreads;
+    int numBlocks, numThreads;
     float temp;
     unsigned int i,n, p;
-    for (n = 10; n <=10; n<<=1)
+    for (n = 8; n <=8; n<<=1)
     {
-      p=200000;
+      p=2;
       numBlocks = p;
       n=n*p;
       h_points = (Point*) malloc(n*sizeof(Point));
@@ -52,44 +52,20 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
         temp =  (float) rand()/100000000;
         h_points[i]    = (Point) {temp, temp, temp};
       }
-      int total_lists = p;
       getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
-      h_blockOffsets = (int*) malloc((numBlocks+1)*sizeof(int));
-      h_blockOffsets[0]=0;
-      h_blockOffsets[numBlocks]=total_lists;
-      for (int i = 1; i < numBlocks; ++i)
-      {
-        h_blockOffsets[i]=total_lists/numBlocks * i;
-      }
-      for (int i = 1; i <= total_lists % numBlocks; ++i)
-      {
-        h_blockOffsets[numBlocks - i]++;
-      }
-
 
       checkCudaErrors(
         cudaMalloc((void **)&d_points, n*sizeof(Point)));
       checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
 
-      checkCudaErrors(
-        cudaMalloc((void **)&d_blockOffsets, (numBlocks+1)*sizeof(int)));
-      checkCudaErrors(
-        cudaMemcpy(d_blockOffsets, h_blockOffsets, (numBlocks+1)*sizeof(int), cudaMemcpyHostToDevice));
-
-      // for (int i = 0; i <= numBlocks; ++i)
-      // {
-      //   printf("i = %d, blockoffset =%d\n", i, h_blockOffsets[i] );
-      // }
-
-      h_printPointsArray_(h_points,n, "h_points");
-      printf("blocknum = %d, threadNun = %d\n", numBlocks, numThreads );
-      cuQuickSelect<<<numBlocks,numThreads>>>(d_points, n/p, p, d_blockOffsets, 0);
+      h_printPointsArray_(h_points,n, "h_points",0);
+      cuQuickSelect<<<2,numThreads>>>(d_points, n/p, p, 0);
 
       checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
-      h_printPointsArray_(h_points,n, "h_points");
+      h_printPointsArray_(h_points,n, "h_points",0);
 
       int step = n/p;
       Point *t_points;
@@ -108,17 +84,14 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
 
       checkCudaErrors(
         cudaFree(d_points));
-      checkCudaErrors(
-        cudaFree(d_blockOffsets));
       free(h_points);
-      free(h_blockOffsets);
       cudaDeviceSynchronize();
       cudaDeviceReset();
     }
   }
   TEST(kernels, quick_selection_time){
     Point *h_points, *d_points;
-    int *h_blockOffsets, *d_blockOffsets, numBlocks, numThreads;
+    int numBlocks, numThreads;
     float temp;
     unsigned int i,n, p;
     for (n = 9; n <=9; n<<=1)
@@ -133,36 +106,12 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
         temp =  (float) rand()/100000000;
         h_points[i]    = (Point) {temp, temp, temp};
       }
-      int total_lists = n/(n/p);
       getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
-      h_blockOffsets = (int*) malloc((numBlocks+1)*sizeof(int));
-      h_blockOffsets[0]=0;
-      h_blockOffsets[numBlocks]=total_lists;
-      for (int i = 1; i < numBlocks; ++i)
-      {
-        h_blockOffsets[i]=total_lists/numBlocks * i;
-      }
-      for (int i = 1; i <= total_lists % numBlocks; ++i)
-      {
-        h_blockOffsets[numBlocks - i]++;
-      }
-
-
-      checkCudaErrors(
-        cudaMalloc((void **)&d_blockOffsets, (numBlocks+1)*sizeof(int)));
-      checkCudaErrors(
-        cudaMemcpy(d_blockOffsets, h_blockOffsets, (numBlocks+1)*sizeof(int), cudaMemcpyHostToDevice));
 
       checkCudaErrors(
         cudaMalloc((void **)&d_points, n*sizeof(Point)));
       checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
-
-      checkCudaErrors(
-        cudaMalloc((void **)&d_blockOffsets, (numBlocks+1)*sizeof(int)));
-      checkCudaErrors(
-        cudaMemcpy(d_blockOffsets, h_blockOffsets, (numBlocks+1)*sizeof(int), cudaMemcpyHostToDevice));
-
 
 
             cudaEvent_t start, stop;
@@ -170,11 +119,9 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
       checkCudaErrors(cudaEventCreate(&start));
       checkCudaErrors(cudaEventCreate(&stop));
       float elapsed_time=0;
-
       checkCudaErrors(cudaEventRecord(start, 0));
 
-
-      cuQuickSelect<<<numBlocks,numThreads>>>(d_points, n/p, p, d_blockOffsets, 0);
+      cuQuickSelect<<<numBlocks,numThreads>>>(d_points, n/p, p, 0);
 
       checkCudaErrors(cudaEventRecord(stop, 0));
       cudaEventSynchronize(start);
@@ -184,8 +131,6 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
       double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
       printf("quick_selection, Throughput = %.4f GB/s, Time = %.5f ms, Size = %d, p = %d, NumDevsUsed = %d\n",
        throughput, elapsed_time, n, p, 1);
-
-
 
       checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
@@ -207,83 +152,8 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
 
       checkCudaErrors(
         cudaFree(d_points));
-      checkCudaErrors(
-        cudaFree(d_blockOffsets));
       free(h_points);
-      free(h_blockOffsets);
       cudaDeviceSynchronize();
       cudaDeviceReset();
     }
   }
-  // TEST(kernels, quick_selection_time){
-  //   Point *h_points, *d_points;
-  //   int *h_blockOffsets, *d_blockOffsets;
-  //   float temp;
-  //   unsigned int i,n, p;
-  //   for (n = 8; n <=8; n<<=1)
-  //   {
-  //     p=5;
-  //     int numBlocks = p;
-  //     n=n*p;
-  //     h_points = (Point*) malloc(n*sizeof(Point));
-  //     srand ( (unsigned int)time(NULL) );
-  //     for (i=0 ; i<n; i++)
-  //     {
-  //       temp =  (float) rand()/100000000;
-  //       h_points[i]    = (Point) {temp, temp, temp};
-  //     }
-
-  //     h_blockOffsets = (int*) malloc((numBlocks+1)*sizeof(int));
-  //     h_blockOffsets[numBlocks]=numBlocks;
-  //     h_blockOffsets[0]=0;
-  //     int total_lists = n/(n/p);
-  //     for (int i = 1; i < numBlocks; ++i)
-  //     {
-  //       h_blockOffsets[i]=total_lists/numBlocks * i;
-  //     }
-
-  //     checkCudaErrors(
-  //       cudaMalloc((void **)&d_points, n*sizeof(Point)));
-  //     checkCudaErrors(
-  //       cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
-
-  //     checkCudaErrors(
-  //       cudaMalloc((void **)&d_blockOffsets, (numBlocks+1)*sizeof(int)));
-  //     checkCudaErrors(
-  //       cudaMemcpy(d_blockOffsets, h_blockOffsets, (numBlocks+1)*sizeof(int), cudaMemcpyHostToDevice));
-
-  //     cudaEvent_t start, stop;
-  //     unsigned int bytes = n * (sizeof(Point));
-  //     checkCudaErrors(cudaEventCreate(&start));
-  //     checkCudaErrors(cudaEventCreate(&stop));
-  //     float elapsed_time=0;
-
-  //     checkCudaErrors(cudaEventRecord(start, 0));
-
-
-  //     cuQuickSelect<<<numBlocks,512>>>(d_points, n/p, p, d_blockOffsets, 0);
-
-  //     checkCudaErrors(cudaEventRecord(stop, 0));
-  //     cudaEventSynchronize(start);
-  //     cudaEventSynchronize(stop);
-  //     cudaEventElapsedTime(&elapsed_time, start, stop);
-  //     elapsed_time = elapsed_time ;
-  //     double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
-  //     printf("quick_selection, Throughput = %.4f GB/s, Time = %.5f ms, Size = %d, p = %d, NumDevsUsed = %d\n",
-  //      throughput, elapsed_time, n, p, 1);
-
-
-  //     checkCudaErrors(
-  //       cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
-
-
-  //     checkCudaErrors(
-  //       cudaFree(d_points));
-  //     checkCudaErrors(
-  //       cudaFree(d_blockOffsets));
-  //     free(h_points);
-  //     free(h_blockOffsets);
-  //     cudaDeviceSynchronize();
-  //     cudaDeviceReset();
-  //   }
-  // }
