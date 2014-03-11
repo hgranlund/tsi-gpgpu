@@ -371,7 +371,7 @@ void build_kd_tree(Point *h_points, int n)
     p = 1;
     step = n/p;
     i = 0;
-    while(step > 32)
+    while(step > 256)
     {
         getThreadAndBlockCount(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
