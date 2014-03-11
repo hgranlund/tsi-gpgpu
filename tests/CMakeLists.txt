@@ -61,10 +61,13 @@ if (BUILD_TESTS)
     # kNN/brute_force/test-knn-brute-force-reduce.cu
     # kNN/brute_force/test-knn-brute-force-bitonic.cu
     kNN/kd-tree/test-kd-tree-naive.cu
+    # kNN/kernels/test-quick-select.cu
+
   )
 
   cuda_add_executable(nvproc_test
     ${profile_files}
+    OPTIONS  --ptxas-options=-v -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_20,code=compute_20
   )
 
   target_link_libraries(nvproc_test gtest gtest_main )
