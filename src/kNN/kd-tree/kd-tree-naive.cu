@@ -307,7 +307,7 @@ void build_kd_tree(Point *h_points, int n)
 
 
     Point *d_points, *d_swap;
-    int p, h, i, numBlocks, numThreads;
+    int p, i, numBlocks, numThreads, step;
     int *d_partition;
 
     checkCudaErrors(
@@ -322,29 +322,33 @@ void build_kd_tree(Point *h_points, int n)
     checkCudaErrors(
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
 
-    h = ceil(log2((float)n + 1) - 1);
     p = 1;
-    for (i = 0; i < h-4; i++)
+    step = n/p;
+    i = 0;
+    while(step > 64)
     {
         getThreadAndBlockCount(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
         cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, i%3);
         p <<=1;
+        step=n/p;
+        i++;
     }
-    for (int i = max(h-4, 0) ; i < h-1; ++i)
+    while(step > 2)
     {
-
+        debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
         getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
         cuQuickSelect<<<numBlocks,numThreads>>>(d_points, n/p, p, i%3);
         p <<=1;
-        // h_printPointsArray(h_points, n, "after step");
+        step=n/p;
+        i++;
     }
 
     numThreads = min(n, THREADS_PER_BLOCK/2);
     numBlocks = n/numThreads;
     numBlocks = min(numBlocks, 65536);
     debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
-    cuBalanceBranchLeafs<<<numBlocks, numThreads>>>(d_points, n, (h-1)%3);
+    cuBalanceBranchLeafs<<<numBlocks, numThreads>>>(d_points, n, i%3);
 
     checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));

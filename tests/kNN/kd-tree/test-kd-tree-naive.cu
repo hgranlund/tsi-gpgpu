@@ -114,67 +114,9 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
 }
 
 
-TEST(kd_tree_naive, kd_tree_naive_step_time){
-  int i, n, p, numBlocks, numThreads, *d_partition;
-  float temp;
-  Point *h_points;
-  srand(time(NULL));
-  p = 65536;
-  n= 4 *p;
-  h_points = (Point*) malloc(n  * sizeof(Point));
-  for ( i = 0; i < n; ++i)
-  {
-    temp = n-i-1;
-    h_points[i] =(Point) {.p={temp,temp,temp}};
-  }
-  Point *d_points, *d_swap;
-
-  checkCudaErrors(
-    cudaMalloc(&d_partition, n*sizeof(int)));
-
-  checkCudaErrors(
-    cudaMalloc(&d_points, n*sizeof(Point)));
-
-  checkCudaErrors(
-    cudaMalloc(&d_swap, n*sizeof(Point)));
-
-  checkCudaErrors(
-    cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
-
-  cudaEvent_t start, stop;
-  unsigned int bytes = n * (sizeof(Point));
-  checkCudaErrors(cudaEventCreate(&start));
-  checkCudaErrors(cudaEventCreate(&stop));
-  float elapsed_time=0;
-
-  checkCudaErrors(cudaEventRecord(start, 0));
-
-
-  getThreadAndBlockCount(n, p, numBlocks, numThreads);
-  cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, 0);
-
-  checkCudaErrors(cudaEventRecord(stop, 0));
-  cudaEventSynchronize(start);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsed_time, start, stop);
-  elapsed_time = elapsed_time ;
-  double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
-  printf("kd_tree_naive_step, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u, p = %d Elements, NumDevsUsed = %d\n",
-    throughput, elapsed_time, n/p, p, 1);
-
-  checkCudaErrors(
-    cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
-
-
-  free(h_points);
-  checkCudaErrors(cudaFree(d_points));
-  checkCudaErrors(cudaFree(d_swap));
-  checkCudaErrors(cudaFree(d_partition));
-
-}
 
 TEST(kd_tree_naive, kd_tree_naive_time){
-  int i, n = 8388608/16;
+  int i, n = 8388608;
   float temp;
   Point *points;
   points = (Point*) malloc(n  * sizeof(Point));
@@ -208,3 +150,61 @@ TEST(kd_tree_naive, kd_tree_naive_time){
 }
 
 
+// TEST(kd_tree_naive, kd_tree_naive_step_time){
+//   int i, n, p, numBlocks, numThreads, *d_partition;
+//   float temp;
+//   Point *h_points;
+//   srand(time(NULL));
+//   p = 65536;
+//   n= 4 *p;
+//   h_points = (Point*) malloc(n  * sizeof(Point));
+//   for ( i = 0; i < n; ++i)
+//   {
+//     temp = n-i-1;
+//     h_points[i] =(Point) {.p={temp,temp,temp}};
+//   }
+//   Point *d_points, *d_swap;
+
+//   checkCudaErrors(
+//     cudaMalloc(&d_partition, n*sizeof(int)));
+
+//   checkCudaErrors(
+//     cudaMalloc(&d_points, n*sizeof(Point)));
+
+//   checkCudaErrors(
+//     cudaMalloc(&d_swap, n*sizeof(Point)));
+
+//   checkCudaErrors(
+//     cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
+
+//   cudaEvent_t start, stop;
+//   unsigned int bytes = n * (sizeof(Point));
+//   checkCudaErrors(cudaEventCreate(&start));
+//   checkCudaErrors(cudaEventCreate(&stop));
+//   float elapsed_time=0;
+
+//   checkCudaErrors(cudaEventRecord(start, 0));
+
+
+//   getThreadAndBlockCount(n, p, numBlocks, numThreads);
+//   cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, 0);
+
+//   checkCudaErrors(cudaEventRecord(stop, 0));
+//   cudaEventSynchronize(start);
+//   cudaEventSynchronize(stop);
+//   cudaEventElapsedTime(&elapsed_time, start, stop);
+//   elapsed_time = elapsed_time ;
+//   double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+//   printf("kd_tree_naive_step, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u, p = %d Elements, NumDevsUsed = %d\n",
+//     throughput, elapsed_time, n/p, p, 1);
+
+//   checkCudaErrors(
+//     cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
+
+
+//   free(h_points);
+//   checkCudaErrors(cudaFree(d_points));
+//   checkCudaErrors(cudaFree(d_swap));
+//   checkCudaErrors(cudaFree(d_partition));
+
+// }

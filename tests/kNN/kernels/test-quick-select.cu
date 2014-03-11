@@ -42,7 +42,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
     unsigned int i,n, p;
     for (n = 8; n <=8; n<<=1)
     {
-      p=2;
+      p=20;
       numBlocks = p;
       n=n*p;
       h_points = (Point*) malloc(n*sizeof(Point));
