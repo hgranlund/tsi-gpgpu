@@ -1,6 +1,5 @@
 #include "radix-select.cuh"
 #include "common.cuh"
-#include "point.h"
 
 //TODO must be imporved
 __device__  void cuAccumulateIndex(int *list, int n)

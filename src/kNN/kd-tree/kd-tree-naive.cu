@@ -1,21 +1,11 @@
 #include <kd-tree-naive.cuh>
-#include "radix-select.cuh"
+#include <radix-select.cuh>
 #include <quick-select.cuh>
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
-#include <cuda.h>
 #include <point.h>
 
 #include <helper_cuda.h>
-
-#define THREADS_PER_BLOCK 1024U
-#define MAX_BLOCK_DIM_SIZE 65535U
-#define MAX_SHARED_MEM 49152U
-// #define THREADS_PER_BLOCK 4U
-// #define MAX_BLOCK_DIM_SIZE 8U
-
 
 #define debug 0
 #include "common-debug.cuh"
@@ -80,7 +70,6 @@ void build_kd_tree(Point *h_points, int n)
     {
         getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
-        // printf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
         if (step > 16)
         {
             cuQuickSelectGlobal<<<numBlocks,numThreads>>>(d_points, n/p, p, i%3);
@@ -125,7 +114,7 @@ void build_kd_tree(Point *h_points, int n)
 
     numThreads = min(n, THREADS_PER_BLOCK/2);
     numBlocks = n/numThreads;
-    numBlocks = min(numBlocks, 65536);
+    numBlocks = min(numBlocks, MAX_BLOCK_DIM_SIZE);
     debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
     cuBalanceBranchLeafs<<<numBlocks, numThreads>>>(d_points, n, i%3);
 
