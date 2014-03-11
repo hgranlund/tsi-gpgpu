@@ -15,6 +15,7 @@ include_directories(
 set(CUHFILES
 # brute-force/kNN-brute-force-garcia.cuh
 # brute-force/kNN-brute-force.cuh
+kernels/common.cuh
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 kernels/reduction-mod.cuh

@@ -1,10 +1,12 @@
 #include <kd-tree-naive.cuh>
+#include "common.cuh"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include <cuda.h>
 #include <point.h>
+
 #include <helper_cuda.h>
 
 #define THREADS_PER_BLOCK 1024U
@@ -13,86 +15,19 @@
 // #define THREADS_PER_BLOCK 4U
 // #define MAX_BLOCK_DIM_SIZE 8U
 
-#include <string.h>
 
 #define debug 0
 #include "common-debug.cuh"
-
 
 __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
 {
   cuRadixSelect(data, data_copy, m, n, partition, dir);
 }
 
-
-
-__device__ __host__
-unsigned int nextPowerOf2(unsigned int x)
-{
-  --x;
-  x |= x >> 1;
-  x |= x >> 2;
-  x |= x >> 4;
-  x |= x >> 8;
-  x |= x >> 16;
-  return ++x;
-}
-
-__device__ __host__
-bool isPowTwo(unsigned int x)
-{
-  return ((x&(x-1))==0);
-}
-
-__device__ __host__
-unsigned int prevPowerOf2(unsigned int n)
-{
-    if (isPowTwo(n))
-    {
-        return n;
-    }
-    n = nextPowerOf2(n);
-    return n >>=1;
-
-}
-
-
-
 __device__ void cuPointSwap(Point *p, int a, int b){
     Point temp = p[a];
     p[a]=p[b], p[b]=temp;
 }
-
-__device__ int cuSumReduce(int *list, int n)
-{
-  int half = n/2;
-  int tid = threadIdx.x;
-  while(tid<half && half > 0)
-  {
-    list[tid] += list[tid+half];
-    half = half/2;
-}
-return list[0];
-}
-
-//TODO must be imporved
-__device__  void cuAccumulateIndex(int *list, int n)
-{
-    if (threadIdx.x == 0)
-    {
-        int sum=0;
-        list[n]=list[n-1];
-        int temp=0;
-        for (int i = 0; i < n; ++i)
-        {
-            temp = list[i];
-            list[i] = sum;
-            sum += temp;
-        }
-        list[n]+=list[n-1];
-    }
-}
-
 
 __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
 {
@@ -156,7 +91,6 @@ __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition,
     }
     return cuSumReduce(zero_count, blockDim.x);
 }
-
 
 __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
 {
@@ -332,7 +266,7 @@ void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, i
 void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
 {
     n = n/p;
-    n = prevPowerOf2(n/2);
+    n = prevPowTwo(n/2);
     blocks = min(MAX_BLOCK_DIM_SIZE, p);
     blocks = max(1, blocks);
     threads = min(THREADS_PER_BLOCK, n);
