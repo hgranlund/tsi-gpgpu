@@ -1,8 +1,6 @@
 #include "radix-select.cuh"
-
+#include "common.cuh"
 #include "point.h"
-
-
 
 //TODO must be imporved
 __device__  void cuAccumulateIndex(int *list, int n)
@@ -167,3 +165,16 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int 
 {
   cuRadixSelect(data, data_copy, m, n, partition, dir);
 }
+
+
+
+void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
+{
+    n = n/p;
+    n = prevPowTwo(n/2);
+    blocks = min(MAX_BLOCK_DIM_SIZE, p);
+    blocks = max(1, blocks);
+    threads = min(THREADS_PER_BLOCK, n);
+    threads = max(1, threads);
+}
+

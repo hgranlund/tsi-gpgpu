@@ -1,5 +1,4 @@
 #include <kd-tree-naive.cuh>
-#include "common.cuh"
 #include "radix-select.cuh"
 #include <quick-select.cuh>
 
@@ -44,17 +43,6 @@ void cuBalanceBranchLeafs(Point* points, int n, int dir)
         tid += blockDim.x;
     }
 }
-
-void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
-{
-    n = n/p;
-    n = prevPowTwo(n/2);
-    blocks = min(MAX_BLOCK_DIM_SIZE, p);
-    blocks = max(1, blocks);
-    threads = min(THREADS_PER_BLOCK, n);
-    threads = max(1, threads);
-}
-
 
 void build_kd_tree(Point *h_points, int n)
 {
