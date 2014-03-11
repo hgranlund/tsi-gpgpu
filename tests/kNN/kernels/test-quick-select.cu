@@ -40,9 +40,9 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
     int numBlocks, numThreads;
     float temp;
     unsigned int i,n, p;
-    for (n = 8; n <=8; n<<=1)
+    for (n = 8; n <=9; n<<=1)
     {
-      p=20;
+      p=16;
       numBlocks = p;
       n=n*p;
       h_points = (Point*) malloc(n*sizeof(Point));
@@ -60,7 +60,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
 
       h_printPointsArray_(h_points,n, "h_points",0);
-      cuQuickSelect<<<2,numThreads>>>(d_points, n/p, p, 0);
+      cuQuickSelectShared<8><<<2,2>>>(d_points, n/p, p, 0);
 
       checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
@@ -94,7 +94,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
     int numBlocks, numThreads;
     float temp;
     unsigned int i,n, p;
-    for (n = 9; n <=9; n<<=1)
+    for (n = 8; n <=9; n<<=1)
     {
       p=1048576;
       numBlocks = p;
@@ -121,7 +121,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
       float elapsed_time=0;
       checkCudaErrors(cudaEventRecord(start, 0));
 
-      cuQuickSelect<<<numBlocks,numThreads>>>(d_points, n/p, p, 0);
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(d_points, n/p, p, 0);
 
       checkCudaErrors(cudaEventRecord(stop, 0));
       cudaEventSynchronize(start);
