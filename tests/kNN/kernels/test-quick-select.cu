@@ -1,4 +1,5 @@
 // Includes
+#include <quick-select.cuh>
 #include <kd-tree-naive.cuh>
 #include <knn_gpgpu.h>
 #include <stdio.h>
