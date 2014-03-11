@@ -5,7 +5,7 @@
 
 void build_kd_tree(Point *points, int n);
 void getThreadAndBlockCount(int n, int p, int &blocks, int &threads);
-
+void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads);
 
 __global__
 void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir);

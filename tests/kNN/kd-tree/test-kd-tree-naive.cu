@@ -7,7 +7,27 @@
 #include "gtest/gtest.h"
 
 
+
+
+
+
 #define debug 0
+
+
+
+__host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
+{
+  if (debug || l_debug)
+  {
+    printf("%10s: [ ", s);
+      for (int i = 0; i < n; ++i)
+      {
+        printf("%3.1f, ", l[i].p[0]);
+      }
+      printf("]\n");
+  }
+}
+
 
 int h_index(int i, int j, int n)
 {
@@ -79,6 +99,8 @@ TEST(kd_tree_naive, kd_tree_naive_correctness){
   }
 
   build_kd_tree(points, n);
+
+  // h_printPointsArray__(points, n, "points coplete", 0);
 
   for ( i = 0; i < n; ++i)
   {

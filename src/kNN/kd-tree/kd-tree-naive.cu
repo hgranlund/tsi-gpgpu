@@ -237,53 +237,43 @@ __global__
 void cuQuickSelect(Point* points, int n, int p, int *blockOffsets, int dir){
 
     int pos, i,
-    right = n/p - 1,
-    step=n/p,
+    step=n,
     listInBlock = blockOffsets[blockIdx.x+1]-blockOffsets[blockIdx.x],
-    left = 0,
+    right,
+    left,
     tid = threadIdx.x,
     m=step/2;
-    Point s_points[32];
     points += blockOffsets[blockIdx.x]*step;
     points += step * tid;
     float pivot;
     while( tid < listInBlock)
     {
-        for (i = 0; i < step; ++i)
-        {
-            s_points[i]=points[i];
-        }
+        left = 0;
+        right = step - 1;
         while (left < right)
         {
-            pivot = s_points[m].p[dir];
-            cuPointSwap(s_points, m, right);
+            pivot = points[m].p[dir];
+            cuPointSwap(points, m, right);
             for (i = pos = left; i < right; i++)
             {
-                if (s_points[i].p[dir] < pivot)
+                if (points[i].p[dir] < pivot)
                 {
-                    cuPointSwap(s_points, i, pos);
+                    cuPointSwap(points, i, pos);
                     pos++;
                 }
             }
-            cuPointSwap(s_points, right, pos);
+            cuPointSwap(points, right, pos);
             if (pos == m) break;
             if (pos < m) left = pos + 1;
             else right = pos - 1;
         }
-        for (i = 0; i < step; ++i)
-        {
-            points[i]=s_points[i];
-        }
         tid += blockDim.x;
         points += step * blockDim.x;
+
     }
-    free(s_points);
 }
 
 
-
-// float quick_select(int k, struct Point *x, int lower, int upper, int dir)
-// {
 
 
 __global__
@@ -306,13 +296,22 @@ void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
     threads = min(THREADS_PER_BLOCK, n);
     threads = max(1, threads);
 }
+void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads)
+{
+    threads = 128;
+    int step = n/p,
+    numberOfLists= n/step;
+    blocks = numberOfLists/threads;
+    blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
+    blocks = max(1, blocks);
+}
 
 void build_kd_tree(Point *h_points, int n)
 {
 
 
     Point *d_points, *d_swap;
-    int p, h, i, numBlocks, numThreads;
+    int p, h, i, j, numBlocks, numThreads, *h_blockOffsets, *d_blockOffsets;
     int *d_partition;
 
     checkCudaErrors(
@@ -329,12 +328,46 @@ void build_kd_tree(Point *h_points, int n)
 
     h = ceil(log2((float)n + 1) - 1);
     p = 1;
-    for (i = 0; i < h-1; i++)
+    for (i = 0; i < h-4; i++)
     {
         getThreadAndBlockCount(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
         cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, i%3);
         p <<=1;
+    }
+    for (int i = max(h-4, 0) ; i < h-1; ++i)
+    {
+
+        getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
+        h_blockOffsets = (int*) malloc((numBlocks+1)*sizeof(int));
+        h_blockOffsets[numBlocks]=p;
+        h_blockOffsets[0]=0;
+       for (j = 1; j < numBlocks; ++j)
+        {
+            h_blockOffsets[j]=p/numBlocks * j;
+        }
+        int rest = p % numBlocks;
+        for (j = n-1; j >= n-(p % numBlocks); --j)
+        {
+            h_blockOffsets[j]+=rest;
+            rest--;
+        }
+
+
+        checkCudaErrors(
+            cudaMalloc((void **)&d_blockOffsets, (numBlocks+1)*sizeof(int)));
+        checkCudaErrors(
+            cudaMemcpy(d_blockOffsets, h_blockOffsets, (numBlocks+1)*sizeof(int), cudaMemcpyHostToDevice));
+        debugf("n = %d, p = %d, numblock = %d, numThread =%d, rest = %d, i = %d, h=%d\n", n/p, p, numBlocks, numThreads,p % numBlocks, i ,h );
+        cuQuickSelect<<<numBlocks,numThreads>>>(d_points, n/p, p, d_blockOffsets, i%3);
+        p <<=1;
+        checkCudaErrors(
+            cudaFree(d_blockOffsets));
+
+            // checkCudaErrors(
+        // cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
+
+        // h_printPointsArray(h_points, n, "after step");
     }
 
     numThreads = min(n, THREADS_PER_BLOCK/2);
@@ -350,6 +383,7 @@ void build_kd_tree(Point *h_points, int n)
     checkCudaErrors(cudaFree(d_points));
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));
+    free(h_blockOffsets);
 }
 
 
