@@ -32,7 +32,7 @@ Makefile
 cmake_install.cmake
 install_manifest.txt
 
-
+simen_grave*
 build/*
 src/kNN/kd-tree/kd-tree
 src/kNN/kd-tree/kd-tree-iterative
