@@ -1,2 +1,2 @@
 #!/bin/bash
-while inotifywait -e modify -e close_write -r ../* ;do cd ../build/ && make test -j8;done
+while inotifywait -e modify -e close_write -r ../* ;do cd ../build/ && make test -j4;done

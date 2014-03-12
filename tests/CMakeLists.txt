@@ -31,6 +31,7 @@ if (BUILD_TESTS)
     #kNN/test-kNN-brute-force.cpp
     kNN/kernels/test_redution.cu
     kNN/kernels/test-radix-select.cu
+    kNN/kernels/test-quick-select.cu
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
     kNN/kd-tree/test-kd-tree-naive.cu
@@ -52,5 +53,28 @@ if (BUILD_TESTS)
   cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
   target_link_libraries(performance knn_gpgpu)
   add_custom_target(time performance)
+
+  set(profile_files
+    #kNN/test-kNN-brute-force.cpp
+    # kNN/kernels/test_redution.cu
+    # kNN/kernels/test-radix-select.cu
+    # kNN/brute_force/test-knn-brute-force-reduce.cu
+    # kNN/brute_force/test-knn-brute-force-bitonic.cu
+    kNN/kd-tree/test-kd-tree-naive.cu
+    # kNN/kernels/test-quick-select.cu
+
+  )
+
+  cuda_add_executable(nvproc_test
+    ${profile_files}
+    OPTIONS  --ptxas-options=-v -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_20,code=compute_20
+  )
+
+  target_link_libraries(nvproc_test gtest gtest_main )
+  # target_link_libraries(runUnitTests common_debug )
+
+  target_link_libraries(nvproc_test knn_gpgpu)
+
+  add_custom_target(profile_test nvproc_test)
 
   endif()

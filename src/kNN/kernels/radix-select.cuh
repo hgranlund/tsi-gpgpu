@@ -3,10 +3,14 @@
 #include "point.h"
 
 
-__global__
-void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *ones, Point *result);
+#define THREADS_PER_BLOCK 1024U
+#define MAX_BLOCK_DIM_SIZE 65535U
+#define MAX_SHARED_MEM 49152U
 
-Point cpu_radixselect(Point *data, int l, int u, int m, int bit);
+void getThreadAndBlockCount(int n, int p, int &blocks, int &threads);
+
+__global__
+void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir);
 
 #endif
 

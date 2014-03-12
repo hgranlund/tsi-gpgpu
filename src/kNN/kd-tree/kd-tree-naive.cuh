@@ -2,13 +2,25 @@
 #define _KD_TREE_NAIVE_
 #include "point.h"
 
+
 void build_kd_tree(Point *points, int n);
-int midpoint(int lower, int upper);
-void swap(Point *points, int a, int b);
-float quick_select(int k, Point *points, int lower, int upper, int dim);
-void center_median(Point *points, int lower, int upper, int dim);
-int h_index(int i, int j, int n);
+void getThreadAndBlockCount(int n, int p, int &blocks, int &threads);
+void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads);
+
+__global__
+void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir);
+
 
 __device__
-int index(int i, int j, int n);
+void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir);
+
+__global__
+void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir);
+
+__global__
+void cuQuickSelectGlobal(Point* points, int n, int p, int dir);
+
+template <int maxStep> __global__
+void cuQuickSelectShared(Point* points, int n, int p, int dir);
+
 #endif
