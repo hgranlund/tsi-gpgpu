@@ -1,75 +1,102 @@
 #include "radix-select.cuh"
 #include "common.cuh"
+#include <stdio.h>
 
-//TODO must be imporved
-__device__  void cuAccumulateIndex(int *list, int n)
-{
-    if (threadIdx.x == 0)
-    {
-        int sum=0;
-        list[n]=list[n-1];
-        int temp=0;
-        for (int i = 0; i < n; ++i)
-        {
-            temp = list[i];
-            list[i] = sum;
-            sum += temp;
-        }
-        list[n]+=list[n-1];
-    }
-}
 
-__device__ int cuSumReduce(int *list, int n)
-{
-  int half = n/2;
-  int tid = threadIdx.x;
-  while(tid<half && half > 0)
+# define debug 1
+__device__
+void printIntArray__(int* l, int n, char *s){
+  int i;
+  if (debug && threadIdx.x == 0)
   {
-    list[tid] += list[tid+half];
-    half = half/2;
-}
-return list[0];
-}
+    printf("%s: ", s);
+    printf("[%d", l[0] );
+      for (i = 1; i < n; ++i)
+      {
+        printf(", %d", l[i] );
+      }
+      printf("]\n");
+    }
+  }
 
-__device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
-{
-	unsigned int
-	tid = threadIdx.x,
-	is_bigger,
-	big,
-	less;
 
-	zero_count[threadIdx.x] = 0;
-	one_count[threadIdx.x] = 0;
 
-	while(tid < n)
-	{
-		swap[tid]=data[tid];
-		is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
-		one_count[threadIdx.x] += is_bigger;
-		zero_count[threadIdx.x] += !is_bigger;
-		tid+=blockDim.x;
-	}
-	__syncthreads();
-	cuAccumulateIndex(zero_count, blockDim.x);
-	cuAccumulateIndex(one_count, blockDim.x);
-	tid = threadIdx.x;
-	__syncthreads();
-	less = zero_count[threadIdx.x];
-	big = one_count[threadIdx.x];
-	while(tid<n)
-	{
-		if (!partition[tid])
-		{
-			data[less]=swap[tid];
-			less++;
-		}else
-		{
-			data[n-big-1]=swap[tid];
-			big++;
-		}
-		tid+=blockDim.x;
-	}
+
+  __device__  void cuAccumulateIndex(int *list, int n)
+  {
+    int i, j, temp,
+    tid = threadIdx.x;
+    if (tid == blockDim.x-1)
+    {
+      list[0] =0;
+    }
+    list+=1;
+    for ( i = 2; i <= n; i<<=1)
+    {
+
+      if (tid*i+i/2 <n)
+      {
+        temp = list[tid*i];
+        for (j = 1; j <= i/2; ++j)
+        {
+          list[tid*i+j]+=temp;
+        }
+      }
+    }
+  }
+
+
+  __device__ int cuSumReduce(int *list, int n)
+  {
+    int half = n/2;
+    int tid = threadIdx.x;
+    while(tid<half && half > 0)
+    {
+      list[tid] += list[tid+half];
+      half = half/2;
+    }
+    return list[0];
+  }
+
+  __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
+  {
+   unsigned int
+   tid = threadIdx.x,
+   is_bigger,
+   big,
+   less;
+
+   zero_count[threadIdx.x] = 0;
+   one_count[threadIdx.x] = 0;
+
+   while(tid < n)
+   {
+    swap[tid]=data[tid];
+    is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
+    one_count[threadIdx.x] += is_bigger;
+    zero_count[threadIdx.x] += !is_bigger;
+    tid+=blockDim.x;
+  }
+  __syncthreads();
+  cuAccumulateIndex(zero_count, blockDim.x);
+  cuAccumulateIndex(one_count, blockDim.x);
+  tid = threadIdx.x;
+  __syncthreads();
+  less = zero_count[threadIdx.x];
+  big = one_count[threadIdx.x];
+  while(tid<n)
+  {
+    if (!partition[tid])
+    {
+     data[less]=swap[tid];
+     less++;
+   }else
+   {
+     data[n-big-1]=swap[tid];
+     big++;
+   }
+   tid+=blockDim.x;
+ }
 }
 
 __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
@@ -169,11 +196,11 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int 
 
 void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
 {
-    n = n/p;
-    n = prevPowTwo(n/2);
-    blocks = min(MAX_BLOCK_DIM_SIZE, p);
-    blocks = max(1, blocks);
-    threads = min(THREADS_PER_BLOCK, n);
-    threads = max(1, threads);
+  n = n/p;
+  n = prevPowTwo(n/2);
+  blocks = min(MAX_BLOCK_DIM_SIZE, p);
+  blocks = max(1, blocks);
+  threads = min(THREADS_PER_BLOCK, n);
+  threads = max(1, threads);
 }
 
