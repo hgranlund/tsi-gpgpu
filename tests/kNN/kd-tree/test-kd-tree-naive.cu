@@ -42,7 +42,7 @@ __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
 
   int midpoint(int lower, int upper)
   {
-    return (int) floor((upper - lower) / 2) + lower;
+    return (int) floor((float)(upper - lower) / 2) + lower;
   }
 
   void print_tree(Point *tree, int level, int lower, int upper, int n)
@@ -78,8 +78,16 @@ __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
     for ( i = 0; i < n; ++i)
     {
       temp = n-i-1;
-      points[i] =(Point) {.p={temp,temp,temp}};
-      expected_points[i] = (Point) {.p={i,i,i}};;
+      Point t;
+      t.p[0]=temp;
+      t.p[1]=temp;
+      t.p[2]=temp;
+      points[i]    = t;
+      Point t2;
+      t2.p[0]=i;
+      t2.p[1]=i;
+      t2.p[2]=i;
+      expected_points[i] = t2;
     }
     if (debug)
     {
@@ -126,8 +134,13 @@ __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
       srand(time(NULL));
       for ( i = 0; i < n; ++i)
       {
-        temp = n-i-1;
-        points[i] =(Point) {.p={temp,temp,temp}};
+      temp = n-i-1;
+      Point t;
+      t.p[0]=temp;
+      t.p[1]=temp;
+      t.p[2]=temp;
+      points[i]    = t;
+   
       }
 
       cudaEvent_t start, stop;
