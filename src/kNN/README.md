@@ -1,4 +1,5 @@
-#The quest for a fast KNN search
+The quest for a fast KNN search
+===============================
 
 This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm.
 
@@ -9,7 +10,7 @@ In order to make the document more readable, we have included short descriptions
 The following papers, available in the resources folder, forms the literary basis for our current work.
 
 Related to the brute force approach:
-* _Improving the k-Nearest Neighbour Algorithm with CUDA - Graham Nolan_
+* _Improving the k-Nearest Neighbor Algorithm with CUDA - Graham Nolan_
 * _Fast k Nearest Neighbor Search using GPU - Garcia et al._
 * _K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al._
 
@@ -17,9 +18,11 @@ Related to the k-d tree based approach:
 * _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
 
 
-# Brute force based effort
+Brute force based effort
+========================
 
-## Garcia's base algorithm
+Garcia's base algorithm
+-----------------------
 
 Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
 
@@ -35,7 +38,9 @@ Steps:
 1. O(n). Every reference point must be evaluated once. Since all calculations are independent, we have a large potential for parallelizing.
 2. Insertion sort: O(n^2).
 
-## Our reimplementation
+
+Our reimplementation
+--------------------
 
 ### Bitonic-sort
 
@@ -47,7 +52,6 @@ Steps:
 
 1. O(n).
 2. Bitonic sort: worst case = O(n*log²(n)), average time ( parallel) = O(log²(n)).
-
 
 
 #### Results
@@ -66,7 +70,7 @@ Test with n =8 388 608:
 * Bitonic sort:  176 ms.
 * Total: 200 ms.
 
-### Min-Reduce
+#### Min-Reduce
 
 An other possibility to improve step 2 is to use a reduce operation to get the smallest distances. This can be done k times to get the k smallest values.
 
@@ -91,7 +95,6 @@ The optimizations include:
 
 #### Results
 
-
 Test results of n = 8 388 608 with no memory optimization:
 
 *  Memory transfer:  21.1 ms.
@@ -107,20 +110,20 @@ Test results of n = 8 388 608 with memory optimization:
 *  Total time: (23.7 + k*1.7) ms.
 
 
-
 ![Comparison between bitonic and reduce (k=10).](./images/BitonicVSreduce.png)
 
 fig: Brute-force - k = 10
 
 
-### Possible improvements
+#### Possible improvements
 
 * Memory improvements. Use shared memory and texture memory.
 * Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
 * Replace bitonic sort with min reduce. O(k*log²(n)).
 
 
-# k-d trees
+k-d tree based effort
+=====================
 
 A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
 
@@ -134,7 +137,11 @@ Given the previous splits and selection of nodes, the resulting binary tree woul
 
 Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log² n) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log² n) time.
 
-## The serial base algorithm
+Interested readers is encouraged to look at the paper "Multidimensional binary search trees used for associative searching" by Jon Louis Bentley, where kd-trees first was described.
+
+
+The serial base algorithm
+-------------------------
 
 1. Build a balanced k-d tree from the point cloud.
 2. Query the tree for different sets of neighbors.
@@ -148,8 +155,6 @@ Steps:
 
 #### Results
 
-Referring to the previous result graph, we are going to break down
-
 ![serial-k-d-tree-breakdown](./images/serial-k-d-tree-breakdown.png)
 
 As expected, almost all the time is spent building the tree. Querying for the closest neighbor in the largest tree took less than 0.0015 ms, but 9 seconds is a long time to wait for the tree to build.
@@ -158,17 +163,96 @@ The paper _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al.
 
 A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by NVIDIA, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
 
-Our focus therefore turned to implementing and parallelizing the algorithm our self. This has proven to be a quite challenging task. One might think that you would just would split the workload over new processors every time a split occur in the recursive algorithm. This would give a speed increase, but you still have to process all the nodes in the root node, requiring at least O(n) time.
 
-Another option could be to build several small trees on different processes, but then you would get an large time penalty when trying to combine the different sub-trees.
+Our reimplementation
+--------------------
+
+Finding a way to represent the kd-tree boils down to representing a binary tree. This can be done in several ways, but we had some criteria for our representation:
+
+* The kd-tree should be memory-efficient, at best explicitly storing only the actual point coordinates. This since we want to store the largest possible amount of points on the smaller memory of the GPU.
+* The kd-tree representation should be easy to split, distribute and join, since we want to build it on several independent processes.
+
+After a bit of research and trial and error, we choose to represent the kd-tree as a array of structs, representing points, with an x, y and z coordinate stored in an short array. In order to turn this array into a binary tree, the following scheme was derived. Given an array, the root node of that array is the midmost element (the leftmost of the two, given an even number of elements). To find the left child of the root, you simply find the midmost element of the left sub-array, and likewise for the right child. This representation have some advantages and drawbacks.
+
+Advantages:
+
+* Can represent binary trees where not all leaf-nodes are present. This is the minimal requirement for representing perfectly balanced kd-trees.
+* Joining or splitting subtrees is as simple as appending or splitting arrays.
+* Minimal memory overhead, kd-trees can even be built in-place on the array.
+
+Drawbacks:
+
+* Cannot represent imperfectly balanced kd-trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
+* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree (foreshadowing...)
+
+Given this representation of the kd-tree, the base kd-tree building algorithm can be expanded to the following:
+
+Steps:
+
+1. Find the exact median (of the current split dimension) in this sub-array, and swap it to the midmost place.
+2. Go through all elements in the list, and swap elements, such that all elements lower than the median is placed to the left, and all elements higher than the median is placed to the right.
+3. Repeat for the new sub-arrays, until the entire tree is built.
+
+#### Results
+
+_The serial kd-tree build times was similar or better than the base algorithm, so it is not discussed here_
+
+![awg-query-time-old-vs-new](./images/awg-query-time-old-vs-new.png)
+
+As we can see from the graph, the need for calculating the location of each child at each step in the search has a negative impact on our search time. We also note the unstable curve traced by our tests. This is probably the result of the calculation overhead, enhancing the lower runtime of cases where the combination of query-points and kd-tree, does not allow for easy pruning of the tree during search. In such cases, a notable amount of extra points has to be traversed and searched, all penalized by the lowered lookup performance.
+
+![n-query-time-old-vs-new](./images/n-query-time-old-vs-new.png)
+
+This problem is enhanced when we consider N searches, and it is worth to note the long time required to perform all N searches, even given a sub-millisecond runtime for an individual search. This should be an argument for parallelizing large number of searches. In spite of this problem, the search is still a lot faster than the brute force approach, only requiring a search time of ~0.01 ms for one query in 14 million points.
+
+#### Possible improvements
+
+* Store pointers to each child median in parent struct. Easy to implement, but requires more memory.
+* Run several queries in parallel. Easy to implement, as parallelization is trivial due to independent queries, but is dependent on efficient transfer and storage of the kd-tree on the GPU.
+
+
+Parallel improvements
+---------------------
+
+As we noted in the previous section, the kd-tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize this operation. In order to do this, we have to look a bit closer at the different steps of the kd-tree build algorithm.
+
+Steps:
+
+1. Find the median of the points along a specified axis. This median point becomes the value of the current node.
+2. Sort all points with lower values than the median to the left of the median, and all the points with higher values than the median to the right.
+3. Perform this algorithm recursively on the left and right set of nodes.
+
+Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. The parallel algorithm for finding the median can be used to speed up the early iterations, where we do not have the possibility of calculating several sub-trees in parallel, as well as speeding up the calculation on lather calculations, by utilizing the large number of concurrent threads available in each parallel process.
+
+Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. Given a sorted list you can find the median directly, by simply looking at the midmost element of the array. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. We also have the inherent downside of sorting a list in order to find the median, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting.
+
+
+The existing O(n) algorithms for finding the median is mostly based on a more generic problem, namely selection or [kth order statistic algorithms](http://en.wikipedia.org/wiki/Selection_algorithm). Quick select and radix select to two of the best known selection algorithms in serial. They have both an average time complexity of O(n), witch makes them a good candidates. The difference between then is the constant time penalty. The radix sort have a more exact time complexity of O(bn), where b is the number of bits in each number. While the penalty for quick select is based on n, and if bad pivot elements are chosen the worst case performance is O(n²). We choose to start implementing radix sort based on the results from [*Radix Selection Algorithm for the kth Order Statistic*](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/radix_select.pdf). Based on the constant time penalties radix sort would also be the best candidate for large number of elements (n).
+
+
+The radix select is based on a bitwise partitioning, much like radix sort. In each step, elements are partitioned in two subgroups based on the current bit. Then the subgroup that contains the median is determined, and the search continue in that subgroup until the median is found.
+
+![An illustration of radix selectionn](./images/Radix_select.png)
+
+
+
+
+#### Results
+
+![gpu-vs-cpu-build-time](./images/gpu-vs-cpu-build-time.png)
+
+We see that the parallel implementation performs better than the base serial implementation, building a tree of 14 million points in just over 5 seconds, compared to just under 10 required by the serial algorithm. Still we regard this as a quite rough implementation, in need of more tuning to really bring out the speed potential. The potential for parallelizing the workload for the first and last iterations have not been fully developed. This is due to the implementation forcing one version of the radix select algorithm being to work on all problem sizes. This is not optimal for dividing cuda resources, and as a result, we get high penalties when the problem size reaches "unsuitable" values. Basic tuning has been explored, and the preliminary results look very promising, but this is better discussed on our nest meeting.
+
+We also see a couple of large "jumps" in the graph. This happens when the number of elements passes a power of two and the height of the resulting kd-tree increase. The height increase hits the implementation at its weakest.
 
 #### Further work
 
-* Try out a heuristic and parallel method for determining the median point.
-* Parallelize the code according to one of the simple strategies.
-* Further investigate the strategies used in _Real-Time KD-Tree Construction on Graphics Hardware_
+* Tune radix select algorithm to better work with the different problem sizes in each iteration.
+* Use quick selection for elements smaller then a number x.
+* Store children locations in the three, so we do not have to calculate their location when searching.
+* Always look at that memory optimization.
 
+Work-plan for next week
+-----------------------
 
-Final thoughts
-
-We have discovered a possible relevant paper, [CUKNN: A parallel implementation of K-nearest neighbor on CUDA-enabled GPU](http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=5382329), behind a pay-wall we cannot access with our student accounts. Maybe you have access to this Ole Ivar?
+Both parallelizing the search, and improving the parallel building implementation is important, so we'll run those two tasks as parallel tracks.

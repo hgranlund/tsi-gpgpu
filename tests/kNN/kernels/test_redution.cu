@@ -14,7 +14,7 @@
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
-#define debug 1
+#define debug 0
 float cpu_min(float* in, int num_els)
 {
   float min = inf;

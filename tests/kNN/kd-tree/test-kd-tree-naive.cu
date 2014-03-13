@@ -1,157 +1,213 @@
 #include <kd-tree-naive.cuh>
 #include <knn_gpgpu.h>
+#include <point.h>
 
 #include <stdio.h>
 #include <helper_cuda.h>
 #include "gtest/gtest.h"
 
 
+
+
+
+
 #define debug 0
 
-void print_tree(float *tree, int level, int lower, int upper, int n)
+
+
+__host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
 {
-  if (debug)
+  if (debug || l_debug)
   {
-    if (lower >= upper)
-    {
-      return;
-    }
-
-    int i, r = midpoint(lower, upper);
-
-    printf("|");
-    for (i = 0; i < level; ++i)
-    {
-      printf("--");
-    }
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[h_index(r, 0, n)], tree[h_index(r, 1, n)], tree[h_index(r, 2, n)]);
-
-    print_tree(tree, 1 + level, lower, r, n);
-    print_tree(tree, 1 + level, r + 1, upper, n);
-  }
-}
-
-TEST(kd_tree_naive, kd_tree_naive_correctness){
-  int i, j, n = 1000;
-  float *points, *expected_points;
-  points = (float*) malloc(n * 3 * sizeof(float));
-  expected_points = (float*) malloc(n * 3 * sizeof(float));
-  srand(time(NULL));
-  for ( i = 0; i < n; ++i)
-  {
-    for ( j = 0; j < 3; ++j)
-    {
-      points[h_index(i, j, n)] = n - i -1 +j;
-      points[h_index(i, j, n)] = (float) rand() /100000000;
-      expected_points[h_index(i, j, n)] = i ;
-    }
-  }
-  if (debug)
-  {
-
-
-    printf("kd tree:\n");
-    print_tree(points, 0, 0, n, n);
-    printf("==================\n");
-
-  }
-
-  build_kd_tree(points, n);
-
-  for ( i = 0; i < n; ++i)
-  {
-    for ( j = 0; j < 3; ++j)
-    {
-// ASSERT_EQ(points[h_index(i, j, 5n)] ,i) << "Faild with i = " << i << " j = " <<j ;
+    printf("%10s: [ ", s);
+      for (int i = 0; i < n; ++i)
+      {
+        printf("%3.1f, ", l[i].p[0]);
+      }
+      printf("]\n");
     }
   }
 
-  if (debug)
+
+  int h_index(int i, int j, int n)
   {
-
-    printf("kd tree:\n");
-    print_tree(points, 0, 0, n, n);
-    printf("==================\n");
-
+    return i + j * n;
   }
 
-  free(points);
-  free(expected_points);
-}
-
-TEST(kd_tree_naive, kd_tree_naive_timeing)
-{
-  int i, j, n = 65536;
-  float *points;
-  points = (float*) malloc(n * 3 * sizeof(float));
-  srand(time(NULL));
-  for ( i = 0; i < n; ++i)
+  void h_swap(Point *points, int a, int b, int n)
   {
-    for ( j = 0; j < 3; ++j)
+    Point t = points[a];
+    points[a] = points[b], points[b] = t;
+  }
+
+  int midpoint(int lower, int upper)
+  {
+    return (int) floor((upper - lower) / 2) + lower;
+  }
+
+  void print_tree(Point *tree, int level, int lower, int upper, int n)
+  {
+    if (debug)
     {
-      points[h_index(i, j, n)] = (float) rand() /100000000;
+      if (lower >= upper)
+      {
+        return;
+      }
+
+      int i, r = midpoint(lower, upper);
+
+      printf("|");
+      for (i = 0; i < level; ++i)
+      {
+        printf("--");
+      }
+      printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
+
+      print_tree(tree, 1 + level, lower, r, n);
+      print_tree(tree, 1 + level, r + 1, upper, n);
     }
   }
 
-  cudaEvent_t start, stop;
-  unsigned int bytes = n*3 * (sizeof(float));
-  checkCudaErrors(cudaEventCreate(&start));
-  checkCudaErrors(cudaEventCreate(&stop));
-  float elapsed_time=0;
+  TEST(kd_tree_naive, kd_tree_naive_correctness){
+    int i, j, n = 8;
+    float temp;
+    Point *points, *expected_points;
+    points = (Point*) malloc(n  * sizeof(Point));
+    expected_points = (Point*) malloc(n * sizeof(Point));
+    srand(time(NULL));
+    for ( i = 0; i < n; ++i)
+    {
+      temp = n-i-1;
+      points[i] =(Point) {.p={temp,temp,temp}};
+      expected_points[i] = (Point) {.p={i,i,i}};;
+    }
+    if (debug)
+    {
+      printf("kd tree expected:\n");
+      print_tree(expected_points, 0, 0, n, n);
+      printf("==================\n");
 
-  checkCudaErrors(cudaEventRecord(start, 0));
+      printf("kd tree:\n");
+      print_tree(points, 0, 0, n, n);
+      printf("==================\n");
 
-  build_kd_tree(points, n);
+      for (int i = 0; i < n; ++i)
+      {
+        printf("%3.1f, ", points[i].p[0]);
+      }
+      printf("\n");
+    }
 
-  checkCudaErrors(cudaEventRecord(stop, 0));
-  cudaEventSynchronize(start);
-  cudaEventSynchronize(stop);
-  cudaEventElapsedTime(&elapsed_time, start, stop);
-  elapsed_time = elapsed_time ;
-  double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
-  printf("build_kd_tree_naive, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
-    throughput, elapsed_time, n, 1);
+    build_kd_tree(points, n);
 
-  free(points);
-}
+  // h_printPointsArray__(points, n, "points coplete", 0);
+
+    for ( i = 0; i < n; ++i)
+    {
+      for ( j = 0; j < 3; ++j)
+      {
+        ASSERT_EQ(points[i].p[j] ,expected_points[i].p[j]) << "Faild with i = " << i << " j = " <<j ;
+      }
+    }
+    free(points);
+    free(expected_points);
+  }
 
 
-// float *ref, *dist;
-// float *query;
-// int *ind;
-// unsigned int    ref_nb = 131072;
-// unsigned int    query_nb = 1;
-// unsigned int    dim=3;
-// unsigned int    k          = 100;
-// unsigned int    iterations = 1;
-// unsigned int    i;
+  TEST(kd_tree_naive, kd_tree_naive_time){
+    int i, n = 8388608;
+    for (n = 8388608; n <=8388608 ; n+=250000)
+    // for (n = 13388608; n <=14000000 ; n+=250000)
+    {
+      cudaDeviceReset();
+      float temp;
+      Point *points;
+      points = (Point*) malloc(n  * sizeof(Point));
+      srand(time(NULL));
+      for ( i = 0; i < n; ++i)
+      {
+        temp = n-i-1;
+        points[i] =(Point) {.p={temp,temp,temp}};
+      }
 
-// ref    = (float *) malloc(ref_nb   * dim * sizeof(float));
-// query  = (float *) malloc(query_nb * dim * sizeof(float));
-// dist  = (float *) malloc(k * sizeof(float));
-// ind  = (int *) malloc(k * sizeof(float));
+      cudaEvent_t start, stop;
+      unsigned int bytes = n * (sizeof(Point));
+      checkCudaErrors(cudaEventCreate(&start));
+      checkCudaErrors(cudaEventCreate(&stop));
+      float elapsed_time=0;
 
-// for (unsigned int count = 0; count < ref_nb*dim; count++)
-// {
-//   ref[count] = (float)ref_nb*dim-count;
+      checkCudaErrors(cudaEventRecord(start, 0));
+
+      build_kd_tree(points, n);
+
+      checkCudaErrors(cudaEventRecord(stop, 0));
+      cudaEventSynchronize(start);
+      cudaEventSynchronize(stop);
+      cudaEventElapsedTime(&elapsed_time, start, stop);
+      elapsed_time = elapsed_time ;
+      double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+      printf("build_kd_tree_naive, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+        throughput, elapsed_time, n, 1);
+      free(points);
+    }
+  }
+
+
+// TEST(kd_tree_naive, kd_tree_naive_step_time){
+//   int i, n, p, numBlocks, numThreads, *d_partition;
+//   float temp;
+//   Point *h_points;
+//   srand(time(NULL));
+//   p = 65536;
+//   n= 4 *p;
+//   h_points = (Point*) malloc(n  * sizeof(Point));
+//   for ( i = 0; i < n; ++i)
+//   {
+//     temp = n-i-1;
+//     h_points[i] =(Point) {.p={temp,temp,temp}};
+//   }
+//   Point *d_points, *d_swap;
+
+//   checkCudaErrors(
+//     cudaMalloc(&d_partition, n*sizeof(int)));
+
+//   checkCudaErrors(
+//     cudaMalloc(&d_points, n*sizeof(Point)));
+
+//   checkCudaErrors(
+//     cudaMalloc(&d_swap, n*sizeof(Point)));
+
+//   checkCudaErrors(
+//     cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
+
+//   cudaEvent_t start, stop;
+//   unsigned int bytes = n * (sizeof(Point));
+//   checkCudaErrors(cudaEventCreate(&start));
+//   checkCudaErrors(cudaEventCreate(&stop));
+//   float elapsed_time=0;
+
+//   checkCudaErrors(cudaEventRecord(start, 0));
+
+
+//   getThreadAndBlockCount(n, p, numBlocks, numThreads);
+//   cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, 0);
+
+//   checkCudaErrors(cudaEventRecord(stop, 0));
+//   cudaEventSynchronize(start);
+//   cudaEventSynchronize(stop);
+//   cudaEventElapsedTime(&elapsed_time, start, stop);
+//   elapsed_time = elapsed_time ;
+//   double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+//   printf("kd_tree_naive_step, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u, p = %d Elements, NumDevsUsed = %d\n",
+//     throughput, elapsed_time, n/p, p, 1);
+
+//   checkCudaErrors(
+//     cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
+
+
+//   free(h_points);
+//   checkCudaErrors(cudaFree(d_points));
+//   checkCudaErrors(cudaFree(d_swap));
+//   checkCudaErrors(cudaFree(d_partition));
+
 // }
-// for (unsigned int count = 0; count < query_nb*dim; count++)
-// {
-//   query[count] = 0;
-// }
-
-// for (i=0; i<iterations; i++){
-//   knn_brute_force_reduce(ref, ref_nb, query, dim, k, dist, ind);
-// }
-
-// for (unsigned int i = 0; i < k; ++i)
-// {
-//   ASSERT_EQ(ind[i], ref_nb-1-i) << "Faild with i = "<<i << " and n = " << ref_nb;;
-// }
-
-// free(dist);
-// free(ind);
-// free(query);
-// free(ref);
-// cudaDeviceSynchronize();
-// cudaDeviceReset();
