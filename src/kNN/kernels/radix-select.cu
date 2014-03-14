@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 
+
 # define debug 1
 __device__
 void printIntArray__(int* l, int n, char *s){
@@ -20,30 +21,45 @@ void printIntArray__(int* l, int n, char *s){
   }
 
 
+__device__  void cuAccumulateIndex(int *list, int n)
+{
+    if (threadIdx.x == 0)
+     {
+        int sum=0;
+        list[n]=list[n-1];
+        int temp=0;
+        for (int i = 0; i < n; ++i)
+         {
+            temp = list[i];
+            list[i] = sum;
+            sum += temp;
+         }
+        list[n]+=list[n-1];
+     }
+}
 
+  // __device__  void cuAccumulateIndex(int *list, int n)
+  // {
+  //   int i, j, temp,
+  //   tid = threadIdx.x;
+  //   if (tid == blockDim.x-1)
+  //   {
+  //     list[0] =0;
+  //   }
+  //   list+=1;
+  //   for ( i = 2; i <= n; i<<=1)
+  //   {
 
-  __device__  void cuAccumulateIndex(int *list, int n)
-  {
-    int i, j, temp,
-    tid = threadIdx.x;
-    if (tid == blockDim.x-1)
-    {
-      list[0] =0;
-    }
-    list+=1;
-    for ( i = 2; i <= n; i<<=1)
-    {
-
-      if (tid*i+i/2 <n)
-      {
-        temp = list[tid*i];
-        for (j = 1; j <= i/2; ++j)
-        {
-          list[tid*i+j]+=temp;
-        }
-      }
-    }
-  }
+  //     if (tid*i+i/2 <n)
+  //     {
+  //       temp = list[tid*i];
+  //       for (j = 1; j <= i/2; ++j)
+  //       {
+  //         list[tid*i+j]+=temp;
+  //       }
+  //     }
+  //   }
+  // }
 
 
   __device__ int cuSumReduce(int *list, int n)
@@ -99,7 +115,7 @@ void printIntArray__(int* l, int n, char *s){
  }
 }
 
-__device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
+__device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition, int *zero_count, int &last, unsigned int bit, int dir)
 {
 	unsigned int
 	tid = threadIdx.x,
@@ -111,13 +127,14 @@ __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition,
 	{
 		if (partition[tid] == last)
 		{
-			is_one = partition[tid]= (bool)((*(int*)&(data[tid].p[dir]))&radix);
+			is_one = partition[tid] = (bool)((*(int*)&(data[tid].p[dir]))&radix);
 			zero_count[threadIdx.x] += !is_one;
 		}else{
 			partition[tid] = 2;
 		}
 		tid+=blockDim.x;
 	}
+  last = is_one;
 	return cuSumReduce(zero_count, blockDim.x);
 }
 
@@ -141,19 +158,22 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
 	}
 
 	tid = threadIdx.x;
-	do {
-		__syncthreads();
-		cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
-		if ((l+cut) <= m)
+  do {
+    __syncthreads();
+    cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
+		if ((l+cut) < m)
 		{
+      l +=cut;
+      last = 1;
+    }
+    else if ((l+cut) > m)
+    {
+      last = 0;
+      u -=u-cut-l;
+    }
+    else{
 			l +=cut;
-			last = 1;
-		}
-		else
-		{
-			last = 0;
-			u -=u-cut-l;
-		}
+    }
 	}while (((u-l)>1) && (bit<32));
 
 	tid = threadIdx.x;
