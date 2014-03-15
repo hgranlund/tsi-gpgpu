@@ -183,7 +183,7 @@ Advantages:
 Drawbacks:
 
 * Cannot represent imperfectly balanced kd-trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
-* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree (foreshadowing...)
+* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree. In order to eliminate this drawback, a index cache is computed before the search is performed. 
 
 Given this representation of the kd-tree, the base kd-tree building algorithm can be expanded to the following:
 
@@ -199,16 +199,18 @@ _The serial kd-tree build times was similar or better than the base algorithm, s
 
 ![awg-query-time-old-vs-new](./images/awg-query-time-old-vs-new.png)
 
-As we can see from the graph, the need for calculating the location of each child at each step in the search has a negative impact on our search time. We also note the unstable curve traced by our tests. This is probably the result of the calculation overhead, enhancing the lower runtime of cases where the combination of query-points and kd-tree, does not allow for easy pruning of the tree during search. In such cases, a notable amount of extra points has to be traversed and searched, all penalized by the lowered lookup performance.
+The graph shows that our serial implementation of search in this data structure, given a pre-calculated index cache, is as fast, or slightly faster than the base algorithm. The possibility of improving the search even more, by storing all calculated distances in a distance cache was also explored, but we can see from the graph that the overhead associated with this operation did outweigh the benefits.
+
+Some unstability is apparent in the graph, but this is probably due to the author running other programs in the background when performing the test.
 
 ![n-query-time-old-vs-new](./images/n-query-time-old-vs-new.png)
 
-This problem is enhanced when we consider N searches, and it is worth to note the long time required to perform all N searches, even given a sub-millisecond runtime for an individual search. This should be an argument for parallelizing large number of searches. In spite of this problem, the search is still a lot faster than the brute force approach, only requiring a search time of ~0.01 ms for one query in 14 million points.
+The trend is exaggerated when considering N searches. Searching with an index cache is overall fastest, and gives a total search time of ~17 s for 14 million searches in a point cloud of 14 million.
 
 #### Possible improvements
 
-* Store pointers to each child median in parent struct. Easy to implement, but requires more memory.
 * Run several queries in parallel. Easy to implement, as parallelization is trivial due to independent queries, but is dependent on efficient transfer and storage of the kd-tree on the GPU.
+* Explore performance on a variable number of k.
 
 
 Parallel improvements
@@ -226,33 +228,29 @@ Several strategies can be used to parallelize this code. We can perform the recu
 
 Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. Given a sorted list you can find the median directly, by simply looking at the midmost element of the array. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. We also have the inherent downside of sorting a list in order to find the median, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting.
 
-
 The existing O(n) algorithms for finding the median is mostly based on a more generic problem, namely selection or [kth order statistic algorithms](http://en.wikipedia.org/wiki/Selection_algorithm). Quick select and radix select to two of the best known selection algorithms in serial. They have both an average time complexity of O(n), witch makes them a good candidates. The difference between then is the constant time penalty. The radix sort have a more exact time complexity of O(bn), where b is the number of bits in each number. While the penalty for quick select is based on n, and if bad pivot elements are chosen the worst case performance is O(n²). We choose to start implementing radix sort based on the results from [*Radix Selection Algorithm for the kth Order Statistic*](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/radix_select.pdf). Based on the constant time penalties radix sort would also be the best candidate for large number of elements (n).
-
 
 The radix select is based on a bitwise partitioning, much like radix sort. In each step, elements are partitioned in two subgroups based on the current bit. Then the subgroup that contains the median is determined, and the search continue in that subgroup until the median is found.
 
 ![An illustration of radix selectionn](./images/Radix_select.png)
 
 
-
-
 #### Results
 
 ![gpu-vs-cpu-build-time](./images/gpu-vs-cpu-build-time.png)
 
-We see that the parallel implementation performs better than the base serial implementation, building a tree of 14 million points in just over 5 seconds, compared to just under 10 required by the serial algorithm. Still we regard this as a quite rough implementation, in need of more tuning to really bring out the speed potential. The potential for parallelizing the workload for the first and last iterations have not been fully developed. This is due to the implementation forcing one version of the radix select algorithm being to work on all problem sizes. This is not optimal for dividing cuda resources, and as a result, we get high penalties when the problem size reaches "unsuitable" values. Basic tuning has been explored, and the preliminary results look very promising, but this is better discussed on our nest meeting.
+We see that the parallel implementation performs better than the base serial implementation, building a tree of 14 million points in just over 5 seconds, compared to just under 10 required by the serial algorithm. Still we regard this as a quite rough implementation, in need of more tuning to really bring out the speed potential. The potential for parallelizing the workload for the first and last iterations have not been fully developed. This is due to the implementation forcing one version of the radix select algorithm being to work on all problem sizes. This is not optimal for dividing cuda resources, and as a result, we get high penalties when the problem size reaches "unsuitable" values.
 
 We also see a couple of large "jumps" in the graph. This happens when the number of elements passes a power of two and the height of the resulting kd-tree increase. The height increase hits the implementation at its weakest.
 
+Tuning the algorithm to alternate between bitonic select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
+
 #### Further work
 
-* Tune radix select algorithm to better work with the different problem sizes in each iteration.
-* Use quick selection for elements smaller then a number x.
-* Store children locations in the three, so we do not have to calculate their location when searching.
-* Always look at that memory optimization.
+* Look at memory optimization.
+
 
 Work-plan for next week
 -----------------------
 
-Both parallelizing the search, and improving the parallel building implementation is important, so we'll run those two tasks as parallel tracks.
+The three-building algorithm is improving, but still more optimization can be done. Given the optimized serial implementation of the search algorithm, it is ready for parallelization when searching for a large number of query-points. These two tasks will run as parallel tracks the next week.
