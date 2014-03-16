@@ -110,14 +110,16 @@ void printPoints(Point* l, int n){
   }
   TEST(kernels, radix_selection){
     Point *h_points;
+    int numBlocks, numThreads;
     float temp;
     unsigned int i,n;
-    for (n = 4; n <=2000; n<<=1)
+    for (n = 128 ; n <=128; n<<=1)
     {
       h_points = (Point*) malloc(n*sizeof(Point));
       srand ( (unsigned int)time(NULL) );
       for (i=0 ; i<n; i++)
       {
+        temp =  (float) i;
         temp =  (float) rand()/100000000;
         h_points[i]    = (Point) {temp, temp, temp};
       }
@@ -139,8 +141,9 @@ void printPoints(Point* l, int n){
 
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
-
-      cuRadixSelectGlobal<<<1,2>>>(d_points, d_temp, n/2, n, partition, 0);
+      getThreadAndBlockCount(n, 1, numBlocks, numThreads);
+      // printf("threads = %d\n", numThreads);
+      cuRadixSelectGlobal<<<numBlocks,numThreads>>>(d_points, d_temp, n/2, n, partition, 0);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -164,7 +167,6 @@ void printPoints(Point* l, int n){
         ASSERT_GE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
         /* code */
       }
-        // printDistArray(h_points,n);
       checkCudaErrors(
         cudaFree(d_points));
       checkCudaErrors(
