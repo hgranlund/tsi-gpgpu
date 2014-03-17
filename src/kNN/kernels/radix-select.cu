@@ -212,6 +212,7 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
   int numBlocks, numThreads,
   l=0,
   u = n,
+  m_u = ceil((float)n/2),
   cut=0,
   bit = 0,
   last = 2,
@@ -239,7 +240,7 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
     cuPartitionStep<<<numBlocks, numThreads>>>(points, n, partition, d_zeros_count_block, last, bit++, dir);
     cudaMemcpy(h_zeros_count_block, d_zeros_count_block, numBlocks*sizeof(int), cudaMemcpyDeviceToHost);
     cut = sumReduce(h_zeros_count_block, numBlocks);
-    if ((u-cut) >= m)
+    if ((u-cut) >= m_u)
     {
       u = u-cut;
       last = 1;

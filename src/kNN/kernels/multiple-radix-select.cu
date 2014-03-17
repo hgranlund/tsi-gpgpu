@@ -135,6 +135,7 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
 
   int l=0,
   u = n,
+  m_u = ceil((float)n/2),
   cut=0,
   bit = 0,
   last = 2,
@@ -149,7 +150,7 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
   do {
     __syncthreads();
     cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
-    if ((u-cut) >= m)
+    if ((u-cut) >= (m_u))
     {
       u = u-cut;
       last = 1;
@@ -170,7 +171,6 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
     {
      median = data[tid];
      data[tid]=data[0], data[0] = median;
-
    }
    tid+=blockDim.x;
  }
