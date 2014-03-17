@@ -113,14 +113,14 @@ void printPoints(Point* l, int n){
     int numBlocks, numThreads;
     float temp;
     unsigned int i,n;
-    for (n = 128 ; n <=128; n<<=1)
+    for (n = 4; n <=15000; n<<=1)
     {
       h_points = (Point*) malloc(n*sizeof(Point));
       srand ( (unsigned int)time(NULL) );
       for (i=0 ; i<n; i++)
       {
-        temp =  (float) i;
         temp =  (float) rand()/100000000;
+        temp =  (float) n-1-i;
         h_points[i]    = (Point) {temp, temp, temp};
       }
 
@@ -142,7 +142,7 @@ void printPoints(Point* l, int n){
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
       getThreadAndBlockCount(n, 1, numBlocks, numThreads);
-      // printf("threads = %d\n", numThreads);
+      debugf("threads = %d, n = %d\n", numThreads, n);
       cuRadixSelectGlobal<<<numBlocks,numThreads>>>(d_points, d_temp, n/2, n, partition, 0);
       checkCudaErrors(
        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
@@ -183,8 +183,9 @@ void printPoints(Point* l, int n){
     Point *h_points;
     unsigned int i,n;
     n = 160000;
-    int p=1;
-    for (n = 65536; n < 65536; n<<=1)
+    int numBlocks, numThreads,
+    p=1;
+    for (n = 8388608; n <= 8388608; n<<=1)
     {
       h_points = (Point*) malloc(n*p*sizeof(Point));
 
@@ -213,8 +214,6 @@ void printPoints(Point* l, int n){
 
 
 
-      int threads = min(THREADS_PER_BLOCK, prevPowerOf21(n/2));
-
       cudaEvent_t start, stop;
       unsigned int bytes = n * (sizeof(float)) ;
       checkCudaErrors(cudaEventCreate(&start));
@@ -223,7 +222,8 @@ void printPoints(Point* l, int n){
 
       checkCudaErrors(cudaEventRecord(start, 0));
 
-      cuRadixSelectGlobal<<<p,threads>>>(d_points, d_temp, n/2, n, partition, 0);
+      getThreadAndBlockCount(n, p, numBlocks, numThreads);
+      cuRadixSelectGlobal<<<numBlocks,numThreads>>>(d_points, d_temp, n/2, n, partition, 0);
 
 
       checkCudaErrors(cudaEventRecord(stop, 0));
