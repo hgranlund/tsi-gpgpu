@@ -31,6 +31,7 @@ if (BUILD_TESTS)
     #kNN/test-kNN-brute-force.cpp
     kNN/kernels/test_redution.cu
     kNN/kernels/test-multiple-radix-select.cu
+    kNN/kernels/test-radix-select.cu
     kNN/kernels/test-quick-select.cu
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
