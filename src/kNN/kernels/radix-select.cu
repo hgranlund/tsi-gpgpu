@@ -4,7 +4,7 @@
 
 
 
-# define debug 1
+# define debug 0
 __device__
 void printIntArray__(int* l, int n, char *s){
   int i;
@@ -23,46 +23,26 @@ void printIntArray__(int* l, int n, char *s){
 
   __device__  void cuAccumulateIndex(int *list, int n)
   {
-    if (threadIdx.x == 0)
+    int i, j, temp, temp_index,
+    tid = threadIdx.x;
+    if (tid == blockDim.x-1)
     {
-      int sum=0;
-      list[n]=list[n-1];
-      int temp=0;
-      for (int i = 0; i < n; ++i)
-      {
-        temp = list[i];
-        list[i] = sum;
-        sum += temp;
-      }
-      list[n]+=list[n-1];
+      list[-1] =0;
     }
+    for ( i = 2; i <= n; i<<=1)
+    {
+      temp_index = tid * i + i/2 -1;
+      if (temp_index+i/2 <n)
+      {
+        temp = list[temp_index];
+        for (j = 1; j <= i/2; ++j)
+        {
+          list[temp_index + j]+=temp;
+        }
+      }
+    }
+    __syncthreads();
   }
-
-  // __device__  void cuAccumulateIndex(int *list, int n)
-  // {
-  //   int i, j, temp, temp_index,
-  //   tid = threadIdx.x;
-
-
-  //     printIntArray__(list-1, n+1, "before");
-  //   if (tid == blockDim.x-1)
-  //   {
-  //     list[-1] =0;
-  //   }
-  //   for ( i = 2; i <= n; i<<=1)
-  //   {
-  //     temp_index = tid * i + i/2 -1;
-  //     if (temp_index+i/2 <n)
-  //     {
-  //       temp = list[temp_index];
-  //       for (j = 1; j <= i/2; ++j)
-  //       {
-  //         list[temp_index + j]+=temp;
-  //       }
-  //     }
-  //   }
-  //     printIntArray__(list-1, n+1, "after");
-  // }
 
 
   __device__ int cuSumReduce(int *list, int n)
@@ -85,8 +65,8 @@ void printIntArray__(int* l, int n, char *s){
    is_bigger,
    big,
    less;
-   // zero_count++;
-   // one_count++;
+   zero_count++;
+   one_count++;
    zero_count[threadIdx.x] = 0;
    one_count[threadIdx.x] = 0;
 
@@ -103,8 +83,8 @@ void printIntArray__(int* l, int n, char *s){
   cuAccumulateIndex(one_count, blockDim.x);
   tid = threadIdx.x;
   __syncthreads();
-  // one_count--;
-  // zero_count--;
+  one_count--;
+  zero_count--;
   less = zero_count[threadIdx.x];
   big = one_count[threadIdx.x];
   while(tid<n)
