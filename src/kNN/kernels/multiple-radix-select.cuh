@@ -1,5 +1,5 @@
-#ifndef _RADIX_SELECT_
-#define _RADIX_SELECT_
+#ifndef MULTI_RADIX_SELECT_
+#define MULTI_RADIX_SELECT_
 #include "point.h"
 
 
