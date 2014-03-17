@@ -31,6 +31,7 @@ void printIntArray__(int* l, int n, char *s){
     }
     for ( i = 2; i <= n; i<<=1)
     {
+      __syncthreads();
       temp_index = tid * i + i/2 -1;
       if (temp_index+i/2 <n)
       {
@@ -41,7 +42,6 @@ void printIntArray__(int* l, int n, char *s){
         }
       }
     }
-    __syncthreads();
   }
 
 
