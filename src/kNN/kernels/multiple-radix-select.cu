@@ -2,7 +2,9 @@
 #include "common.cuh"
 #include <stdio.h>
 
+#include <helper_cuda.h>
 
+#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 # define debug 0
 __device__
@@ -157,7 +159,7 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
       l =u-cut;
       last = 0;
     }
-  }while (((u-l)>0) && (bit<32));
+  }while (((u-l)>1) && (bit<32));
 
   tid = threadIdx.x;
 
