@@ -245,7 +245,7 @@ void printPoints(Point* l, int n)
       cudaEventElapsedTime(&elapsed_time, start, stop);
       elapsed_time = elapsed_time ;
       double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
-      printf("radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+      printf("multi-radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
         throughput, elapsed_time, n, 1);
 
 
