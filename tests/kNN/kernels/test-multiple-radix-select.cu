@@ -151,7 +151,7 @@ void printPoints(Point* l, int n)
 
 
       Point cpu_result = cpu_radixselect(h_points, 0, n-1, n/2, 0);
-      getThreadAndBlockCount(n, 1, numBlocks, numThreads);
+      getThreadAndBlockCountMulRadix(n, 1, numBlocks, numThreads);
       debugf("threads = %d, n = %d\n", numThreads, n);
       cuRadixSelectGlobal<<<numBlocks,numThreads>>>(d_points, d_temp, n/2, n, partition, 0);
       checkCudaErrors(
@@ -235,7 +235,7 @@ void printPoints(Point* l, int n)
 
       checkCudaErrors(cudaEventRecord(start, 0));
 
-      getThreadAndBlockCount(n, p, numBlocks, numThreads);
+      getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
       cuRadixSelectGlobal<<<numBlocks,numThreads>>>(d_points, d_temp, n/2, n, partition, 0);
 
 

@@ -202,7 +202,7 @@ __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
 //   checkCudaErrors(cudaEventRecord(start, 0));
 
 
-//   getThreadAndBlockCount(n, p, numBlocks, numThreads);
+//   getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
 //   cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, 0);
 
 //   checkCudaErrors(cudaEventRecord(stop, 0));

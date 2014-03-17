@@ -202,7 +202,7 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int 
 
 
 
-void getThreadAndBlockCount(int n, int p, int &blocks, int &threads)
+void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
 {
   n = n/p;
   n--;

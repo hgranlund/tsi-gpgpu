@@ -59,7 +59,7 @@ void build_kd_tree(Point *h_points, int n)
     i = 0;
     while(step > 256)
     {
-        getThreadAndBlockCount(n, p, numBlocks, numThreads);
+        getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
         debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n/p, p, numBlocks, numThreads );
         cuBalanceBranch<<<numBlocks,numThreads>>>(d_points, d_swap, d_partition, n/p, p, i%3);
         p <<=1;
