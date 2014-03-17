@@ -124,8 +124,8 @@ __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
 
   TEST(kd_tree_naive, kd_tree_naive_time){
     int i, n = 8388608;
+    // for (n = 13000000; n <=13000000 ; n+=250000)
     for (n = 8388608; n <=8388608 ; n+=250000)
-    // for (n = 13388608; n <=14000000 ; n+=250000)
     {
       cudaDeviceReset();
       float temp;
@@ -140,7 +140,7 @@ __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug=0)
       t.p[1]=temp;
       t.p[2]=temp;
       points[i]    = t;
-   
+
       }
 
       cudaEvent_t start, stop;

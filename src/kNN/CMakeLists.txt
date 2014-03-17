@@ -16,9 +16,9 @@ set(CUHFILES
 # brute-force/kNN-brute-force-garcia.cuh
 # brute-force/kNN-brute-force.cuh
 # kernels/reduction.cuh
-# kernels/radix-select.cuh
+# kernels/multiple-multiple-radix-select.cuh
 kernels/common.cuh
-kernels/radix-select.cuh
+kernels/multiple-radix-select.cuh
 kernels/quick-select.cuh
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
@@ -33,8 +33,8 @@ set(CUFILES
 brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
 kernels/reduction-mod.cu
-# kernels/radix-select.cu
-kernels/radix-select.cu
+# kernels/multiple-radix-select.cu
+kernels/multiple-radix-select.cu
 kernels/quick-select.cu
 kd-tree/kd-tree-naive.cu
 )

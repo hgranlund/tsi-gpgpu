@@ -1,5 +1,5 @@
 #include <kd-tree-naive.cuh>
-#include <radix-select.cuh>
+#include <multiple-radix-select.cuh>
 #include <quick-select.cuh>
 
 #include <stdio.h>

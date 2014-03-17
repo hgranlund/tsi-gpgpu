@@ -1,4 +1,4 @@
-#include "radix-select.cuh"
+#include "multiple-radix-select.cuh"
 #include "common.cuh"
 #include <stdio.h>
 
@@ -113,8 +113,7 @@ __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition,
 	{
 		if (partition[tid] == last)
 		{
-			is_one =  (bool)((*(int*)&(data[tid].p[dir]))&radix);
-      partition[tid] = is_one;
+			is_one = partition[tid] = (bool)((*(int*)&(data[tid].p[dir]))&radix);
       zero_count[threadIdx.x] += !is_one;
     }else{
      partition[tid] = 2;
@@ -129,22 +128,22 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
 {
 	__shared__ int one_count[1025];
 	__shared__ int zeros_count[1025];
-	__shared__ Point median;
+  __shared__ Point median;
 
 
-	int l=0,
-	u = n,
-	cut=0,
-	bit = 0,
-	last = 2,
-	tid = threadIdx.x;
-	while(tid < n)
-	{
-		partition[tid] = last;
-		tid+=blockDim.x;
-	}
+  int l=0,
+  u = n,
+  cut=0,
+  bit = 0,
+  last = 2,
+  tid = threadIdx.x;
+  while(tid < n)
+  {
+    partition[tid] = last;
+    tid+=blockDim.x;
+  }
 
-	tid = threadIdx.x;
+  tid = threadIdx.x;
   do {
     __syncthreads();
     cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
@@ -158,7 +157,6 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
       l =u-cut;
       last = 0;
     }
-
   }while (((u-l)>0) && (bit<32));
 
   tid = threadIdx.x;
