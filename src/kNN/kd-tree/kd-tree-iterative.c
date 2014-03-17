@@ -5,9 +5,9 @@
 
 struct Point
 {
-  float p[3];
-  int left;
-  int right;
+    float p[3];
+    int left;
+    int right;
 };
 
 int ind(int i, int j, int n)
@@ -131,31 +131,33 @@ int store_locations(struct Point *tree, int lower, int upper, int n)
     return r;
 }
 
-float distance_to_query_point(float *qp, struct Point *points, int x)
+float dist(float *qp, struct Point *points, int x)
 {
-    return (qp[0] - points[x].p[0])*(qp[0] - points[x].p[0]) 
-        + (qp[1] - points[x].p[1])*(qp[1] - points[x].p[1]) 
-        + (qp[2] - points[x].p[2])*(qp[2] - points[x].p[0]);
+    return 0.0;
+
+    float dx = qp[0] - points[x].p[0],
+        dy = qp[1] - points[x].p[1],
+        dz = qp[2] - points[x].p[2];
+
+    return dx*dx + dy*dy + dz*dz;
 }
 
 int nn(float *qp, struct Point *tree, int dim, int index)
 {
+
     if (tree[index].left == -1 && tree[index].right == -1)
     {
         return index;
     }
 
-    int target, other,
-
-        r = index,
-        d = dim % 3,
+    int target, other, d = dim % 3,
     
         target_index = tree[index].right,
         other_index = tree[index].left;
     
     dim++;
 
-    if (tree[r].p[d] > qp[d] || target_index == -1)
+    if (tree[index].p[d] > qp[d] || target_index == -1)
     {
         int temp = target_index;
 
@@ -164,24 +166,22 @@ int nn(float *qp, struct Point *tree, int dim, int index)
     }
 
     target = nn(qp, tree, dim, target_index);
-
-    float target_dist = distance_to_query_point(qp, tree, target),
-        current_dist = distance_to_query_point(qp, tree, r);
+    float target_dist = dist(qp, tree, target);
+    float current_dist = dist(qp, tree, index);
 
     if (current_dist < target_dist)
     {
         target_dist = current_dist;
-        target = r;
+        target = index;
     }
 
-    if ((tree[r].p[d] - qp[d])*(tree[r].p[d] - qp[d]) > target_dist || other_index == -1)
+    if ((tree[index].p[d] - qp[d])*(tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
     {
         return target;
     }
 
     other = nn(qp, tree, dim, other_index);
-
-    float other_distance = distance_to_query_point(qp, tree, other);
+    float other_distance = dist(qp, tree, other);
 
     if (other_distance > target_dist)
     {
@@ -189,6 +189,55 @@ int nn(float *qp, struct Point *tree, int dim, int index)
     }
     return other;
 }
+
+// int nn(float *qp, struct Point *tree, float *dists, int dim, int index)
+// {
+//     float current_dist = dist(qp, tree, index);
+//     dists[index] = current_dist;
+
+//     if (tree[index].left == -1 && tree[index].right == -1)
+//     {
+//         return index;
+//     }
+
+//     int target, other, d = dim % 3,
+    
+//         target_index = tree[index].right,
+//         other_index = tree[index].left;
+    
+//     dim++;
+
+//     if (tree[index].p[d] > qp[d] || target_index == -1)
+//     {
+//         int temp = target_index;
+
+//         target_index = other_index;
+//         other_index = temp;
+//     }
+
+//     target = nn(qp, tree, dists, dim, target_index);
+//     float target_dist = dists[target];
+
+//     if (current_dist < target_dist)
+//     {
+//         target_dist = current_dist;
+//         target = index;
+//     }
+
+//     if ((tree[index].p[d] - qp[d])*(tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
+//     {
+//         return target;
+//     }
+
+//     other = nn(qp, tree, dists, dim, other_index);
+//     float other_distance = dists[other];
+
+//     if (other_distance > target_dist)
+//     {
+//         return target;
+//     }
+//     return other;
+// }
 
 int nearest(float *qp, struct Point *tree, int lower, int upper, int dim, int n)
 {
@@ -223,8 +272,8 @@ int nearest(float *qp, struct Point *tree, int lower, int upper, int dim, int n)
 
     target = nearest(qp, tree, target_lower, target_upper, dim, n);
 
-    float target_dist = distance_to_query_point(qp, tree, target),
-        current_dist = distance_to_query_point(qp, tree, r);
+    float target_dist = dist(qp, tree, target),
+        current_dist = dist(qp, tree, r);
 
     if (current_dist < target_dist)
     {
@@ -239,7 +288,7 @@ int nearest(float *qp, struct Point *tree, int lower, int upper, int dim, int n)
 
     other = nearest(qp, tree, other_lower, other_upper, dim, n);
 
-    float other_distance = distance_to_query_point(qp, tree, other);
+    float other_distance = dist(qp, tree, other);
 
     if (other_distance > target_dist)
     {
@@ -277,9 +326,12 @@ double wall_time()
 
 int test_nn(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
 {
+    float dists[n];
+
     float query_point[3];
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
     
+    // int best_fit = nn(query_point, tree, dists, 0, midpoint(0, n));
     int best_fit = nn(query_point, tree, 0, midpoint(0, n));
 
     float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
@@ -290,12 +342,6 @@ int test_nn(struct Point *tree, int n, float qx, float qy, float qz, float ex, f
         return 0;
     }
     return 1;
-
-    // printf("Closest point to (%3.1f, %3.1f, %3.1f) was (%3.1f, %3.1f, %3.1f) located at %d\n",
-    //     query_point[0], query_point[1], query_point[2],
-    //     tree[best_fit].p[0], tree[best_fit].p[1], tree[best_fit].p[2],
-    //     best_fit);
-    // printf("==================\n");
 }
 
 int test_nearest(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
@@ -335,7 +381,8 @@ int main(int argc, char *argv[])
 
     if (!debug)
     {
-        n = 5000000; //atoi(argv[1]);
+        // n = 5100000;
+        n = atoi(argv[1]);
     }
 
     points = malloc(n * sizeof(struct Point));
@@ -357,7 +404,7 @@ int main(int argc, char *argv[])
         store_locations(points, 0, n, n);
 
         double build_time = (wall_time() - time) * 1000;
-        printf("\nBuild duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
+        // printf("\nBuild duration for %d points: %lf (ms)\n", n, (wall_time() - time) * 1000);
 
         int test_runs = 10000;
         float **query_data = malloc(test_runs * 3 * sizeof(float));
@@ -371,31 +418,38 @@ int main(int argc, char *argv[])
             query_data[i] = qp;
         }
 
-        printf("\nOld query:\n");
+        // printf("\nOld query:\n");
 
         time = wall_time();
         for (i = 0; i < test_runs; i++) {
             nearest(query_data[i], points, 0, n, 0, n);
         }
-        printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
-        printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
+        // printf("%lf\n", ((wall_time() - time) * 1000) / test_runs);
 
-        printf("\nNew query:\n");
+        // printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
+        // printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
+
+        // printf("\nNew query:\n");
+
+        float *dists = malloc(n * sizeof(float));
 
         time = wall_time();
         for (i = 0; i < test_runs; i++) {
+            // nn(query_data[i], points, dists, 0, midpoint(0, n));
             nn(query_data[i], points, 0, midpoint(0, n));
         }
-        printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
-        printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
+        printf("%lf\n", ((wall_time() - time) * 1000) / test_runs);
+
+        // printf("Average query duration: %lf (ms)\n", ((wall_time() - time) * 1000) / test_runs);
+        // printf("Total time for %d queries: %lf (ms)\n", test_runs, ((wall_time() - time) * 1000));
+
+        free(dists);
 
         for (i = 0; i < test_runs; ++i)
         {
             free(query_data[i]);
         }
         free(query_data);
-
-        // printf("%lf, %lf\n", ((wall_time() - time) * 1000) / test_runs, build_time);
     }
 
     if (debug)
@@ -477,6 +531,36 @@ int main(int argc, char *argv[])
             printf("nn function still works!\n");
             printf("==================\n");
         }
+
+        // not_passed_test = test_nn2(wiki, wn, 2, 3, 0, 2, 3, 0)
+        //     + test_nn2(wiki, wn, 5, 4, 0, 5, 4, 0)
+        //     + test_nn2(wiki, wn, 9, 6, 0, 9, 6, 0)
+        //     + test_nn2(wiki, wn, 4, 7, 0, 4, 7, 0)
+        //     + test_nn2(wiki, wn, 8, 1, 0, 8, 1, 0)
+        //     + test_nn2(wiki, wn, 7, 2, 0, 7, 2, 0)
+        //     + test_nn2(wiki, wn, 10, 10, 0, 9, 6, 0)
+        //     + test_nn2(wiki, wn, 0, 0, 0, 2, 3, 0)
+        //     + test_nn2(wiki, wn, 4, 4, 0, 5, 4, 0)
+        //     + test_nn2(wiki, wn, 3, 2, 0, 2, 3, 0)
+        //     + test_nn2(wiki, wn, 2, 6, 0, 4, 7, 0)
+        //     + test_nn2(wiki, wn, 10, 0, 0, 8, 1, 0)
+        //     + test_nn2(wiki, wn, 0, 10, 0, 4, 7, 0);
+
+        // if (not_passed_test)
+        // {
+        //     printf("nn2 function not working right!\n");
+        //     printf("==================\n");   
+        // }
+        // else {
+        //     printf("nn2 function still works!\n");
+        //     printf("==================\n");
+        // }
+
+        // printf("Testing ground for nn2:\n");
+        // float best_dist, query_point[3];
+        //     query_point[0] = 10, query_point[1] = 10, query_point[2] = 0;
+
+        // nn2(query_point, wiki, midpoint(0, wn), 0, 3, &best_dist);
 
         free(wiki);
     }

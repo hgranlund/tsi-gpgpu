@@ -51,7 +51,11 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
       for (i=0 ; i<n; i++)
       {
         temp =  (float) rand()/100000000;
-        h_points[i]    = (Point) {temp, temp, temp};
+        Point t;
+        t.p[0]=temp;
+        t.p[1]=temp;
+        t.p[2]=temp;
+        h_points[i]    = t;
       }
       getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
 
@@ -105,7 +109,11 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
       for (i=0 ; i<n; i++)
       {
         temp =  (float) rand()/100000000;
-        h_points[i]    = (Point) {temp, temp, temp};
+        Point t;
+        t.p[0]=temp;
+        t.p[1]=temp;
+        t.p[2]=temp;
+        h_points[i]    = t;
       }
       getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
 
@@ -115,7 +123,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
         cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
 
 
-            cudaEvent_t start, stop;
+      cudaEvent_t start, stop;
       unsigned int bytes = n * (sizeof(Point));
       checkCudaErrors(cudaEventCreate(&start));
       checkCudaErrors(cudaEventCreate(&stop));

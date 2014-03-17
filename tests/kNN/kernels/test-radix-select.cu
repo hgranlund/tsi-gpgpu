@@ -20,7 +20,7 @@
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
 
-float cpu_partition(Point *data, int l, int u, int bit)
+int cpu_partition(Point *data, int l, int u, int bit)
 {
   unsigned int radix=(1 << 31-bit);
   Point *temp = (Point *)malloc(((u-l)+1)*sizeof(Point));
@@ -52,8 +52,12 @@ float cpu_partition(Point *data, int l, int u, int bit)
 
 Point cpu_radixselect(Point *data, int l, int u, int m, int bit){
 
+  Point t;
+  t.p[0] = 0;
+  t.p[1] = 0;
+  t.p[2] = 0;
   if (l == u) return(data[l]);
-  if (bit > 32) {printf("cpu_radixselect fail!\n"); return (Point){0,0,0};}
+  if (bit > 32) {printf("cpu_radixselect fail!\n"); return t;}
   int s = cpu_partition(data, l, u, bit);
   if (s>=m) return cpu_radixselect(data, l, s, m, bit+1);
   return cpu_radixselect(data, s+1, u, m, bit+1);
@@ -64,16 +68,17 @@ Point cpu_radixselect(Point *data, int l, int u, int m, int bit){
 
 
 
-void printPoints(Point* l, int n){
+void printPoints(Point* l, int n)
+{
   int i;
   if (debug)
   {
-    // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
+// printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
     printf("[%3.1f, ", l[0].p[0]);
       for (i = 1; i < n; ++i)
       {
         printf(", %3.1f, ", l[i].p[0]);
-        // printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
+// printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
       }
       printf("]\n");
     }
@@ -108,11 +113,12 @@ void printPoints(Point* l, int n){
     return n >>=1;
 
   }
+
   TEST(kernels, radix_selection){
     Point *h_points;
     int numBlocks, numThreads;
     float temp;
-    unsigned int i,n;
+    int i,n;
     for (n = 4; n <=15000; n<<=1)
     {
       h_points = (Point*) malloc(n*sizeof(Point));
@@ -121,7 +127,11 @@ void printPoints(Point* l, int n){
       {
         temp =  (float) rand()/100000000;
         temp =  (float) n-1-i;
-        h_points[i]    = (Point) {temp, temp, temp};
+        Point t;
+        t.p[0]=temp;
+        t.p[1]=temp;
+        t.p[2]=temp;
+        h_points[i]    = t;
       }
 
       printPoints(h_points,n);
@@ -145,7 +155,7 @@ void printPoints(Point* l, int n){
       debugf("threads = %d, n = %d\n", numThreads, n);
       cuRadixSelectGlobal<<<numBlocks,numThreads>>>(d_points, d_temp, n/2, n, partition, 0);
       checkCudaErrors(
-       cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
+        cudaMemcpy(&h_result, d_result, sizeof(Point), cudaMemcpyDeviceToHost));
 
       checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
@@ -160,12 +170,10 @@ void printPoints(Point* l, int n){
       for (int i = 0; i < n/2; ++i)
       {
         ASSERT_LE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
-        /* code */
       }
       for (int i = n/2; i < n; ++i)
       {
         ASSERT_GE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
-        /* code */
       }
       checkCudaErrors(
         cudaFree(d_points));
@@ -179,7 +187,8 @@ void printPoints(Point* l, int n){
     }
   }
 
-  TEST(kernels, radix_selection_time){
+  TEST(kernels, radix_selection_time)
+  {
     Point *h_points;
     unsigned int i,n;
     n = 160000;
@@ -196,7 +205,11 @@ void printPoints(Point* l, int n){
       for (i=0 ; i<n*p; i++)
       {
         temp =  (float) rand()/100000000;
-        h_points[i]    = (Point) {temp, temp, temp};
+        Point t;
+        t.p[0]=temp;
+        t.p[1]=temp;
+        t.p[2]=temp;
+        h_points[i]    = t;
       }
 
       printPoints(h_points,n);
@@ -233,7 +246,7 @@ void printPoints(Point* l, int n){
       elapsed_time = elapsed_time ;
       double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
       printf("radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
-       throughput, elapsed_time, n, 1);
+        throughput, elapsed_time, n, 1);
 
 
       checkCudaErrors(
