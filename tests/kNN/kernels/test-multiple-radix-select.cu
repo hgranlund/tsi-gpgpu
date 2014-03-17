@@ -114,7 +114,7 @@ void printPoints(Point* l, int n)
 
   }
 
-  TEST(kernels, radix_selection){
+  TEST(kernels, multi_radix_selection){
     Point *h_points;
     int numBlocks, numThreads;
     float temp;
@@ -187,7 +187,7 @@ void printPoints(Point* l, int n)
     }
   }
 
-  TEST(kernels, radix_selection_time)
+  TEST(kernels, multi_radix_selection_time)
   {
     Point *h_points;
     unsigned int i,n;
