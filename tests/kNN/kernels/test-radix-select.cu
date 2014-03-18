@@ -118,14 +118,14 @@ void printPoints1(Point* l, int n)
     Point *h_points;
     float temp;
     int i,n;
-    for (n = 4; n <=1000; n<<=1)
+    for (n = 4; n <=16384; n<<=1)
     {
       h_points = (Point*) malloc(n*sizeof(Point));
       srand ( (unsigned int)time(NULL) );
       for (i=0 ; i<n; i++)
       {
-        temp =  (float) n-1-i;
         temp =  (float) rand()/100000000;
+        temp =  (float) i;
         Point t;
         t.p[0]=temp;
         t.p[1]=temp;
@@ -169,6 +169,81 @@ void printPoints1(Point* l, int n)
       {
         ASSERT_GE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
       }
+      checkCudaErrors(
+        cudaFree(d_points));
+      checkCudaErrors(
+        cudaFree(d_temp));
+      checkCudaErrors(
+        cudaFree(partition));
+      cudaDeviceSynchronize();
+      cudaDeviceReset();
+    }
+  }
+
+
+  TEST(kernels, radix_selection_time){
+    Point *h_points;
+    float temp;
+    int i,n;
+    for (n = 8388608; n <=8388608; n<<=1)
+    {
+      h_points = (Point*) malloc(n*sizeof(Point));
+      srand ( (unsigned int)time(NULL) );
+      for (i=0 ; i<n; i++)
+      {
+        temp =  (float) n-1-i;
+        temp =  (float) rand()/100000000;
+        Point t;
+        t.p[0]=temp;
+        t.p[1]=temp;
+        t.p[2]=temp;
+        h_points[i]    = t;
+      }
+
+      Point *d_points, *d_temp;
+      int *partition;
+      checkCudaErrors(
+        cudaMalloc((void **)&d_points, n*sizeof(Point)));
+      checkCudaErrors(
+        cudaMalloc((void **)&d_temp, n*sizeof(Point)));
+      checkCudaErrors(
+        cudaMalloc((void **)&partition, n*sizeof(int)));
+      checkCudaErrors(
+        cudaMemcpy(d_points, h_points, n*sizeof(Point), cudaMemcpyHostToDevice));
+
+
+      cudaEvent_t start, stop;
+      unsigned int bytes = n * (sizeof(Point)) ;
+      checkCudaErrors(cudaEventCreate(&start));
+      checkCudaErrors(cudaEventCreate(&stop));
+      float elapsed_time=0;
+
+      checkCudaErrors(cudaEventRecord(start, 0));
+
+      radixSelectAndPartition(d_points, d_temp, partition, n/2, n, 0);
+
+      checkCudaErrors(cudaEventRecord(stop, 0));
+      cudaEventSynchronize(start);
+      cudaEventSynchronize(stop);
+      cudaEventElapsedTime(&elapsed_time, start, stop);
+      elapsed_time = elapsed_time ;
+      double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+      printf("radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+        throughput, elapsed_time, n, 1);
+
+      checkCudaErrors(
+        cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
+
+      for (int i = 0; i < n/2; ++i)
+      {
+        ASSERT_LE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
+      }
+      for (int i = n/2; i < n; ++i)
+      {
+        ASSERT_GE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
+      }
+
+
       checkCudaErrors(
         cudaFree(d_points));
       checkCudaErrors(

@@ -5,7 +5,10 @@
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
-# define debug 1
+# define debug 0
+#define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
 __device__
 void d_printIntArray___(int* l, int n, char *s){
   int i;
@@ -69,15 +72,15 @@ void d_printIntArray___(int* l, int n, char *s){
       {
         list[tid] += list[tid+half];
         half = half/2;
-      }
       __syncthreads();
+      }
       return list[0];
     }
 
     __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partition, int last, int dir)
     {
-      __shared__ int ones[513];
-      __shared__ int zeros[513];
+      __shared__ int ones[1025];
+      __shared__ int zeros[1025];
       __shared__ Point median;
 
       int
@@ -146,10 +149,6 @@ void d_printIntArray___(int* l, int n, char *s){
     }
   }
 
-
-
-
-
   __global__ void cuPartitionStep(Point *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
   {
     __shared__ int zero_count[1024];
@@ -157,13 +156,21 @@ void d_printIntArray___(int* l, int n, char *s){
     int
     tid = threadIdx.x,
     is_one,
+    block_offset,
+    rest = n % gridDim.x,
     block_step,
     radix = (1 << 31-bit);
     zero_count[threadIdx.x] = 0;
     block_step = n/gridDim.x;
     n = block_step;
-    data += block_step * blockIdx.x;
-    partition += block_step * blockIdx.x;
+    block_offset = block_step * blockIdx.x;
+    if (rest >= gridDim.x-blockIdx.x)
+    {
+      block_offset += rest - (gridDim.x - blockIdx.x);
+      n++;
+    }
+    data += block_offset;
+    partition += block_offset;
     while(tid < n)
     {
       if (partition[tid] == last)
@@ -176,7 +183,11 @@ void d_printIntArray___(int* l, int n, char *s){
      tid+=blockDim.x;
    }
    __syncthreads();
-   zeros_count_block[blockIdx.x] = cuSumReduce_(zero_count, blockDim.x);
+   cuSumReduce_(zero_count, blockDim.x);
+   if (threadIdx.x == 0)
+   {
+     zeros_count_block[blockIdx.x] = zero_count[0];
+   }
  }
 
 
@@ -192,9 +203,9 @@ void d_printIntArray___(int* l, int n, char *s){
 void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
 {
   threads = 512;
-  blocks = n/threads;
+  blocks = n/threads/2;
   blocks = max(1, blocks);
-  // threads = max(1, threads);
+  blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
 }
 
 __global__ void fillArray(int *array, int value, int n)
@@ -217,38 +228,29 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
   bit = 0,
   last = 2,
   *h_zeros_count_block,
-  *h_zeros,
   *d_zeros_count_block;
 
-
-
+  numThreads = min(n, THREADS_PER_BLOCK);
+  fillArray<<<1,numThreads>>>(partition, 2, n);
   getThreadAndBlockCountPartition(n,numBlocks, numThreads);
-  numThreads=2;
+  debugf("blocks = %d, threads = %d\n", numBlocks, numThreads);
   h_zeros_count_block = (int*) malloc(numBlocks*sizeof(int));
-  h_zeros = (int*) malloc(numBlocks*sizeof(int));
-  for (int i = 0; i < numBlocks; ++i)
-  {
-    h_zeros[i] = 0;
-  }
   checkCudaErrors(
     cudaMalloc((void **) &d_zeros_count_block, numBlocks*sizeof(int)));
 
-  fillArray<<<1,512>>>(partition, 2, n);
-
   do {
-    cudaMemcpy(d_zeros_count_block, h_zeros, numBlocks*sizeof(int), cudaMemcpyHostToDevice);
     cuPartitionStep<<<numBlocks, numThreads>>>(points, n, partition, d_zeros_count_block, last, bit++, dir);
     cudaMemcpy(h_zeros_count_block, d_zeros_count_block, numBlocks*sizeof(int), cudaMemcpyDeviceToHost);
     cut = sumReduce(h_zeros_count_block, numBlocks);
-    if ((u-cut) >= m_u)
+    if ((l+cut) > m_u)
     {
-      u = u-cut;
-      last = 1;
+      u = l+cut;
+      last = 0;
     }
     else
     {
-      l =u-cut;
-      last = 0;
+      l = l+cut;
+      last = 1;
     }
   }while (((u-l)>1) && (bit<32));
 
@@ -256,26 +258,6 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
 
   checkCudaErrors(
     cudaFree(d_zeros_count_block));
-
- //  __syncthreads();
- //  while(tid < n)
- //  {
- //    if (partition[tid] == last)
- //    {
- //     median = data[tid];
- //     data[tid]=data[0], data[0] = median;
-
- //   }
- //   tid+=blockDim.x;
- // }
- // __syncthreads();
- // cuPartitionSwap(data+1, data_copy, n-1, partition, one_count, zeros_count, median, dir);
- // __syncthreads();
- // if (threadIdx.x == 0)
- // {
- //   median = data[m];
- //   data[m]=data[0], data[0] = median;
- // }
 }
 
 
