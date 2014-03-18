@@ -63,16 +63,18 @@ void d_printIntArray___(int* l, int n, char *s){
       }
     }
 
-
     __device__ int cuSumReduce_(int *list, int n)
     {
       int half = n/2;
       int tid = threadIdx.x;
-      while(tid<half && half > 0)
+      while(half > 0)
       {
-        list[tid] += list[tid+half];
+        if (tid < half)
+        {
+          list[tid] += list[tid+half];
+        }
         half = half/2;
-      __syncthreads();
+        __syncthreads();
       }
       return list[0];
     }
