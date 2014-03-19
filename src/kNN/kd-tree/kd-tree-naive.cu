@@ -58,7 +58,7 @@ void build_kd_tree(Point *h_points, int n)
     p = 1;
     step = n/p;
     i = 0;
-    while(step > 8388608)
+    while(step >= 8388608 && p <= 2)
     {
         for (j = 0; j <n; j+= n/p)
         {
