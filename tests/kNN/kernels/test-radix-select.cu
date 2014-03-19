@@ -234,15 +234,6 @@ void printPoints1(Point* l, int n)
       checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
-      for (int i = 0; i < n/2; ++i)
-      {
-        ASSERT_LE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
-      }
-      for (int i = n/2; i < n; ++i)
-      {
-        ASSERT_GE(h_points[i].p[0], h_points[n/2].p[0]) << "Faild with n = " << n;
-      }
-
 
       checkCudaErrors(
         cudaFree(d_points));

@@ -256,7 +256,8 @@ Tuning the algorithm to alternate between radix select and quick select, elimina
 #### Further work
 
 * Look at memory optimization.
-
+* Improve utiliti methods like: accumulateindex, minReduce.
+* Forloop Unrolling.
 
 Work-plan for next week
 -----------------------
