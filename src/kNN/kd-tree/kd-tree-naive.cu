@@ -1,6 +1,7 @@
 #include <kd-tree-naive.cuh>
 #include <multiple-radix-select.cuh>
 #include <quick-select.cuh>
+#include "radix-select.cuh"
 
 #include <stdio.h>
 #include <point.h>
@@ -39,7 +40,7 @@ void build_kd_tree(Point *h_points, int n)
 
 
     Point *d_points, *d_swap;
-    int p, i, numBlocks, numThreads, step;
+    int p, i, j, numBlocks, numThreads, step;
     int *d_partition;
 
     checkCudaErrors(
@@ -57,6 +58,16 @@ void build_kd_tree(Point *h_points, int n)
     p = 1;
     step = n/p;
     i = 0;
+    while(step > 8388608)
+    {
+        for (j = 0; j <n; j+= n/p)
+        {
+            radixSelectAndPartition(d_points+j, d_swap+j, d_partition+j, step/2, step, i%3);
+        }
+        p <<=1;
+        step=n/p;
+        i++;
+    }
     while(step > 256)
     {
         getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
