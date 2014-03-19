@@ -47,21 +47,83 @@ void printIntArray__(int* l, int n, char *s){
   }
 
 
-  __device__ int cuSumReduce(int *list, int n)
-  {
-    int half = n/2;
-    int tid = threadIdx.x;
-    while(half > 0)
+
+__device__ int cuSumReduce(int *list, int n)
+{
+    unsigned int tid = threadIdx.x;
+
+    if (n >= 1024)
     {
-      if (tid<half)
-      {
-        list[tid] += list[tid+half];
-      }
-      half = half/2;
-      __syncthreads();
+        if (tid < 512)
+        {
+            list[tid] += list[tid + 512];
+        }
+        __syncthreads();
     }
+    if (n >= 512)
+    {
+        if (tid < 256)
+        {
+            list[tid] += list[tid + 256];
+        }
+        __syncthreads();
+    }
+
+    if (n >= 256)
+    {
+        if (tid < 128)
+        {
+            list[tid] += list[tid + 128];
+        }
+        __syncthreads();
+    }
+
+    if (n >= 128)
+    {
+        if (tid <  64)
+        {
+            list[tid] += list[tid +  64];
+        }
+        __syncthreads();
+    }
+
+    if (tid < 32)
+    {
+        volatile int *smem = list;
+
+        if (n >=  64)
+        {
+            smem[tid] += smem[tid + 32];
+        }
+
+        if (n >=  32)
+        {
+            smem[tid] += smem[tid + 16];
+        }
+
+        if (n >=  16)
+        {
+            smem[tid] += smem[tid +  8];
+        }
+
+        if (n >=   8)
+        {
+            smem[tid] += smem[tid +  4];
+        }
+
+        if (n >=   4)
+        {
+            smem[tid] += smem[tid +  2];
+        }
+
+        if (n >=   2)
+        {
+            smem[tid] += smem[tid +  1];
+        }
+    }
+    __syncthreads();
     return list[0];
-  }
+}
 
   __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
   {
