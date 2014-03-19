@@ -239,6 +239,8 @@ void printPoints1(Point* l, int n)
         cudaFree(d_points));
       checkCudaErrors(
         cudaFree(partition));
+        checkCudaErrors(
+        cudaFree(d_temp));
       cudaDeviceSynchronize();
       cudaDeviceReset();
     }
