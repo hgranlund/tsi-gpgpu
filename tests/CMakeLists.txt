@@ -131,4 +131,14 @@ if (BUILD_TESTS)
 
   add_custom_target(profile_test nvproc_test)
 
+
+  cuda_add_executable(time_kd_tree_build
+    kNN/kd-tree/time-kd-tree-naive.cu
+    OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
+  )
+
+  target_link_libraries(time_kd_tree_build knn_gpgpu)
+
+  add_custom_target(kd_tree_build time_kd_tree_build)
+
   endif()
