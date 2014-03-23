@@ -11,9 +11,9 @@
 
 __device__
 void d_printIntArray___(int* l, int n, char *s){
-  int i;
   if (debug && threadIdx.x == 0)
   {
+    int i;
     printf("%s: ", s);
     printf("[%d", l[0] );
       for (i = 1; i < n; ++i)
@@ -27,9 +27,9 @@ void d_printIntArray___(int* l, int n, char *s){
 
   void h_printIntArray___(int* l, int n, char *s)
   {
-    int i;
     if (debug)
     {
+      int i;
       printf("%s: ", s);
       printf("[%d", l[0]);
         for (i = 1; i < n; ++i)
@@ -43,7 +43,7 @@ void d_printIntArray___(int* l, int n, char *s){
 
     __device__  void cuAccumulateIndex_(int *list, int n)
     {
-      int i, j, temp, temp_index,
+      int i, j, temp,
       tid = threadIdx.x;
       if (tid == blockDim.x-1)
       {
@@ -52,7 +52,7 @@ void d_printIntArray___(int* l, int n, char *s){
       for ( i = 2; i <= n; i<<=1)
       {
         __syncthreads();
-        temp_index = tid * i + i/2 -1;
+        int temp_index = tid * i + i/2 -1;
         if (temp_index+i/2 <n)
         {
           temp = list[temp_index];
@@ -149,7 +149,6 @@ void d_printIntArray___(int* l, int n, char *s){
 
       int
       tid = threadIdx.x,
-      is_bigger,
       big,
       *zero_count = ones,
       *one_count = zeros,
@@ -177,7 +176,7 @@ void d_printIntArray___(int* l, int n, char *s){
       while(tid < n)
       {
         swap[tid]=points[tid];
-        is_bigger = partition[tid]= (bool)(points[tid].p[dir] > median.p[dir]);
+        int is_bigger = partition[tid]= (bool)(points[tid].p[dir] > median.p[dir]);
         one_count[threadIdx.x] += is_bigger;
         zero_count[threadIdx.x] += !is_bigger;
         tid+=blockDim.x;
@@ -288,7 +287,6 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
   l=0,
   u = n,
   m_u = ceil((float)n/2),
-  cut=0,
   bit = 0,
   last = 2,
   *h_zeros_count_block,
@@ -305,7 +303,7 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
   do {
     cuPartitionStep<<<numBlocks, numThreads>>>(points, n, partition, d_zeros_count_block, last, bit++, dir);
     cudaMemcpy(h_zeros_count_block, d_zeros_count_block, numBlocks*sizeof(int), cudaMemcpyDeviceToHost);
-    cut = sumReduce(h_zeros_count_block, numBlocks);
+    int cut = sumReduce(h_zeros_count_block, numBlocks);
     if ((l+cut) > m_u)
     {
       u = l+cut;

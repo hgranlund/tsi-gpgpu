@@ -1,9 +1,9 @@
-#include <kd-tree-naive.cuh>
-#include <knn_gpgpu.h>
-#include <point.h>
+#include "kd-tree-naive.cuh"
+#include "knn_gpgpu.h"
+#include "point.h"
 
-#include <stdio.h>
-#include <helper_cuda.h>
+#include "stdio.h"
+#include "helper_cuda.h"
 #include "gtest/gtest.h"
 
 

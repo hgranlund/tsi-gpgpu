@@ -9,12 +9,11 @@
 # define debug 0
 __device__
 void printIntArray__(int* l, int n, char *s){
-  int i;
   if (debug && threadIdx.x == 0)
   {
     printf("%s: ", s);
     printf("[%d", l[0] );
-      for (i = 1; i < n; ++i)
+      for (int i = 1; i < n; ++i)
       {
         printf(", %d", l[i] );
       }
@@ -25,7 +24,7 @@ void printIntArray__(int* l, int n, char *s){
 
   __device__  void cuAccumulateIndex(int *list, int n)
   {
-    int i, j, temp, temp_index,
+    int i, j, temp,
     tid = threadIdx.x;
     if (tid == blockDim.x-1)
     {
@@ -34,7 +33,7 @@ void printIntArray__(int* l, int n, char *s){
     for ( i = 2; i <= n; i<<=1)
     {
       __syncthreads();
-      temp_index = tid * i + i/2 -1;
+      int temp_index = tid * i + i/2 -1;
       if (temp_index+i/2 <n)
       {
         temp = list[temp_index];
@@ -48,88 +47,87 @@ void printIntArray__(int* l, int n, char *s){
 
 
 
-__device__ int cuSumReduce(int *list, int n)
-{
+  __device__ int cuSumReduce(int *list, int n)
+  {
     unsigned int tid = threadIdx.x;
 
     if (n >= 1024)
     {
-        if (tid < 512)
-        {
-            list[tid] += list[tid + 512];
-        }
-        __syncthreads();
+      if (tid < 512)
+      {
+        list[tid] += list[tid + 512];
+      }
+      __syncthreads();
     }
     if (n >= 512)
     {
-        if (tid < 256)
-        {
-            list[tid] += list[tid + 256];
-        }
-        __syncthreads();
+      if (tid < 256)
+      {
+        list[tid] += list[tid + 256];
+      }
+      __syncthreads();
     }
 
     if (n >= 256)
     {
-        if (tid < 128)
-        {
-            list[tid] += list[tid + 128];
-        }
-        __syncthreads();
+      if (tid < 128)
+      {
+        list[tid] += list[tid + 128];
+      }
+      __syncthreads();
     }
 
     if (n >= 128)
     {
-        if (tid <  64)
-        {
-            list[tid] += list[tid +  64];
-        }
-        __syncthreads();
+      if (tid <  64)
+      {
+        list[tid] += list[tid +  64];
+      }
+      __syncthreads();
     }
 
     if (tid < 32)
     {
-        volatile int *smem = list;
+      volatile int *smem = list;
 
-        if (n >=  64)
-        {
-            smem[tid] += smem[tid + 32];
-        }
+      if (n >=  64)
+      {
+        smem[tid] += smem[tid + 32];
+      }
 
-        if (n >=  32)
-        {
-            smem[tid] += smem[tid + 16];
-        }
+      if (n >=  32)
+      {
+        smem[tid] += smem[tid + 16];
+      }
 
-        if (n >=  16)
-        {
-            smem[tid] += smem[tid +  8];
-        }
+      if (n >=  16)
+      {
+        smem[tid] += smem[tid +  8];
+      }
 
-        if (n >=   8)
-        {
-            smem[tid] += smem[tid +  4];
-        }
+      if (n >=   8)
+      {
+        smem[tid] += smem[tid +  4];
+      }
 
-        if (n >=   4)
-        {
-            smem[tid] += smem[tid +  2];
-        }
+      if (n >=   4)
+      {
+        smem[tid] += smem[tid +  2];
+      }
 
-        if (n >=   2)
-        {
-            smem[tid] += smem[tid +  1];
-        }
+      if (n >=   2)
+      {
+        smem[tid] += smem[tid +  1];
+      }
     }
     __syncthreads();
     return list[0];
-}
+  }
 
   __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
   {
    unsigned int
    tid = threadIdx.x,
-   is_bigger,
    big,
    less;
    zero_count++;
@@ -140,7 +138,7 @@ __device__ int cuSumReduce(int *list, int n)
    while(tid < n)
    {
     swap[tid]=data[tid];
-    is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
+    int is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
     one_count[threadIdx.x] += is_bigger;
     zero_count[threadIdx.x] += !is_bigger;
     tid+=blockDim.x;
@@ -201,7 +199,6 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
   int l=0,
   u = n,
   m_u = ceil((float)n/2),
-  cut=0,
   bit = 0,
   last = 2,
   tid = threadIdx.x;
@@ -214,7 +211,7 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
   tid = threadIdx.x;
   do {
     __syncthreads();
-    cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
+    int cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
     if ((u-cut) >= (m_u))
     {
       u = u-cut;
@@ -252,10 +249,9 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
 __global__
 void cuBalanceBranch(Point* points, Point* swap, int *partition, int n, int p, int dir){
 
-	int blockoffset, bid;
-	bid = blockIdx.x;
+	int bid = blockIdx.x;
 	while(bid < p){
-		blockoffset = n * bid;
+		int blockoffset = n * bid;
 		cuRadixSelect(points+blockoffset, swap+blockoffset, n/2, n, partition+blockoffset, dir);
 		bid += gridDim.x;
 	}

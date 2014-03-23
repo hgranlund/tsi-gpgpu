@@ -1,12 +1,12 @@
-#include <kd-tree-naive.cuh>
-#include <multiple-radix-select.cuh>
-#include <quick-select.cuh>
+#include "kd-tree-naive.cuh"
+#include "multiple-radix-select.cuh"
+#include "quick-select.cuh"
 #include "radix-select.cuh"
 
-#include <stdio.h>
-#include <point.h>
+#include "stdio.h"
+#include "point.h"
 
-#include <helper_cuda.h>
+#include "helper_cuda.h"
 
 #define debug 0
 #include "common-debug.cuh"

@@ -15,7 +15,7 @@ template <int maxStep> __global__
 void cuQuickSelectShared(Point* points, int n, int p, int dir){
   __shared__ Point ss_points[maxStep*128];
   Point *s_points = ss_points;
-  int pos, i, left, right,
+  int pos, i,
   listInBlock = p/gridDim.x,
   tid = threadIdx.x,
   m=n/2;
@@ -25,6 +25,7 @@ void cuQuickSelectShared(Point* points, int n, int p, int dir){
   float pivot;
   while( tid < listInBlock)
   {
+    int left, right;
     for (i = 0; i < n; ++i)
     {
       s_points[i]=points[i];
@@ -59,8 +60,7 @@ void cuQuickSelectShared(Point* points, int n, int p, int dir){
 
 __global__
 void cuQuickSelectGlobal(Point* points, int n, int p, int dir){
-  int pos, i, left, right,
-
+  int pos, i,
   listInBlock = p/gridDim.x,
   tid = threadIdx.x,
   m=n/2;
@@ -69,7 +69,8 @@ void cuQuickSelectGlobal(Point* points, int n, int p, int dir){
   float pivot;
   while( tid < listInBlock)
   {
-    left = 0;
+    int
+    left = 0,
     right = n - 1;
     while (left < right)
     {
