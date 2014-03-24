@@ -1,32 +1,10 @@
 #include <quick-select.cuh>
 #include <stdio.h>
 
+
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
 
-
-unsigned int nextPowTwo_(unsigned int x){
-  --x;
-  x |= x >> 1;
-  x |= x >> 2;
-  x |= x >> 4;
-  x |= x >> 8;
-  x |= x >> 16;
-  return ++x;
-}
-
-bool isPowTwo_(unsigned int x){
-  return ((x&(x-1))==0);
-}
-
-unsigned int prevPowTwo_(unsigned int n){
-  if (isPowTwo_(n))
-  {
-    return n;
-  }
-  n = nextPowTwo_(n);
-  return n >>=1;
-}
 
 __device__ void cuPointSwap(Point *p, int a, int b){
   Point temp = p[a];
@@ -118,18 +96,48 @@ void cuQuickSelectGlobal(Point* points, int n, int p, int dir){
 
 void quickSelectAndPartition(Point *points, int n ,int p, int dir)
 {
-  int numBlocks, numThreads, nPrevPowTwo;
+  int numBlocks, numThreads;
   getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
-  nPrevPowTwo = prevPowTwo_(n);
-  if (nPrevPowTwo * 2 * sizeof(Point) * numThreads < MAX_SHARED_MEM)
-  {
-    quickSelectShared(points, n, p, dir, nPrevPowTwo * 2, numBlocks,numThreads);
-  }
-  else
+  if (n > 16)
   {
     cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
   }
+  else if (n > 8)
+  {
+    if (16* sizeof(Point) * numThreads < MAX_SHARED_MEM)
+    {
+      quickSelectShared(points, n, p, dir, 16, numBlocks,numThreads);
+    }
+    else
+    {
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+    }
+  }
+  else if (n > 4)
+  {
+    if (8* sizeof(Point) * numThreads < MAX_SHARED_MEM)
+    {
+      quickSelectShared(points, n, p, dir, 8, numBlocks,numThreads);
+    }
+    else
+    {
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+    }
+  }
+  else
+  {
+    if (4* sizeof(Point) * numThreads < MAX_SHARED_MEM)
+    {
+      quickSelectShared(points, n, p, dir, 4, numBlocks,numThreads);
+    }
+    else
+    {
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+    }
+  }
 }
+
+
 
 void quickSelectShared(Point* points, int n, int p, int dir, int size, int numBlocks, int numThreads){
   if (size > 16)
@@ -149,6 +157,7 @@ void quickSelectShared(Point* points, int n, int p, int dir, int size, int numBl
     cuQuickSelectShared<4><<<numBlocks,numThreads>>>(points, n, p, dir);
   }
 }
+
 
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads)
 {
