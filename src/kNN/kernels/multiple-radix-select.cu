@@ -129,6 +129,7 @@ void printIntArray__(int* l, int n, char *s){
    unsigned int
    tid = threadIdx.x,
    big,
+   is_bigger,
    less;
    zero_count++;
    one_count++;
@@ -138,7 +139,7 @@ void printIntArray__(int* l, int n, char *s){
    while(tid < n)
    {
     swap[tid]=data[tid];
-    int is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
+    is_bigger = partition[tid]= (bool)(data[tid].p[dir] > median.p[dir]);
     one_count[threadIdx.x] += is_bigger;
     zero_count[threadIdx.x] += !is_bigger;
     tid+=blockDim.x;

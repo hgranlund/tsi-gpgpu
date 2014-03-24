@@ -165,7 +165,6 @@ void d_printIntArray___(int* l, int n, char *s){
         {
           median = points[tid];
           points[tid] = points[0], points[0] = median;
-          // printf("tid= %d, median = %3.1f \n",tid, median.p[0]);
         }
         tid+=blockDim.x;
       }
