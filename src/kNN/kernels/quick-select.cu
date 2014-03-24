@@ -15,17 +15,17 @@ template <int maxStep> __global__
 void cuQuickSelectShared(Point* points, int n, int p, int dir){
   __shared__ Point ss_points[maxStep*128];
   Point *s_points = ss_points;
-  int pos, i,
+  float pivot;
+  int pos, i, left, right,
   listInBlock = p/gridDim.x,
   tid = threadIdx.x,
   m=n/2;
+
   points += listInBlock * blockIdx.x * n;
   points += n * tid;
   s_points += (tid * maxStep);
-  float pivot;
   while( tid < listInBlock)
   {
-    int left, right;
     for (i = 0; i < n; ++i)
     {
       s_points[i]=points[i];
@@ -94,6 +94,50 @@ void cuQuickSelectGlobal(Point* points, int n, int p, int dir){
   }
 }
 
+void quickSelectAndPartition(Point *points, int n ,int p, int dir)
+{
+  int numBlocks, numThreads;
+  getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
+  if (n > 16)
+  {
+    cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+  }
+  else if (n > 8)
+  {
+    if (16* sizeof(Point) * numThreads < MAX_SHARED_MEM)
+    {
+      quickSelectShared(points, n, p, dir, 16, numBlocks,numThreads);
+    }
+    else
+    {
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+    }
+  }
+  else if (n > 4)
+  {
+    if (8* sizeof(Point) * numThreads < MAX_SHARED_MEM)
+    {
+      quickSelectShared(points, n, p, dir, 8, numBlocks,numThreads);
+    }
+    else
+    {
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+    }
+  }
+  else
+  {
+    if (4* sizeof(Point) * numThreads < MAX_SHARED_MEM)
+    {
+      quickSelectShared(points, n, p, dir, 4, numBlocks,numThreads);
+    }
+    else
+    {
+      cuQuickSelectGlobal<<<numBlocks,numThreads>>>(points, n, p, dir);
+    }
+  }
+}
+
+
 
 void quickSelectShared(Point* points, int n, int p, int dir, int size, int numBlocks, int numThreads){
   if (size > 16)
@@ -117,8 +161,8 @@ void quickSelectShared(Point* points, int n, int p, int dir, int size, int numBl
 
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads)
 {
-    threads = 128;
-    blocks = p/threads;
-    blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
-    blocks = max(1, blocks);
+  threads = 128;
+  blocks = p/threads;
+  blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
+  blocks = max(1, blocks);
 }
