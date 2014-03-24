@@ -248,7 +248,6 @@ void printPoints(Point* l, int n)
       printf("multi-radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
         throughput, elapsed_time, n, 1);
 
-
       checkCudaErrors(
         cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -258,8 +257,9 @@ void printPoints(Point* l, int n)
         cudaFree(d_points));
       checkCudaErrors(
         cudaFree(partition));
+      checkCudaErrors(
+        cudaFree(d_temp));
       free(h_points);
-      cudaDeviceSynchronize();
       cudaDeviceReset();
     }
 

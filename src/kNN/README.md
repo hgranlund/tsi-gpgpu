@@ -183,7 +183,7 @@ Advantages:
 Drawbacks:
 
 * Cannot represent imperfectly balanced kd-trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
-* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree. In order to eliminate this drawback, a index cache is computed before the search is performed. 
+* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree. In order to eliminate this drawback, a index cache is computed before the search is performed.
 
 Given this representation of the kd-tree, the base kd-tree building algorithm can be expanded to the following:
 
@@ -235,6 +235,8 @@ The radix select is based on a bitwise partitioning, much like radix sort. In ea
 ![An illustration of radix selectionn](./images/Radix_select.png)
 
 
+It is hard to use all the parallel power of cuda in this algorithm. The reason is that the problem is divided in three different types; partition one huge list, partition some middle sized list and partition many small lists. This is the reason why we have chosen to use three different implementation of k'th order statistic. The constant time penalties of the two algorithms we have chosen give us a clear indication the radix select is best on large lists while quick select is best on small lists.
+
 #### Results
 
 ![gpu-vs-cpu-build-time](./images/gpu-vs-cpu-build-time.png)
@@ -245,10 +247,17 @@ We also see a couple of large "jumps" in the graph. This happens when the number
 
 Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
 
+
+
+
+
+
+
 #### Further work
 
 * Look at memory optimization.
-
+* Improve utiliti methods like: accumulateindex, minReduce.
+* Forloop Unrolling.
 
 Work-plan for next week
 -----------------------

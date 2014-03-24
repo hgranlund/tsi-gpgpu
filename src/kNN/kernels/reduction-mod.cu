@@ -44,29 +44,29 @@ void getNumBlocksAndThreads(int n, int maxBlocks, int maxThreads, int &blocks, i
 {
 
     //get device capability, to avoid block/grid size excceed the upbound
-  cudaDeviceProp prop;
-  int device;
-  checkCudaErrors(cudaGetDevice(&device));
-  checkCudaErrors(cudaGetDeviceProperties(&prop, device));
+  // cudaDeviceProp prop;
+  // int device;
+  // checkCudaErrors(cudaGetDevice(&device));
+  // checkCudaErrors(cudaGetDeviceProperties(&prop, device));
 
 
   threads = (n < maxThreads*2) ? nextPow2((n + 1)/ 2) : maxThreads;
   blocks = (n + (threads * 2 - 1)) / (threads * 2);
 
 
-  if ((float)threads*blocks > (float)prop.maxGridSize[0] * prop.maxThreadsPerBlock)
-  {
-    printf("n is too large, please choose a smaller number!\n");
-  }
+  // if ((float)threads*blocks > (float)prop.maxGridSize[0] * prop.maxThreadsPerBlock)
+  // {
+  //   printf("n is too large, please choose a smaller number!\n");
+  // }
 
-  if (blocks > prop.maxGridSize[0])
-  {
-    printf("Grid size <%d> excceeds the device capability <%d>, set block size as %d (original %d)\n",
-     blocks, prop.maxGridSize[0], threads*2, threads);
+  // if (blocks > prop.maxGridSize[0])
+  // {
+  //   printf("Grid size <%d> excceeds the device capability <%d>, set block size as %d (original %d)\n",
+  //    blocks, prop.maxGridSize[0], threads*2, threads);
 
-    blocks /= 2;
-    threads *= 2;
-  }
+  //   blocks /= 2;
+  //   threads *= 2;
+  // }
 
   blocks = min(maxBlocks, blocks);
 
