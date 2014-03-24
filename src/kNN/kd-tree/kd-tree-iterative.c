@@ -133,8 +133,6 @@ int store_locations(struct Point *tree, int lower, int upper, int n)
 
 float dist(float *qp, struct Point *points, int x)
 {
-    return 0.0;
-
     float dx = qp[0] - points[x].p[0],
         dy = qp[1] - points[x].p[1],
         dz = qp[2] - points[x].p[2];
@@ -381,8 +379,8 @@ int main(int argc, char *argv[])
 
     if (!debug)
     {
-        // n = 5100000;
-        n = atoi(argv[1]);
+        n = 5100000;
+        // n = atoi(argv[1]);
     }
 
     points = malloc(n * sizeof(struct Point));
@@ -531,36 +529,6 @@ int main(int argc, char *argv[])
             printf("nn function still works!\n");
             printf("==================\n");
         }
-
-        // not_passed_test = test_nn2(wiki, wn, 2, 3, 0, 2, 3, 0)
-        //     + test_nn2(wiki, wn, 5, 4, 0, 5, 4, 0)
-        //     + test_nn2(wiki, wn, 9, 6, 0, 9, 6, 0)
-        //     + test_nn2(wiki, wn, 4, 7, 0, 4, 7, 0)
-        //     + test_nn2(wiki, wn, 8, 1, 0, 8, 1, 0)
-        //     + test_nn2(wiki, wn, 7, 2, 0, 7, 2, 0)
-        //     + test_nn2(wiki, wn, 10, 10, 0, 9, 6, 0)
-        //     + test_nn2(wiki, wn, 0, 0, 0, 2, 3, 0)
-        //     + test_nn2(wiki, wn, 4, 4, 0, 5, 4, 0)
-        //     + test_nn2(wiki, wn, 3, 2, 0, 2, 3, 0)
-        //     + test_nn2(wiki, wn, 2, 6, 0, 4, 7, 0)
-        //     + test_nn2(wiki, wn, 10, 0, 0, 8, 1, 0)
-        //     + test_nn2(wiki, wn, 0, 10, 0, 4, 7, 0);
-
-        // if (not_passed_test)
-        // {
-        //     printf("nn2 function not working right!\n");
-        //     printf("==================\n");   
-        // }
-        // else {
-        //     printf("nn2 function still works!\n");
-        //     printf("==================\n");
-        // }
-
-        // printf("Testing ground for nn2:\n");
-        // float best_dist, query_point[3];
-        //     query_point[0] = 10, query_point[1] = 10, query_point[2] = 0;
-
-        // nn2(query_point, wiki, midpoint(0, wn), 0, 3, &best_dist);
 
         free(wiki);
     }

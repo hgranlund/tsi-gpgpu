@@ -3,7 +3,9 @@
 
 struct Point
 {
-  float p[3];
+    float p[3];
+    int left;
+    int right;
 };
 
 #endif //  _DATA_TYPES_
