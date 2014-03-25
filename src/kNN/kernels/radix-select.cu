@@ -211,7 +211,7 @@ __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partitio
     {
         n++;
         points--;
-        points[0] = points[n / 2], points[n / 2] = median;
+        points[0] = points[n >> 1], points[n >> 1] = median; //n >> 1 is the same as n/2
     }
 }
 

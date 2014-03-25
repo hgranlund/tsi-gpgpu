@@ -22,7 +22,6 @@ void printIntArray__(int *l, int n, char *s)
     }
 }
 
-
 __device__  void cuAccumulateIndex(int *list, int n)
 {
     int i, j, temp,
@@ -45,8 +44,6 @@ __device__  void cuAccumulateIndex(int *list, int n)
         }
     }
 }
-
-
 
 __device__ int cuSumReduce(int *list, int n)
 {
@@ -194,7 +191,7 @@ __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition,
     return cuSumReduce(zero_count, blockDim.x);
 }
 
-__device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
+__device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int n, int *partition, int dir)
 {
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
@@ -248,8 +245,8 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int m, uns
     __syncthreads();
     if (threadIdx.x == 0)
     {
-        median = data[m];
-        data[m] = data[0], data[0] = median;
+        median = data[n >> 1];
+        data[n >> 1] = data[0], data[0] = median;
     }
 }
 
@@ -261,15 +258,15 @@ void cuBalanceBranch(Point *points, Point *swap, int *partition, int n, int p, i
     while (bid < p)
     {
         int blockoffset = n * bid;
-        cuRadixSelect(points + blockoffset, swap + blockoffset, n / 2, n, partition + blockoffset, dir);
+        cuRadixSelect(points + blockoffset, swap + blockoffset, n, partition + blockoffset, dir);
         bid += gridDim.x;
     }
 }
 
 //For testing - One cannot import a __device__ kernel
-__global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, unsigned int m, unsigned int n, int *partition, int dir)
+__global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *partition, int dir)
 {
-    cuRadixSelect(data, data_copy, m, n, partition, dir);
+    cuRadixSelect(data, data_copy, n, partition, dir);
 }
 
 
