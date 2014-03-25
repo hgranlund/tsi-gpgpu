@@ -99,7 +99,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug=0)
     int numBlocks, numThreads;
     float temp;
     unsigned int i,n, p;
-    for (n = 8; n <=9; n<<=1)
+    for (n = 8; n <=8; n<<=1)
     {
       p=1048576;
       numBlocks = p;

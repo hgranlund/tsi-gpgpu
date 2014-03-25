@@ -140,6 +140,81 @@ void d_printIntArray___(int* l, int n, char *s){
         }
       }
     }
+__global__ void cuSumReduce__(int *list, int n)
+    {
+      unsigned int tid = threadIdx.x;
+
+      if (n >= 1024)
+      {
+        if (tid < 512)
+        {
+          list[tid] += list[tid + 512];
+        }
+        __syncthreads();
+      }
+
+      if (n >= 512)
+      {
+        if (tid < 256)
+        {
+          list[tid] += list[tid + 256];
+        }
+        __syncthreads();
+      }
+
+      if (n >= 256)
+      {
+        if (tid < 128)
+        {
+          list[tid] += list[tid + 128];
+        }
+        __syncthreads();
+      }
+
+      if (n >= 128)
+      {
+        if (tid <  64)
+        {
+          list[tid] += list[tid +  64];
+        }
+        __syncthreads();
+      }
+
+      if (tid < 32)
+      {
+        volatile int *smem = list;
+
+        if (n >=  64)
+        {
+          smem[tid] += smem[tid + 32];
+        }
+
+        if (n >=  32)
+        {
+          smem[tid] += smem[tid + 16];
+        }
+
+        if (n >=  16)
+        {
+          smem[tid] += smem[tid +  8];
+        }
+
+        if (n >=   8)
+        {
+          smem[tid] += smem[tid +  4];
+        }
+
+        if (n >=   4)
+        {
+          smem[tid] += smem[tid +  2];
+        }
+
+        if (n >=   2)
+        {
+          smem[tid] += smem[tid +  1];
+        }
+      }
+    }
 
     __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partition, int last, int dir)
     {
@@ -264,6 +339,7 @@ void d_printIntArray___(int* l, int n, char *s){
 
 void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
 {
+  // threads must be power of 2
   threads = 512;
   blocks = n/threads/2;
   blocks = max(1, blocks);
@@ -282,7 +358,7 @@ __global__ void fillArray(int *array, int value, int n)
 
 void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, int n, int dir)
 {
-  int numBlocks, numThreads,
+  int numBlocks, numThreads, cut,
   l=0,
   u = n,
   m_u = ceil((float)n/2),
@@ -301,8 +377,9 @@ void radixSelectAndPartition(Point* points, Point* swap, int *partition, int m, 
 
   do {
     cuPartitionStep<<<numBlocks, numThreads>>>(points, n, partition, d_zeros_count_block, last, bit++, dir);
-    cudaMemcpy(h_zeros_count_block, d_zeros_count_block, numBlocks*sizeof(int), cudaMemcpyDeviceToHost);
-    int cut = sumReduce(h_zeros_count_block, numBlocks);
+    cuSumReduce__<<<1, numBlocks/2>>>(d_zeros_count_block, numBlocks);
+    cudaMemcpy(h_zeros_count_block, d_zeros_count_block, 1*sizeof(int), cudaMemcpyDeviceToHost);
+    cut = h_zeros_count_block[0];
     if ((l+cut) > m_u)
     {
       u = l+cut;
