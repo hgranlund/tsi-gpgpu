@@ -274,11 +274,11 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *p
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
 {
     n--;
-    threads = prevPowTwo(n / 3);
+    threads = prevPowTwo(n / 4);
     blocks = min(MAX_BLOCK_DIM_SIZE, p);
     blocks = max(1, blocks);
     threads = min(THREADS_PER_BLOCK, threads);
-    threads = max(2, threads);
+    threads = max(128, threads);
 }
 
 

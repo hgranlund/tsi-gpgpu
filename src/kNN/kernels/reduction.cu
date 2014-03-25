@@ -115,9 +115,6 @@ void min_reduce(Distance *h_dist, int *h_ind, unsigned int n)
 
     Distance *d_dist;
     unsigned int blockCount, threadCount, elements_in_block;
-
-
-
     blockCount = ceil((float)n / SHARED_SIZE_LIMIT );
     elements_in_block = n / blockCount;
     if (blockCount == 0)
