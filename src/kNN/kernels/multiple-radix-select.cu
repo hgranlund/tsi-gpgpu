@@ -30,14 +30,14 @@ __device__  void cuAccumulateIndex(int *list, int n)
     {
         list[-1] = 0;
     }
-    for ( i = 2; i <= n; i <<= 1)
+    for ( i = 1; i <= n; i <<= 1)
     {
         __syncthreads();
-        int temp_index = tid * i + i / 2 - 1;
-        if (temp_index + i / 2 < n)
+        int temp_index = tid * i * 2  + i - 1;
+        if (temp_index + i < n)
         {
             temp = list[temp_index];
-            for (j = 1; j <= i / 2; ++j)
+            for (j = 1; j <= i; ++j)
             {
                 list[temp_index + j] += temp;
             }
@@ -273,7 +273,6 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *p
 
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
 {
-    n = n / p;
     n--;
     n = prevPowTwo(n / 2);
     blocks = min(MAX_BLOCK_DIM_SIZE, p);
@@ -282,3 +281,10 @@ void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
     threads = max(1, threads);
 }
 
+
+void  multiRadixSelectAndPartition(Point *data, Point *data_copy, int *partition, int n, int p,  int dir)
+{
+    int numBlocks, numThreads;
+    getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
+    cuBalanceBranch <<< numBlocks, numThreads>>>(data, data_copy, partition, n, p, dir);
+}

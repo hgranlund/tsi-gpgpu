@@ -19,7 +19,7 @@ void cuBalanceBranchLeafs(Point *points, int n, int dir)
     step = n / gridDim.x,
     blockOffset = step * blockIdx.x,
     tid = threadIdx.x;
-    step = step / 2;
+    step = step >> 1;           // same as n / 2;
     Point point1;
     Point point2;
     points += blockOffset;
@@ -63,7 +63,7 @@ void build_kd_tree(Point *h_points, int n)
     {
         for (j = 0; j < n; j += n / p)
         {
-            radixSelectAndPartition(d_points + j, d_swap + j, d_partition + j, step / 2, step, i % 3);
+            radixSelectAndPartition(d_points + j, d_swap + j, d_partition + j, step, i % 3);
         }
         p <<= 1;
         step = n / p;
@@ -71,9 +71,7 @@ void build_kd_tree(Point *h_points, int n)
     }
     while (step > 256)
     {
-        getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
-        debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", step, p, numBlocks, numThreads );
-        cuBalanceBranch <<< numBlocks, numThreads>>>(d_points, d_swap, d_partition, step, p, i % 3);
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, step, p, i % 3);
         p <<= 1;
         step = n / p;
         i++;
@@ -94,8 +92,6 @@ void build_kd_tree(Point *h_points, int n)
 
     checkCudaErrors(
         cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
-
-
     checkCudaErrors(cudaFree(d_points));
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));
