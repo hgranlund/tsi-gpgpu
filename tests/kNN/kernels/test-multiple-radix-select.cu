@@ -1,5 +1,5 @@
 // Includes
-#include <kd-tree-naive.cuh>
+#include "multiple-radix-select.cuh"
 #include <knn_gpgpu.h>
 #include <stdio.h>
 #include <gtest/gtest.h>
@@ -68,22 +68,15 @@ Point cpu_radixselect(Point *data, int l, int u, int m, int bit)
     return cpu_radixselect(data, s + 1, u, m, bit + 1);
 }
 
-
-
-
-
-
 void printPoints(Point *l, int n)
 {
     int i;
     if (debug)
     {
-        // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
         printf("[%3.1f, ", l[0].p[0]);
         for (i = 1; i < n; ++i)
         {
             printf(", %3.1f, ", l[i].p[0]);
-            // printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
         }
         printf("]\n");
     }
@@ -116,7 +109,6 @@ unsigned int prevPowerOf21(unsigned int n)
     }
     n = nextPowerOf21(n);
     return n >>= 1;
-
 }
 
 TEST(kernels, multi_radix_selection)
@@ -157,7 +149,7 @@ TEST(kernels, multi_radix_selection)
         Point cpu_result = cpu_radixselect(h_points, 0, n - 1, n / 2, 0);
         getThreadAndBlockCountMulRadix(n, 1, numBlocks, numThreads);
         debugf("threads = %d, n = %d\n", numThreads, n);
-        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n / 2, n, partition, 0);
+        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n, partition, 0);
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -231,12 +223,10 @@ TEST(kernels, multi_radix_selection_time)
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         float elapsed_time = 0;
-
         checkCudaErrors(cudaEventRecord(start, 0));
 
         getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
-        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n / 2, n, partition, 0);
-
+        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n, partition, 0);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -261,6 +251,5 @@ TEST(kernels, multi_radix_selection_time)
         free(h_points);
         cudaDeviceReset();
     }
-
 }
 
