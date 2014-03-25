@@ -155,7 +155,7 @@ TEST(kernels, radix_selection)
 
         Point cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
 
-        radixSelectAndPartition(d_points, d_temp, partition, n / 2, n, 0);
+        radixSelectAndPartition(d_points, d_temp, partition, n, 0);
 
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
@@ -227,7 +227,7 @@ TEST(kernels, radix_selection_time)
 
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        radixSelectAndPartition(d_points, d_temp, partition, n / 2, n, 0);
+        radixSelectAndPartition(d_points, d_temp, partition, n, 0);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);

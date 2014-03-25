@@ -51,14 +51,14 @@ __device__  void cuAccumulateIndex_(int *list, int n)
     {
         list[-1] = 0;
     }
-    for ( i = 2; i <= n; i <<= 1)
+    for ( i = 1; i <= n; i <<= 1)
     {
         __syncthreads();
-        int temp_index = tid * i + i / 2 - 1;
-        if (temp_index + i / 2 < n)
+        int temp_index = tid * i * 2 + i  - 1;
+        if (temp_index + i  < n)
         {
             temp = list[temp_index];
-            for (j = 1; j <= i / 2; ++j)
+            for (j = 1; j <= i ; ++j)
             {
                 list[temp_index + j] += temp;
             }
@@ -288,7 +288,7 @@ __global__ void fillArray(int *array, int value, int n)
     }
 }
 
-void radixSelectAndPartition(Point *points, Point *swap, int *partition, int m, int n, int dir)
+void radixSelectAndPartition(Point *points, Point *swap, int *partition, int n, int dir)
 {
     int numBlocks, numThreads, cut,
         l = 0,
