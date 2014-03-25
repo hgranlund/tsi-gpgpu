@@ -15,96 +15,98 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
 #define debug 0
-float cpu_min(float* in, int num_els)
+float cpu_min(float *in, int num_els)
 {
-  float min = inf;
+    float min = inf;
 
-  for(int i = 0; i < num_els; i++)
-    min = in[i] < min ? in[i] : min;
+    for (int i = 0; i < num_els; i++)
+        min = in[i] < min ? in[i] : min;
 
-  return min;
+    return min;
 }
 
-void printDistArray(Distance* l, int n)
+void printDistArray(Distance *l, int n)
 {
-  int i;
-  if (debug)
-  {
-    printf("[(%d - %3.1f)", l[0].index, l[0].value );
-      for (i = 1; i < n; ++i)
-      {
-        printf(", (%d - %3.1f)", l[i].index, l[i].value );
-      }
-      printf("]\n");
-    }
-  }
-
-  void printIntArray(int* l, int n){
     int i;
     if (debug)
     {
-      printf("[%4d", l[0] );
+        printf("[(%d - %3.1f)", l[0].index, l[0].value );
         for (i = 1; i < n; ++i)
         {
-          printf(", %4d", l[i] );
+            printf(", (%d - %3.1f)", l[i].index, l[i].value );
         }
         printf("]\n");
-      }
     }
+}
+
+void printIntArray(int *l, int n)
+{
+    int i;
+    if (debug)
+    {
+        printf("[%4d", l[0] );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %4d", l[i] );
+        }
+        printf("]\n");
+    }
+}
 
 
-    // TEST(kernels, min_reduce){
+// TEST(kernels, min_reduce){
 
-    //   Distance *h_dist;
-    //   int i,n;
-    //   for (n = 11; n <=11; n +=2)
-    //   {
+//   Distance *h_dist;
+//   int i,n;
+//   for (n = 11; n <=11; n +=2)
+//   {
 
-    //     h_dist = (Distance*) malloc(n*sizeof(Distance));
+//     h_dist = (Distance*) malloc(n*sizeof(Distance));
 
-    //     srand ( (unsigned int)time(NULL) );
-    //     for (i=0 ; i<n; i++)
-    //     {
-    //       h_dist[i].value    = n-i-1;
-    //       h_dist[i].value=i;
-    //     }
-    //     // printf("########\n");
-    //     // printFloatArray(list,n);
-    //     // printIntArray(ind_1,n);
+//     srand ( (unsigned int)time(NULL) );
+//     for (i=0 ; i<n; i++)
+//     {
+//       h_dist[i].value    = n-i-1;
+//       h_dist[i].value=i;
+//     }
+//     // printf("########\n");
+//     // printFloatArray(list,n);
+//     // printIntArray(ind_1,n);
 
-    //     Distance *d_dist;
+//     Distance *d_dist;
 
-    //     cudaMalloc( (void **) &d_dist, n* sizeof(Distance));
+//     cudaMalloc( (void **) &d_dist, n* sizeof(Distance));
 
-    //     cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
+//     cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
 
-    //     knn_min_reduce(d_dist, n);
+//     knn_min_reduce(d_dist, n);
 
-    //     cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);
+//     cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);
 
-    //     ASSERT_LE(h_dist[0].value, 0)  << "Faild with n = " << n;
-    //     ASSERT_LE(h_dist[0].index, n-1)  << "Faild with n = " << n;
+//     ASSERT_LE(h_dist[0].value, 0)  << "Faild with n = " << n;
+//     ASSERT_LE(h_dist[0].index, n-1)  << "Faild with n = " << n;
 
-    //     cudaFree(d_dist);
-    //     free(h_dist);
-    //   }
-    // }
+//     cudaFree(d_dist);
+//     free(h_dist);
+//   }
+// }
 
-    TEST(kernels, min_reduce_mod){
-      cudaDeviceReset();
+TEST(kernels, min_reduce_mod)
+{
+    cudaDeviceReset();
 
-      Distance *h_dist;
-      unsigned int i,n;
-      for (n = 2; n <=30000000; n <<=1)
-      {
+    Distance *h_dist;
+    unsigned int i, n;
+    for (n = 2; n <= 30000000; n <<= 1)
+    {
 
-        h_dist = (Distance*) malloc(n*sizeof(Distance));
+        h_dist = (Distance *) malloc(n * sizeof(Distance));
 
         srand ( (unsigned int)time(NULL) );
-        for (i=0 ; i<n; i++)
+        for (i = 0 ; i < n; i++)
         {
-          h_dist[i].value    =(float) n-i-1;
-          h_dist[i].index=i;
+            h_dist[i].value    = (float) n - i - 1;
+            h_dist[i].index = i;
         }
         // printf("########\n");
         // printDistArray(h_dist,n);
@@ -112,71 +114,72 @@ void printDistArray(Distance* l, int n)
 
         Distance *d_dist;
 
-        cudaMalloc( (void **) &d_dist, n* sizeof(Distance));
+        cudaMalloc( (void **) &d_dist, n * sizeof(Distance));
 
-        cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
+        cudaMemcpy(d_dist, h_dist, n * sizeof(Distance), cudaMemcpyHostToDevice);
 
         dist_min_reduce(d_dist, n);
 
-        cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_dist, d_dist, n * sizeof(Distance), cudaMemcpyDeviceToHost);
 
         // printDistArray(h_dist,n);
 
         ASSERT_EQ(h_dist[0].value, 0)  << "Faild with n = " << n;
-        ASSERT_EQ(h_dist[0].index, n-1)  << "Faild with n = " << n;
+        ASSERT_EQ(h_dist[0].index, n - 1)  << "Faild with n = " << n;
         cudaFree(d_dist);
         free(h_dist);
         cudaDeviceSynchronize();
         cudaDeviceReset();
-      }
+    }
+}
+
+TEST(kernels, min_reduce_mod_time)
+{
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+    Distance *h_dist;
+    Distance *d_dist;
+    unsigned int i, n;
+    n = 8388608;
+    h_dist = (Distance *) malloc(n * sizeof(Distance));
+
+    srand ( (unsigned int)time(NULL) );
+    for (i = 0 ; i < n; i++)
+    {
+        h_dist[i].value    = (float)n - i - 1;
+        h_dist[i].index = i;
     }
 
-    TEST(kernels, min_reduce_mod_time){
-      cudaDeviceSynchronize();
-      cudaDeviceReset();
-      Distance *h_dist;
-      Distance *d_dist;
-      unsigned int i,n;
-      n=8388608;
-      h_dist = (Distance*) malloc(n*sizeof(Distance));
+    cudaMalloc( (void **) &d_dist, n * sizeof(Distance));
+    cudaMemcpy(d_dist, h_dist, n * sizeof(Distance), cudaMemcpyHostToDevice);
 
-      srand ( (unsigned int)time(NULL) );
-      for (i=0 ; i<n; i++)
-      {
-        h_dist[i].value    = (float)n-i-1;
-        h_dist[i].index=i;
-      }
+    cudaEvent_t start, stop;
+    unsigned int bytes = n * (sizeof(Distance) + sizeof(int));
+    checkCudaErrors(cudaEventCreate(&start));
+    checkCudaErrors(cudaEventCreate(&stop));
+    float elapsed_time = 0;
 
-      cudaMalloc( (void **) &d_dist, n* sizeof(Distance));
-      cudaMemcpy(d_dist,h_dist, n*sizeof(Distance), cudaMemcpyHostToDevice);
-
-      cudaEvent_t start, stop;
-      unsigned int bytes = n * (sizeof(Distance)+sizeof(int));
-      checkCudaErrors(cudaEventCreate(&start));
-      checkCudaErrors(cudaEventCreate(&stop));
-      float elapsed_time=0;
-
-      checkCudaErrors(cudaEventRecord(start, 0));
+    checkCudaErrors(cudaEventRecord(start, 0));
 
 
-      dist_min_reduce(d_dist, n);
+    dist_min_reduce(d_dist, n);
 
-      checkCudaErrors(cudaEventRecord(stop, 0));
-      cudaEventSynchronize(start);
-      cudaEventSynchronize(stop);
-      cudaEventElapsedTime(&elapsed_time, start, stop);
-      elapsed_time = elapsed_time ;
-      double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
-      printf("Reduction_mod, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
-       throughput, elapsed_time, n, 1);
+    checkCudaErrors(cudaEventRecord(stop, 0));
+    cudaEventSynchronize(start);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+    elapsed_time = elapsed_time ;
+    double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
+    printf("Reduction_mod, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+           throughput, elapsed_time, n, 1);
 
-      cudaMemcpy(h_dist,d_dist, n*sizeof(Distance), cudaMemcpyDeviceToHost);
+    cudaMemcpy(h_dist, d_dist, n * sizeof(Distance), cudaMemcpyDeviceToHost);
 
-      ASSERT_LE(h_dist[0].value, 0)  << "Faild with n = " << n;
-      ASSERT_LE(h_dist[0].index, n-1)  << "Faild with n = " << n;
+    ASSERT_LE(h_dist[0].value, 0)  << "Faild with n = " << n;
+    ASSERT_LE(h_dist[0].index, n - 1)  << "Faild with n = " << n;
 
-      cudaFree(d_dist);
-      free(h_dist);
-      cudaDeviceSynchronize();
-      cudaDeviceReset();
-    }
+    cudaFree(d_dist);
+    free(h_dist);
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+}

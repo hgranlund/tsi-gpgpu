@@ -10,7 +10,7 @@ struct node
     struct node *left, *right;
 };
 
-struct node* median(struct node *start, struct node *end, int idx)
+struct node *median(struct node *start, struct node *end, int idx)
 {
     if (end <= start)
     {
@@ -19,22 +19,26 @@ struct node* median(struct node *start, struct node *end, int idx)
     {
         return start;
     }
- 
-    inline void swap(struct node *x, struct node *y) {
+
+    inline void swap(struct node * x, struct node * y)
+    {
         double tmp[3];
         memcpy(tmp,  x->x, sizeof(tmp));
         memcpy(x->x, y->x, sizeof(tmp));
         memcpy(y->x, tmp,  sizeof(tmp));
     }
- 
+
     struct node *p, *store, *md = start + (end - start) / 2;
     double pivot;
-    while (1) {
+    while (1)
+    {
         pivot = md->x[idx];
- 
+
         swap(md, end - 1);
-        for (store = p = start; p < end; p++) {
-            if (p->x[idx] < pivot) {
+        for (store = p = start; p < end; p++)
+        {
+            if (p->x[idx] < pivot)
+            {
                 if (p != store)
                 {
                     swap(p, store);
@@ -48,24 +52,26 @@ struct node* median(struct node *start, struct node *end, int idx)
         {
             return md;
         }
- 
+
         if (store > md)
         {
             end = store;
-        } else
+        }
+        else
         {
             start = store;
         }
     }
 }
- 
-struct node* makeKdTree(struct node *t, int len, int i)
+
+struct node *makeKdTree(struct node *t, int len, int i)
 {
     struct node *n;
- 
+
     if (!len) return 0;
- 
-    if ((n = median(t, t + len, i))) {
+
+    if ((n = median(t, t + len, i)))
+    {
         i = (i + 1) % 3;
         n->left  = makeKdTree(t, n - t, i);
         n->right = makeKdTree(n + 1, t + len - (n + 1), i);
@@ -99,7 +105,7 @@ double WallTime()
 {
     struct timeval tmpTime;
     gettimeofday(&tmpTime, NULL);
-    return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
+    return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
 }
 
 int main(int argc, char *argv[])
@@ -118,7 +124,7 @@ int main(int argc, char *argv[])
 
     double time = WallTime();
     root = makeKdTree(tree, N, 0);
-    
+
     printf("Build duration for %d points: %lf (ms)\n", N, (WallTime() - time) * 1000);
     // printf("k-d tree:\n");
     // printTree(root, 0);

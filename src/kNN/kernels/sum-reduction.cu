@@ -4,7 +4,7 @@ __global__ void cuSumReduce__(int *list, int n)
 {
     unsigned int tid = threadIdx.x;
 
-      if (n >= 1024)
+    if (n >= 1024)
     {
         if (tid < 512)
         {

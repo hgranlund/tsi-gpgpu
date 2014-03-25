@@ -6,9 +6,9 @@
 #define debug 0
 #include <stdio.h>
 
-void printFloatArray(float* l, int n);
+void printFloatArray(float *l, int n);
 
-void printIntArray(int* l, int n);
+void printIntArray(int *l, int n);
 
 
 #endif

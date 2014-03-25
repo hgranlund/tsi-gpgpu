@@ -16,31 +16,33 @@
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
 
-void printFloatArray_(float* l, int n){
-  int i;
-  if (debug)
-  {
-    printf("[%3.1f", l[0] );
-      for (i = 1; i < n; ++i)
-      {
-        printf(", %3.1f", l[i] );
-      }
-      printf("]\n");
+void printFloatArray_(float *l, int n)
+{
+    int i;
+    if (debug)
+    {
+        printf("[%3.1f", l[0] );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %3.1f", l[i] );
+        }
+        printf("]\n");
     }
-  }
+}
 
-void printIntArray_(int* l, int n){
-  int i;
-  if (debug)
-  {
-    printf("[%d", l[0] );
-      for (i = 1; i < n; ++i)
-      {
-        printf(", %d", l[i] );
-      }
-      printf("]\n");
+void printIntArray_(int *l, int n)
+{
+    int i;
+    if (debug)
+    {
+        printf("[%d", l[0] );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %d", l[i] );
+        }
+        printf("]\n");
     }
-  }
+}
 
 
 __device__ void printPointsInt_(int *l, int n, char *s)
@@ -48,22 +50,23 @@ __device__ void printPointsInt_(int *l, int n, char *s)
     if (debug)
     {
 #if __CUDA_ARCH__>=200
-      if (threadIdx.x == 0)
-      {
-        printf("%10s: [ ", s);
-          for (int i = 0; i < n; ++i)
-          {
-            printf("%3d, ", l[i]);
+        if (threadIdx.x == 0)
+        {
+            printf("%10s: [ ", s);
+            for (int i = 0; i < n; ++i)
+            {
+                printf("%3d, ", l[i]);
+            }
+            printf("]\n");
         }
-        printf("]\n");
-    }
-    __syncthreads();
+        __syncthreads();
 #endif
-}
+    }
 }
 
 
-void h_print_matrix_(Point* points, int n){
+void h_print_matrix_(Point *points, int n)
+{
     if (debug)
     {
         printf("#################\n");
@@ -82,12 +85,13 @@ void h_print_matrix_(Point* points, int n){
 
 
 __device__
-void printPointsMatrix(Point* points, int n, int offset){
+void printPointsMatrix(Point *points, int n, int offset)
+{
 #if __CUDA_ARCH__>=200
     if (debug)
     {
         __syncthreads();
-        if (threadIdx.x ==0 && blockIdx.x ==0)
+        if (threadIdx.x == 0 && blockIdx.x == 0)
         {
             printf("####################\n");
             printf("block = %d, blockOffset = %d\n", blockIdx.x, offset );
@@ -98,7 +102,7 @@ void printPointsMatrix(Point* points, int n, int offset){
                 {
                     printf(  " %3.1f ", points[i].p[j]);
                 }
-                printf("\n",1 );
+                printf("\n", 1 );
             }
             printf("\n####################\n");
         }
@@ -107,51 +111,51 @@ void printPointsMatrix(Point* points, int n, int offset){
 #endif
 }
 
-__device__ void d_printPointsArray(Point *l, int n, char *s, int l_debug=0)
+__device__ void d_printPointsArray(Point *l, int n, char *s, int l_debug = 0)
 {
-  if (debug || l_debug)
-  {
-        #if __CUDA_ARCH__>=200
-    if (threadIdx.x == 0)
+    if (debug || l_debug)
     {
-      printf("%10s: [ ", s);
+#if __CUDA_ARCH__>=200
+        if (threadIdx.x == 0)
+        {
+            printf("%10s: [ ", s);
+            for (int i = 0; i < n; ++i)
+            {
+                printf("%3.1f, ", l[i].p[0]);
+            }
+            printf("]\n");
+        }
+        __syncthreads();
+#endif
+    }
+}
+__host__  void h_printPointsArray(Point *l, int n, char *s, int l_debug = 0)
+{
+    if (debug || l_debug)
+    {
+        printf("%10s: [ ", s);
         for (int i = 0; i < n; ++i)
         {
-          printf("%3.1f, ", l[i].p[0]);
-      }
-      printf("]\n");
-  }
-  __syncthreads();
-          #endif
-}
-}
-__host__  void h_printPointsArray(Point *l, int n, char *s, int l_debug=0)
-{
-  if (debug || l_debug)
-  {
-    printf("%10s: [ ", s);
-      for (int i = 0; i < n; ++i)
-      {
-        printf("%3.1f, ", l[i].p[0]);
-      }
-      printf("]\n");
-  }
-}
-
-
-
-void printDistArray_(Distance* l, int n)
-{
-  int i;
-  if (debug)
-  {
-    printf("[(%d - %3.1f)", l[0].index, l[0].value );
-      for (i = 1; i < n; ++i)
-      {
-        printf(", (%d - %3.1f)", l[i].index, l[i].value );
-      }
-      printf("]\n");
+            printf("%3.1f, ", l[i].p[0]);
+        }
+        printf("]\n");
     }
-  }
+}
+
+
+
+void printDistArray_(Distance *l, int n)
+{
+    int i;
+    if (debug)
+    {
+        printf("[(%d - %3.1f)", l[0].index, l[0].value );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", (%d - %3.1f)", l[i].index, l[i].value );
+        }
+        printf("]\n");
+    }
+}
 
 #endif
