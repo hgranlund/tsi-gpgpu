@@ -19,7 +19,7 @@ void cuQuickSelectShared(Point* points, int n, int p, int dir){
   int pos, i, left, right,
   listInBlock = p/gridDim.x,
   tid = threadIdx.x,
-  m=n/2;
+  m= n >> 1;    // same as n/2;
 
   points += listInBlock * blockIdx.x * n;
   points += n * tid;
@@ -63,7 +63,7 @@ void cuQuickSelectGlobal(Point* points, int n, int p, int dir){
   int pos, i,
   listInBlock = p/gridDim.x,
   tid = threadIdx.x,
-  m=n/2;
+  m= n >> 1;    // same as n/2;
   points += listInBlock * blockIdx.x * n;
   points += n * tid;
   float pivot;
