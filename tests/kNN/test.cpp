@@ -11,6 +11,7 @@
 
 
 
-TEST(test, testtt){
-	ASSERT_EQ(2,2);
+TEST(test, testtt)
+{
+    ASSERT_EQ(2, 2);
 }

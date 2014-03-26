@@ -5,7 +5,7 @@
 
 
 
-void dist_min_reduce(Distance* dist_dev, unsigned int n);
+void dist_min_reduce(Distance *dist_dev, unsigned int n);
 
 #endif
 

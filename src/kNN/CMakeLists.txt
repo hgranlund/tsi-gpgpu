@@ -24,6 +24,7 @@ kernels/quick-select.cuh
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 kernels/reduction-mod.cuh
+kernels/sum-reduction.cuh
 kd-tree/kd-tree-naive.cuh
 kernels/kd-search.cuh
 )
@@ -33,6 +34,7 @@ set(CUFILES
 # brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
+kernels/sum-reduction.cu
 kernels/reduction-mod.cu
 kernels/multiple-radix-select.cu
 kernels/radix-select.cu

@@ -2,16 +2,19 @@
 #define _QUICK_SELECT_
 #include "point.h"
 
+#define MAX_SHARED_MEM 49152U
 
-void quickSelectShared(Point* points, int n, int p, int dir, int size, int numBlocks, int numThreads);
+
+void quickSelectAndPartition(Point *points, int n, int p, int dir);
+void quickSelectShared(Point *points, int n, int p, int dir, int size, int numBlocks, int numThreads);
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads);
 
 template <int maxStep>
 __global__
-void cuQuickSelectShared(Point* points, int n, int p, int dir);
+void cuQuickSelectShared(Point *points, int n, int p, int dir);
 
 __global__
-void cuQuickSelectGlobal(Point* points, int n, int p, int dir);
+void cuQuickSelectGlobal(Point *points, int n, int p, int dir);
 
 #endif
 

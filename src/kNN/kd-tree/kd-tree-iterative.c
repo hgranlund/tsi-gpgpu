@@ -29,8 +29,8 @@ int midpoint(int lower, int upper)
 float quick_select(int k, struct Point *x, int lower, int upper, int dim)
 {
     int pos, i,
-    left = lower,
-    right = upper - 1;
+        left = lower,
+        right = upper - 1;
 
     float pivot;
 
@@ -100,7 +100,7 @@ void balance_branch(struct Point *x, int lower, int upper, int dim)
 void build_kd_tree(struct Point *x, int n)
 {
     int i, j, p, step,
-    h = ceil(log2(n + 1) - 1);
+        h = ceil(log2(n + 1) - 1);
     for (i = 0; i < h; ++i)
     {
         p = pow(2, i);
@@ -134,10 +134,10 @@ int store_locations(struct Point *tree, int lower, int upper, int n)
 float dist(float *qp, struct Point *points, int x)
 {
     float dx = qp[0] - points[x].p[0],
-        dy = qp[1] - points[x].p[1],
-        dz = qp[2] - points[x].p[2];
+          dy = qp[1] - points[x].p[1],
+          dz = qp[2] - points[x].p[2];
 
-    return dx*dx + dy*dy + dz*dz;
+    return dx * dx + dy * dy + dz * dz;
 }
 
 int nn(float *qp, struct Point *tree, int dim, int index)
@@ -149,10 +149,10 @@ int nn(float *qp, struct Point *tree, int dim, int index)
     }
 
     int target, other, d = dim % 3,
-    
-        target_index = tree[index].right,
-        other_index = tree[index].left;
-    
+
+                       target_index = tree[index].right,
+                       other_index = tree[index].left;
+
     dim++;
 
     if (tree[index].p[d] > qp[d] || target_index == -1)
@@ -173,7 +173,7 @@ int nn(float *qp, struct Point *tree, int dim, int index)
         target = index;
     }
 
-    if ((tree[index].p[d] - qp[d])*(tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
+    if ((tree[index].p[d] - qp[d]) * (tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
     {
         return target;
     }
@@ -199,10 +199,10 @@ int nn(float *qp, struct Point *tree, int dim, int index)
 //     }
 
 //     int target, other, d = dim % 3,
-    
+
 //         target_index = tree[index].right,
 //         other_index = tree[index].left;
-    
+
 //     dim++;
 
 //     if (tree[index].p[d] > qp[d] || target_index == -1)
@@ -252,12 +252,12 @@ int nearest(float *qp, struct Point *tree, int lower, int upper, int dim, int n)
 
         r = midpoint(lower, upper),
         d = dim % 3,
-    
+
         target_lower = r + 1,
         target_upper = upper,
         other_lower = lower,
         other_upper = r;
-    
+
     dim++;
 
     if (tree[r].p[d] > qp[d])
@@ -271,7 +271,7 @@ int nearest(float *qp, struct Point *tree, int lower, int upper, int dim, int n)
     target = nearest(qp, tree, target_lower, target_upper, dim, n);
 
     float target_dist = dist(qp, tree, target),
-        current_dist = dist(qp, tree, r);
+          current_dist = dist(qp, tree, r);
 
     if (current_dist < target_dist)
     {
@@ -279,7 +279,7 @@ int nearest(float *qp, struct Point *tree, int lower, int upper, int dim, int n)
         target = r;
     }
 
-    if ((tree[r].p[d] - qp[d])*(tree[r].p[d] - qp[d]) > target_dist)
+    if ((tree[r].p[d] - qp[d]) * (tree[r].p[d] - qp[d]) > target_dist)
     {
         return target;
     }
@@ -319,7 +319,7 @@ double wall_time()
 {
     struct timeval tmpTime;
     gettimeofday(&tmpTime, NULL);
-    return tmpTime.tv_sec + tmpTime.tv_usec/1.0e6;
+    return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
 }
 
 int test_nn(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
@@ -328,7 +328,7 @@ int test_nn(struct Point *tree, int n, float qx, float qy, float qz, float ex, f
 
     float query_point[3];
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
-    
+
     // int best_fit = nn(query_point, tree, dists, 0, midpoint(0, n));
     int best_fit = nn(query_point, tree, 0, midpoint(0, n));
 
@@ -346,7 +346,7 @@ int test_nearest(struct Point *tree, int n, float qx, float qy, float qz, float 
 {
     float query_point[3];
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
-    
+
     int best_fit = nearest(query_point, tree, 0, n, 0, n);
 
     float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
@@ -419,7 +419,8 @@ int main(int argc, char *argv[])
         // printf("\nOld query:\n");
 
         time = wall_time();
-        for (i = 0; i < test_runs; i++) {
+        for (i = 0; i < test_runs; i++)
+        {
             nearest(query_data[i], points, 0, n, 0, n);
         }
         // printf("%lf\n", ((wall_time() - time) * 1000) / test_runs);
@@ -432,7 +433,8 @@ int main(int argc, char *argv[])
         float *dists = malloc(n * sizeof(float));
 
         time = wall_time();
-        for (i = 0; i < test_runs; i++) {
+        for (i = 0; i < test_runs; i++)
+        {
             // nn(query_data[i], points, dists, 0, midpoint(0, n));
             nn(query_data[i], points, 0, midpoint(0, n));
         }
@@ -483,52 +485,84 @@ int main(int argc, char *argv[])
         printf("==================\n");
 
         int not_passed_test = test_nearest(wiki, wn, 2, 3, 0, 2, 3, 0)
-            + test_nearest(wiki, wn, 5, 4, 0, 5, 4, 0)
-            + test_nearest(wiki, wn, 9, 6, 0, 9, 6, 0)
-            + test_nearest(wiki, wn, 4, 7, 0, 4, 7, 0)
-            + test_nearest(wiki, wn, 8, 1, 0, 8, 1, 0)
-            + test_nearest(wiki, wn, 7, 2, 0, 7, 2, 0)
-            + test_nearest(wiki, wn, 10, 10, 0, 9, 6, 0)
-            + test_nearest(wiki, wn, 0, 0, 0, 2, 3, 0)
-            + test_nearest(wiki, wn, 4, 4, 0, 5, 4, 0)
-            + test_nearest(wiki, wn, 3, 2, 0, 2, 3, 0)
-            + test_nearest(wiki, wn, 2, 6, 0, 4, 7, 0)
-            + test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0)
-            + test_nearest(wiki, wn, 0, 10, 0, 4, 7, 0);
+                              + test_nearest(wiki, wn, 5, 4, 0, 5, 4, 0)
+                              + test_nearest(wiki, wn, 9, 6, 0, 9, 6, 0)
+                              + test_nearest(wiki, wn, 4, 7, 0, 4, 7, 0)
+                              + test_nearest(wiki, wn, 8, 1, 0, 8, 1, 0)
+                              + test_nearest(wiki, wn, 7, 2, 0, 7, 2, 0)
+                              + test_nearest(wiki, wn, 10, 10, 0, 9, 6, 0)
+                              + test_nearest(wiki, wn, 0, 0, 0, 2, 3, 0)
+                              + test_nearest(wiki, wn, 4, 4, 0, 5, 4, 0)
+                              + test_nearest(wiki, wn, 3, 2, 0, 2, 3, 0)
+                              + test_nearest(wiki, wn, 2, 6, 0, 4, 7, 0)
+                              + test_nearest(wiki, wn, 10, 0, 0, 8, 1, 0)
+                              + test_nearest(wiki, wn, 0, 10, 0, 4, 7, 0);
 
         if (not_passed_test)
         {
             printf("nearest function not working right!\n");
-            printf("==================\n");   
+            printf("==================\n");
         }
-        else {
+        else
+        {
             printf("nearest function still works!\n");
             printf("==================\n");
         }
 
         not_passed_test = test_nn(wiki, wn, 2, 3, 0, 2, 3, 0)
-            + test_nn(wiki, wn, 5, 4, 0, 5, 4, 0)
-            + test_nn(wiki, wn, 9, 6, 0, 9, 6, 0)
-            + test_nn(wiki, wn, 4, 7, 0, 4, 7, 0)
-            + test_nn(wiki, wn, 8, 1, 0, 8, 1, 0)
-            + test_nn(wiki, wn, 7, 2, 0, 7, 2, 0)
-            + test_nn(wiki, wn, 10, 10, 0, 9, 6, 0)
-            + test_nn(wiki, wn, 0, 0, 0, 2, 3, 0)
-            + test_nn(wiki, wn, 4, 4, 0, 5, 4, 0)
-            + test_nn(wiki, wn, 3, 2, 0, 2, 3, 0)
-            + test_nn(wiki, wn, 2, 6, 0, 4, 7, 0)
-            + test_nn(wiki, wn, 10, 0, 0, 8, 1, 0)
-            + test_nn(wiki, wn, 0, 10, 0, 4, 7, 0);
+                          + test_nn(wiki, wn, 5, 4, 0, 5, 4, 0)
+                          + test_nn(wiki, wn, 9, 6, 0, 9, 6, 0)
+                          + test_nn(wiki, wn, 4, 7, 0, 4, 7, 0)
+                          + test_nn(wiki, wn, 8, 1, 0, 8, 1, 0)
+                          + test_nn(wiki, wn, 7, 2, 0, 7, 2, 0)
+                          + test_nn(wiki, wn, 10, 10, 0, 9, 6, 0)
+                          + test_nn(wiki, wn, 0, 0, 0, 2, 3, 0)
+                          + test_nn(wiki, wn, 4, 4, 0, 5, 4, 0)
+                          + test_nn(wiki, wn, 3, 2, 0, 2, 3, 0)
+                          + test_nn(wiki, wn, 2, 6, 0, 4, 7, 0)
+                          + test_nn(wiki, wn, 10, 0, 0, 8, 1, 0)
+                          + test_nn(wiki, wn, 0, 10, 0, 4, 7, 0);
 
         if (not_passed_test)
         {
             printf("nn function not working right!\n");
-            printf("==================\n");   
+            printf("==================\n");
         }
-        else {
+        else
+        {
             printf("nn function still works!\n");
             printf("==================\n");
         }
+
+        // not_passed_test = test_nn2(wiki, wn, 2, 3, 0, 2, 3, 0)
+        //     + test_nn2(wiki, wn, 5, 4, 0, 5, 4, 0)
+        //     + test_nn2(wiki, wn, 9, 6, 0, 9, 6, 0)
+        //     + test_nn2(wiki, wn, 4, 7, 0, 4, 7, 0)
+        //     + test_nn2(wiki, wn, 8, 1, 0, 8, 1, 0)
+        //     + test_nn2(wiki, wn, 7, 2, 0, 7, 2, 0)
+        //     + test_nn2(wiki, wn, 10, 10, 0, 9, 6, 0)
+        //     + test_nn2(wiki, wn, 0, 0, 0, 2, 3, 0)
+        //     + test_nn2(wiki, wn, 4, 4, 0, 5, 4, 0)
+        //     + test_nn2(wiki, wn, 3, 2, 0, 2, 3, 0)
+        //     + test_nn2(wiki, wn, 2, 6, 0, 4, 7, 0)
+        //     + test_nn2(wiki, wn, 10, 0, 0, 8, 1, 0)
+        //     + test_nn2(wiki, wn, 0, 10, 0, 4, 7, 0);
+
+        // if (not_passed_test)
+        // {
+        //     printf("nn2 function not working right!\n");
+        //     printf("==================\n");
+        // }
+        // else {
+        //     printf("nn2 function still works!\n");
+        //     printf("==================\n");
+        // }
+
+        // printf("Testing ground for nn2:\n");
+        // float best_dist, query_point[3];
+        //     query_point[0] = 10, query_point[1] = 10, query_point[2] = 0;
+
+        // nn2(query_point, wiki, midpoint(0, wn), 0, 3, &best_dist);
 
         free(wiki);
     }
