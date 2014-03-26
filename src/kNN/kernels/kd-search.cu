@@ -26,10 +26,10 @@ __device__
 float dist(float *qp, Point *points, int x)
 {
     float dx = qp[0] - points[x].p[0],
-        dy = qp[1] - points[x].p[1],
-        dz = qp[2] - points[x].p[2];
+          dy = qp[1] - points[x].p[1],
+          dz = qp[2] - points[x].p[2];
 
-    return dx*dx + dy*dy + dz*dz;
+    return dx * dx + dy * dy + dz * dz;
 }
 
 __device__
@@ -40,11 +40,16 @@ int nn(float *qp, Point *tree, int dim, int index)
         return index;
     }
 
-    int target, other, d = dim % 3,
-    
-        target_index = tree[index].right,
-        other_index = tree[index].left;
-    
+    int target,
+        other,
+        d,
+        target_index,
+        other_index;
+
+    d = dim % 3;
+    target_index = tree[index].right;
+    other_index = tree[index].left;
+
     dim++;
 
     if (tree[index].p[d] > qp[d] || target_index == -1)
@@ -55,7 +60,7 @@ int nn(float *qp, Point *tree, int dim, int index)
         other_index = temp;
     }
 
-    target = nn(qp, tree, dim, target_index);
+    target = 1;//nn(qp, tree, dim, target_index);
     float target_dist = dist(qp, tree, target);
     float current_dist = dist(qp, tree, index);
 
@@ -65,12 +70,12 @@ int nn(float *qp, Point *tree, int dim, int index)
         target = index;
     }
 
-    if ((tree[index].p[d] - qp[d])*(tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
+    if ((tree[index].p[d] - qp[d]) * (tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
     {
         return target;
     }
 
-    other = nn(qp, tree, dim, other_index);
+    other = 1;//nn(qp, tree, dim, other_index);
     float other_distance = dist(qp, tree, other);
 
     if (other_distance > target_dist)
@@ -78,6 +83,17 @@ int nn(float *qp, Point *tree, int dim, int index)
         return target;
     }
     return other;
+}
+
+__device__
+int fact(int f)
+{
+    int t = f * fact(f - 1);
+
+    if (f == 0)
+        return 1;
+    else
+        return t;
 }
 
 __global__
@@ -89,7 +105,9 @@ void d_all_nearest(Point *tree, int n, int mid, int step)
     // step = n / (gridDim.x * blockDim.x);
     // printf("blockIdx: %d, threadIdx: %d, gridDim: %d, blockDim: %d\n", blockIdx.x, threadIdx.x, gridDim.x, blockDim.x);
 
-    result = nn(qp, tree, n, mid);
+    // result = nn(qp, tree, n, mid);
+
+    result = fact(1000000000);
 
     // for (i = 0; i < step; ++i)
     // {
@@ -116,7 +134,7 @@ void all_nearest(Point *h_query_points, Point *h_tree, int qp_n, int tree_n)
     checkCudaErrors(cudaMalloc(&d_tree, tree_n * sizeof(Point)));
     checkCudaErrors(cudaMemcpy(d_tree, h_tree, tree_n * sizeof(Point), cudaMemcpyHostToDevice));
 
-    d_all_nearest<<<numBlocks,numThreads>>>(d_tree, tree_n, mid, step);
+    d_all_nearest <<< numBlocks, numThreads>>>(d_tree, tree_n, mid, step);
 
     checkCudaErrors(cudaFree(d_tree));
 }
@@ -132,10 +150,10 @@ void all_nearest(Point *h_query_points, Point *h_tree, int qp_n, int tree_n)
 //     }
 
 //     int target, other, d = dim % 3,
-    
+
 //         target_index = tree[index].right,
 //         other_index = tree[index].left;
-    
+
 //     dim++;
 
 //     if (tree[index].p[d] > qp[d] || target_index == -1)
