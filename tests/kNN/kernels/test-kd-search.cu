@@ -130,18 +130,18 @@ TEST(kd_search, kd_search_all_points)
     result = (int *) malloc(n_qp  * k * sizeof(int));
     srand(time(NULL));
 
-    for (i = 0; i < n; ++i)
-    {
-        Point t;
-        t.p[0] = rand();
-        t.p[1] = rand();
-        t.p[2] = rand();
-        points[i] = t;
-    }
+    // for (i = 0; i < n; ++i)
+    // {
+    //     Point t;
+    //     t.p[0] = rand();
+    //     t.p[1] = rand();
+    //     t.p[2] = rand();
+    //     points[i] = t;
+    // }
 
-    cudaDeviceReset();
-    build_kd_tree(points, n);
-    store_locations(points, 0, n, n);
+    // cudaDeviceReset();
+    // build_kd_tree(points, n);
+    // store_locations(points, 0, n, n);
 
     cudaDeviceReset();
     cudaEvent_t start, stop;
@@ -150,7 +150,7 @@ TEST(kd_search, kd_search_all_points)
     checkCudaErrors(cudaEventCreate(&stop));
     float elapsed_time = 0;
 
-    checkCudaErrors(cudaEventRecord(start, 0));
+    // checkCudaErrors(cudaEventRecord(start, 0));
 
     queryAll(points, points, n, n, k, result);
 
