@@ -55,7 +55,7 @@ void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, in
     // printf("blockIdx: %d, threadIdx: %d, gridDim: %d, blockDim: %d\n", blockIdx.x, threadIdx.x, gridDim.x, blockDim.x);
     while (tid < block_step)
     {
-        nn(query_points[tid], tree, n_tree, k);
+        result[tid] = nn(query_points[tid], tree, n_tree, k);
         tid += blockDim.x;
     }
 }
