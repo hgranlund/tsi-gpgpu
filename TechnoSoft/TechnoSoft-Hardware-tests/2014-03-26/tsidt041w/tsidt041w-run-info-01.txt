@@ -1,0 +1,45 @@
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>.\helloWorld.exe
+Hello World!
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>.\runUnitTests.exe
+Running main() from gtest_main.cc
+[==========] Running 14 tests from 3 test cases.
+[----------] Global test environment set-up.
+[----------] 8 tests from kernels
+[ RUN      ] kernels.min_reduce_mod
+[       OK ] kernels.min_reduce_mod (1576 ms)
+[ RUN      ] kernels.min_reduce_mod_time
+Reduction_mod, Throughput = 30.5556 GB/s, Time = 3.29443 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.min_reduce_mod_time (156 ms)
+[ RUN      ] kernels.multi_radix_selection
+[       OK ] kernels.multi_radix_selection (608 ms)
+[ RUN      ] kernels.multi_radix_selection_time
+multi-radix-select, Throughput = 0.1389 GB/s, Time = 241.63597 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.multi_radix_selection_time (546 ms)
+[ RUN      ] kernels.radix_selection
+[       OK ] kernels.radix_selection (671 ms)
+[ RUN      ] kernels.radix_selection_time
+radix-select, Throughput = 0.5510 GB/s, Time = 182.69792 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.radix_selection_time (452 ms)
+[ RUN      ] kernels.quick_selection
+[       OK ] kernels.quick_selection (63 ms)
+[ RUN      ] kernels.quick_selection_time
+quick_selection, Throughput = 0.7856 GB/s, Time = 128.13655 ms, Size = 8388608, p = 1048576, NumDevsUsed = 1
+[       OK ] kernels.quick_selection_time (452 ms)
+[----------] 8 tests from kernels (4524 ms total)
+
+[----------] 4 tests from knn_brute_force
+[ RUN      ] knn_brute_force.test_knn_reduce_correctness
+[       OK ] knn_brute_force.test_knn_reduce_correctness (62 ms)
+[ RUN      ] knn_brute_force.test_knn_reduce_time
+kNN-brute-force-reduce, Throughput = 0.1008 GB/s, Time = 332.77533 ms, Size = 8388608 Elements, k = 100 NumDevsUsed = 1
+C:/Users/simenhg/Documents/GitHub/tsi-gpgpu/tests/kNN/brute_force/test-knn-brute-force-reduce.cu(104): error: Value of:
+ref_nb-1-i
+  Actual: 8388606
+Expected: ind[i]
+Which is: 8387583
+Faild with i = 1 and n = 8388608
+[  FAILED  ] knn_brute_force.test_knn_reduce_time (422 ms)
+[ RUN      ] knn_brute_force.test_knn_bitonic_correctness
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>
