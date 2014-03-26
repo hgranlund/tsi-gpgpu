@@ -1,0 +1,60 @@
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>.\helloWorld.exe
+Hello World!
+
+
+
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>.\runUnitTests.exe
+Running main() from gtest_main.cc
+[==========] Running 14 tests from 3 test cases.
+[----------] Global test environment set-up.
+[----------] 8 tests from kernels
+[ RUN      ] kernels.min_reduce_mod
+[       OK ] kernels.min_reduce_mod (2510 ms)
+[ RUN      ] kernels.min_reduce_mod_time
+Reduction_mod, Throughput = 30.4745 GB/s, Time = 3.30320 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.min_reduce_mod_time (186 ms)
+[ RUN      ] kernels.multi_radix_selection
+[       OK ] kernels.multi_radix_selection (758 ms)
+[ RUN      ] kernels.multi_radix_selection_time
+multi-radix-select, Throughput = 0.1389 GB/s, Time = 241.55690 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.multi_radix_selection_time (555 ms)
+[ RUN      ] kernels.radix_selection
+[       OK ] kernels.radix_selection (799 ms)
+[ RUN      ] kernels.radix_selection_time
+radix-select, Throughput = 0.5514 GB/s, Time = 182.57050 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.radix_selection_time (466 ms)
+[ RUN      ] kernels.quick_selection
+[       OK ] kernels.quick_selection (55 ms)
+[ RUN      ] kernels.quick_selection_time
+quick_selection, Throughput = 0.7873 GB/s, Time = 127.86006 ms, Size = 8388608, p = 1048576, NumDevsUsed = 1
+[       OK ] kernels.quick_selection_time (520 ms)
+[----------] 8 tests from kernels (5855 ms total)
+
+[----------] 4 tests from knn_brute_force
+[ RUN      ] knn_brute_force.test_knn_reduce_correctness
+[       OK ] knn_brute_force.test_knn_reduce_correctness (83 ms)
+[ RUN      ] knn_brute_force.test_knn_reduce_time
+kNN-brute-force-reduce, Throughput = 0.0996 GB/s, Time = 336.72736 ms, Size = 8388608 Elements, k = 100 NumDevsUsed = 1
+C:/Users/simenhg/Documents/GitHub/tsi-gpgpu/tests/kNN/brute_force/test-knn-brute-force-reduce.cu(104): error: Value of:
+ref_nb-1-i
+  Actual: 8388606
+Expected: ind[i]
+Which is: 8387583
+Faild with i = 1 and n = 8388608
+[  FAILED  ] knn_brute_force.test_knn_reduce_time (434 ms)
+[ RUN      ] knn_brute_force.test_knn_bitonic_correctness
+
+
+
+
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>.\time_kd_tree_build.exe
+Running kd-tree-build with n = 8388608
+CUDA error at C:/Users/simenhg/Documents/GitHub/tsi-gpgpu/src/kNN/kd-tree/kd-tree-naive.cu:133 code=6(cudaErrorLaunchTim
+eout) "cudaMemcpy(h_points, d_points, n*sizeof(Point), cudaMemcpyDeviceToHost)"
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\bin>
