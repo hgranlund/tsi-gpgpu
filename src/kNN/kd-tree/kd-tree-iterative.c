@@ -142,7 +142,6 @@ float dist(float *qp, struct Point *points, int x)
 
 int nn(float *qp, struct Point *tree, int dim, int index)
 {
-
     if (tree[index].left == -1 && tree[index].right == -1)
     {
         return index;

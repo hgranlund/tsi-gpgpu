@@ -27,6 +27,7 @@ kernels/reduction-mod.cuh
 kernels/sum-reduction.cuh
 kd-tree/kd-tree-naive.cuh
 kernels/kd-search.cuh
+kd-tree/search-iterative.cuh
 )
 
 set(CUFILES
@@ -41,6 +42,7 @@ kernels/radix-select.cu
 kernels/quick-select.cu
 kd-tree/kd-tree-naive.cu
 kernels/kd-search.cu
+kd-tree/search-iterative.cu
 )
 
 set(CFILES
@@ -125,6 +127,7 @@ cuda_add_library(knn_reduce ${LIB_TYPE}
 cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${CUHFILES}
   ${HFILES_PUBLIC}
+  ${HFILES}
   ${CUFILES}
   ${CFILES}
   OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}

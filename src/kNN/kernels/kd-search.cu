@@ -23,16 +23,6 @@ int store_locations(Point *tree, int lower, int upper, int n)
 }
 
 __device__
-float dist(float *qp, Point *points, int x)
-{
-    float dx = qp[0] - points[x].p[0],
-          dy = qp[1] - points[x].p[1],
-          dz = qp[2] - points[x].p[2];
-
-    return dx * dx + dy * dy + dz * dz;
-}
-
-__device__
 int nn(Point qp, Point *tree, int n, int k)
 {
     return 1;
@@ -89,7 +79,3 @@ void queryAll(Point *h_query_points, Point *h_tree, int n_qp, int n_tree, int k,
     checkCudaErrors(cudaFree(d_query_points));
     checkCudaErrors(cudaFree(d_result));
 }
-
-
-
-
