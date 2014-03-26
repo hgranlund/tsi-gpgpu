@@ -1,12 +1,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include <kd-search.cuh>
+#include <helper_cuda.h>
 
-int mid(int lower, int upper)
-{
-    return (int) floor((upper - lower) / 2) + lower;
-}
+#include <kd-search.cuh>
 
 int store_locations(Point *tree, int lower, int upper, int n)
 {
@@ -17,7 +14,7 @@ int store_locations(Point *tree, int lower, int upper, int n)
         return -1;
     }
 
-    r = mid(lower, upper);
+    r = (int) floor((upper - lower) / 2) + lower;
 
     tree[r].left = store_locations(tree, lower, r, n);
     tree[r].right = store_locations(tree, r + 1, upper, n);
@@ -25,6 +22,7 @@ int store_locations(Point *tree, int lower, int upper, int n)
     return r;
 }
 
+__device__
 float dist(float *qp, Point *points, int x)
 {
     float dx = qp[0] - points[x].p[0],
@@ -34,6 +32,7 @@ float dist(float *qp, Point *points, int x)
     return dx*dx + dy*dy + dz*dz;
 }
 
+__device__
 int nn(float *qp, Point *tree, int dim, int index)
 {
     if (tree[index].left == -1 && tree[index].right == -1)
@@ -79,6 +78,47 @@ int nn(float *qp, Point *tree, int dim, int index)
         return target;
     }
     return other;
+}
+
+__global__
+void d_all_nearest(Point *tree, int n, int mid, int step)
+{
+    int i, result;
+    float qp[3] = {0.0, 1.0, 2.0};
+
+    // step = n / (gridDim.x * blockDim.x);
+    // printf("blockIdx: %d, threadIdx: %d, gridDim: %d, blockDim: %d\n", blockIdx.x, threadIdx.x, gridDim.x, blockDim.x);
+
+    result = nn(qp, tree, n, mid);
+
+    // for (i = 0; i < step; ++i)
+    // {
+    //     result = nn(qp, tree, n, mid);
+    // }
+}
+
+void all_nearest(Point *h_query_points, Point *h_tree, int qp_n, int tree_n)
+{
+    int numBlocks, numThreads, mid, step;
+    Point *d_tree;
+
+    // numBlocks = 1000;
+    // numThreads = 100;
+
+    numBlocks = 1;
+    numThreads = 1;
+
+    mid = (int) floor(tree_n / 2);
+    step = ceil(tree_n / (numBlocks * numThreads));
+
+    printf("Block size: %d, step: %d, n: %d\n", numBlocks, step, tree_n);
+
+    checkCudaErrors(cudaMalloc(&d_tree, tree_n * sizeof(Point)));
+    checkCudaErrors(cudaMemcpy(d_tree, h_tree, tree_n * sizeof(Point), cudaMemcpyHostToDevice));
+
+    d_all_nearest<<<numBlocks,numThreads>>>(d_tree, tree_n, mid, step);
+
+    checkCudaErrors(cudaFree(d_tree));
 }
 
 // int nn(float *qp, struct Point *tree, float *dists, int dim, int index)

@@ -3,7 +3,12 @@
 #include "point.h"
 
 int store_locations(Point *tree, int lower, int upper, int n);
+void all_nearest(Point *h_query_points, Point *tree, int qp_n, int tree_n);
+
+__device__
 int nn(float *qp, Point *tree, int dim, int index);
-int mid(int lower, int upper);
+
+__global__
+void nearest(float *qp, Point *tree, int dim, int index);
 
 #endif
