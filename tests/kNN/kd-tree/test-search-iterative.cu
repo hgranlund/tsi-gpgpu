@@ -7,6 +7,7 @@
 #include <helper_cuda.h>
 #include "gtest/gtest.h"
 
+#define debug 0
 
 void _swap(struct Point *points, int a, int b)
 {
@@ -108,32 +109,38 @@ void _build_kd_tree(struct Point *x, int n)
 
 void print_t(Point *tree, int level, int lower, int upper, int n)
 {
-    if (lower >= upper)
+    if (debug)
     {
-        return;
+        if (lower >= upper)
+        {
+            return;
+        }
+
+        int i, r = floor((float)(upper - lower) / 2) + lower;
+
+        printf("|");
+        for (i = 0; i < level; ++i)
+        {
+            printf("--");
+        }
+        printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
+
+        print_t(tree, 1 + level, lower, r, n);
+        print_t(tree, 1 + level, r + 1, upper, n);
     }
-
-    int i, r = floor((float)(upper - lower) / 2) + lower;
-
-    printf("|");
-    for (i = 0; i < level; ++i)
-    {
-        printf("--");
-    }
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
-
-    print_t(tree, 1 + level, lower, r, n);
-    print_t(tree, 1 + level, r + 1, upper, n);
 }
 
 void _printPointsArray(Point *l, int n, char *s)
 {
-    printf("%10s: [ ", s);
-    for (int i = 0; i < n; ++i)
+    if (debug)
     {
-        printf("%3.1f, ", l[i].p[0]);
+        printf("%10s: [ ", s);
+        for (int i = 0; i < n; ++i)
+        {
+            printf("%3.1f, ", l[i].p[0]);
+        }
+        printf("]\n");
     }
-    printf("]\n");
 }
 
 bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
@@ -142,7 +149,7 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
 
     float query_point[3];
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
-    
+
     // // int best_fit = nn(query_point, tree, dists, 0, _midpoint(0, n));
     int mid = (int) floor((float)(n) / 2);
     int best_fit = query_k(query_point, tree, 0, mid);
@@ -157,9 +164,10 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
     return false;
 }
 
-TEST(search_iterative, search_iterative_wiki_correctness){
+TEST(search_iterative, search_iterative_wiki_correctness)
+{
     int wn = 6;
-    struct Point *wiki = (Point*) malloc(wn  * sizeof(Point));
+    struct Point *wiki = (Point *) malloc(wn  * sizeof(Point));
 
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
@@ -173,7 +181,7 @@ TEST(search_iterative, search_iterative_wiki_correctness){
     cudaDeviceReset();
     build_kd_tree(wiki, wn);
     cashe_indexes(wiki, 0, wn, wn);
-    
+
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 2, 3, 0, 2, 3, 0));
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 5, 4, 0, 5, 4, 0));
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 9, 6, 0, 9, 6, 0));
@@ -189,9 +197,10 @@ TEST(search_iterative, search_iterative_wiki_correctness){
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 0, 10, 0, 4, 7, 0));
 }
 
-TEST(search_iterative, search_iterative_dfs){
+TEST(search_iterative, search_iterative_dfs)
+{
     int wn = 6;
-    struct Point *wiki = (Point*) malloc(wn  * sizeof(Point));
+    struct Point *wiki = (Point *) malloc(wn  * sizeof(Point));
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
     wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
@@ -203,17 +212,21 @@ TEST(search_iterative, search_iterative_dfs){
 
     // cudaDeviceReset();
     _build_kd_tree(wiki, wn);
-    print_t(wiki, 0, 0, wn, wn);
-    printf("\n");
+    if (debug)
+    {
+        print_t(wiki, 0, 0, wn, wn);
+        printf("\n");
+    }
 
     cashe_indexes(wiki, 0, wn, wn);
-    
+
     dfs(wiki, wn);
 }
 
-TEST(search_iterative, search_iterative_push){
+TEST(search_iterative, search_iterative_push)
+{
     int eos = -1,
-        *stack = (int*) malloc(5 * sizeof stack);
+        *stack = (int *) malloc(5 * sizeof stack);
 
     push(stack, &eos, 3);
     ASSERT_EQ(3, stack[eos]);
@@ -232,16 +245,17 @@ TEST(search_iterative, search_iterative_push){
     free(stack);
 }
 
-TEST(search_iterative, search_iterative_pop){
+TEST(search_iterative, search_iterative_pop)
+{
     int eos = -1,
-        *stack = (int*) malloc(5 * sizeof stack);
+        *stack = (int *) malloc(5 * sizeof stack);
 
     ASSERT_EQ(-1, pop(stack, &eos));
 
     push(stack, &eos, 3);
     push(stack, &eos, 42);
     push(stack, &eos, 1337);
-    
+
     ASSERT_EQ(1337, pop(stack, &eos));
     ASSERT_EQ(1, eos);
     ASSERT_EQ(42, pop(stack, &eos));
