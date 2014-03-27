@@ -193,7 +193,6 @@ TEST(search_iterative, search_iterative_dfs){
     int wn = 6;
     struct Point *wiki = (Point*) malloc(wn  * sizeof(Point));
 
-
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
     wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
     wiki[1].p[0] = 5, wiki[1].p[1] = 4, wiki[1].p[2] = 0;
@@ -202,15 +201,7 @@ TEST(search_iterative, search_iterative_dfs){
     wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
 
-    cudaDeviceReset();
-
-    build_kd_tree(wiki, wn);
-    print_t(wiki, 0, 0, wn, wn);
-    printf("\n");
-
-    _printPointsArray(wiki, wn, "Simen");
-    printf("\n");
-
+    // cudaDeviceReset();
     _build_kd_tree(wiki, wn);
     print_t(wiki, 0, 0, wn, wn);
     printf("\n");
