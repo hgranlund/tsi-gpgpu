@@ -14,7 +14,7 @@ int store_locations(Point *tree, int lower, int upper, int n)
         return -1;
     }
 
-    r = (int) floor((upper - lower) / 2) + lower;
+    r = (int) ((upper - lower) / 2) + lower;
 
     tree[r].left = store_locations(tree, lower, r, n);
     tree[r].right = store_locations(tree, r + 1, upper, n);

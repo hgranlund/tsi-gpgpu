@@ -13,7 +13,7 @@ int cashe_indexes(Point *tree, int lower, int upper, int n)
         return -1;
     }
 
-    r = (int) floor((upper - lower) / 2) + lower;
+    r = (int) floor((float)(upper - lower) / 2) + lower;
 
     tree[r].left = cashe_indexes(tree, lower, r, n);
     tree[r].right = cashe_indexes(tree, r + 1, upper, n);
@@ -56,7 +56,7 @@ int dfs(Point *tree, int n)
         target,
         other;
 
-    push(stack, &eos, floor(n / 2));
+    push(stack, &eos, floor((float)n / 2));
 
     while(eos > -1)
     {
