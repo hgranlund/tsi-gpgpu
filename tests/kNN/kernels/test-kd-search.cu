@@ -13,7 +13,7 @@
 
 //     float query_point[3];
 //     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
-    
+
 //     // int best_fit = nn(query_point, tree, dists, 0, midpoint(0, n));
 //     int mid = (int) floor((n) / 2);
 //     int best_fit = nn(query_point, tree, 0, mid);
@@ -114,48 +114,54 @@
 //         free(query_data[i]);
 //     }
 //     free(query_data);
-    
+
 //     free(points);
 // }
 
-TEST(kd_search, kd_search_all_points){
-    // int i, n = 10;
-    // Point *points;
-    // points = (Point*) malloc(n  * sizeof(Point));
-    // srand(time(NULL));
+TEST(kd_search, kd_search_all_points)
+{
+    int i,
+        n = 100000,
+        n_qp = n,
+        k = 1,
+        *result;
+    Point *points;
+    points = (Point *) malloc(n  * sizeof(Point));
+    result = (int *) malloc(n_qp  * k * sizeof(int));
+    srand(time(NULL));
 
-    // for (i = 0; i < n; ++i)
-    // {
-    //     Point t;
-    //     t.p[0] = rand();
-    //     t.p[1] = rand();
-    //     t.p[2] = rand();
-    //     points[i] = t;
-    // }
+    for (i = 0; i < n; ++i)
+    {
+        Point t;
+        t.p[0] = rand();
+        t.p[1] = rand();
+        t.p[2] = rand();
+        points[i] = t;
+    }
 
-    // cudaDeviceReset();
-    // build_kd_tree(points, n);
-    // store_locations(points, 0, n, n);
+    cudaDeviceReset();
+    build_kd_tree(points, n);
+    store_locations(points, 0, n, n);
 
-    // cudaDeviceReset();
-    // cudaEvent_t start, stop;
-    // unsigned int bytes = n * (sizeof(Point));
-    // checkCudaErrors(cudaEventCreate(&start));
-    // checkCudaErrors(cudaEventCreate(&stop));
-    // float elapsed_time=0;
+    cudaDeviceReset();
+    cudaEvent_t start, stop;
+    unsigned int bytes = n * (sizeof(Point));
+    checkCudaErrors(cudaEventCreate(&start));
+    checkCudaErrors(cudaEventCreate(&stop));
+    float elapsed_time = 0;
 
-    // checkCudaErrors(cudaEventRecord(start, 0));
+    checkCudaErrors(cudaEventRecord(start, 0));
 
-    // all_nearest(points, points, n, n);
+    queryAll(points, points, n, n, k, result);
 
-    // checkCudaErrors(cudaEventRecord(stop, 0));
-    // cudaEventSynchronize(start);
-    // cudaEventSynchronize(stop);
-    // cudaEventElapsedTime(&elapsed_time, start, stop);
-    // elapsed_time = elapsed_time;
-    // double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+    checkCudaErrors(cudaEventRecord(stop, 0));
+    cudaEventSynchronize(start);
+    cudaEventSynchronize(stop);
+    cudaEventElapsedTime(&elapsed_time, start, stop);
+    elapsed_time = elapsed_time;
+    double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
 
-    // printf("Searched for n queries, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n",throughput, elapsed_time, n);
-    
-    // free(points);
+    printf("Searched for n queries, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n", throughput, elapsed_time, n);
+
+    free(points);
 }

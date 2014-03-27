@@ -3,7 +3,7 @@
 
 #include <helper_cuda.h>
 
-#include <kd-search.cuh>
+#include "kd-search.cuh"
 
 int store_locations(Point *tree, int lower, int upper, int n)
 {
@@ -23,167 +23,59 @@ int store_locations(Point *tree, int lower, int upper, int n)
 }
 
 __device__
-float dist(float *qp, Point *points, int x)
+int nn(Point qp, Point *tree, int n, int k)
 {
-    float dx = qp[0] - points[x].p[0],
-          dy = qp[1] - points[x].p[1],
-          dz = qp[2] - points[x].p[2];
-
-    return dx * dx + dy * dy + dz * dz;
-}
-
-__device__
-int nn(float *qp, Point *tree, int dim, int index)
-{
-    if (tree[index].left == -1 && tree[index].right == -1)
-    {
-        return index;
-    }
-
-    int target,
-        other,
-        d,
-        target_index,
-        other_index;
-
-    d = dim % 3;
-    target_index = tree[index].right;
-    other_index = tree[index].left;
-
-    dim++;
-
-    if (tree[index].p[d] > qp[d] || target_index == -1)
-    {
-        int temp = target_index;
-
-        target_index = other_index;
-        other_index = temp;
-    }
-
-    target = 1;//nn(qp, tree, dim, target_index);
-    float target_dist = dist(qp, tree, target);
-    float current_dist = dist(qp, tree, index);
-
-    if (current_dist < target_dist)
-    {
-        target_dist = current_dist;
-        target = index;
-    }
-
-    if ((tree[index].p[d] - qp[d]) * (tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
-    {
-        return target;
-    }
-
-    other = 1;//nn(qp, tree, dim, other_index);
-    float other_distance = dist(qp, tree, other);
-
-    if (other_distance > target_dist)
-    {
-        return target;
-    }
-    return other;
-}
-
-__device__
-int fact(int f)
-{
-    int t = f * fact(f - 1);
-
-    if (f == 0)
-        return 1;
-    else
-        return t;
+    return 1;
 }
 
 __global__
-void d_all_nearest(Point *tree, int n, int mid, int step)
+void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, int *result)
 {
-    int i, result;
-    float qp[3] = {0.0, 1.0, 2.0};
+    int tid = threadIdx.x,
+        rest = n_qp % gridDim.x,
+        block_step = n_qp / gridDim.x,
+        block_offset = block_step * blockIdx.x;
 
-    // step = n / (gridDim.x * blockDim.x);
+    if (rest >= gridDim.x - blockIdx.x)
+    {
+        block_offset += rest - (gridDim.x - blockIdx.x);
+        block_step++;
+    }
+    query_points += block_offset;
     // printf("blockIdx: %d, threadIdx: %d, gridDim: %d, blockDim: %d\n", blockIdx.x, threadIdx.x, gridDim.x, blockDim.x);
-
-    // result = nn(qp, tree, n, mid);
-
-    result = fact(1000000000);
-
-    // for (i = 0; i < step; ++i)
-    // {
-    //     result = nn(qp, tree, n, mid);
-    // }
+    while (tid < block_step)
+    {
+        result[tid] = nn(query_points[tid], tree, n_tree, k);
+        tid += blockDim.x;
+    }
 }
 
-void all_nearest(Point *h_query_points, Point *h_tree, int qp_n, int tree_n)
+void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
 {
-    int numBlocks, numThreads, mid, step;
-    Point *d_tree;
-
-    // numBlocks = 1000;
-    // numThreads = 100;
-
-    numBlocks = 1;
-    numThreads = 1;
-
-    mid = (int) floor(tree_n / 2);
-    step = ceil(tree_n / (numBlocks * numThreads));
-
-    printf("Block size: %d, step: %d, n: %d\n", numBlocks, step, tree_n);
-
-    checkCudaErrors(cudaMalloc(&d_tree, tree_n * sizeof(Point)));
-    checkCudaErrors(cudaMemcpy(d_tree, h_tree, tree_n * sizeof(Point), cudaMemcpyHostToDevice));
-
-    d_all_nearest <<< numBlocks, numThreads>>>(d_tree, tree_n, mid, step);
-
-    checkCudaErrors(cudaFree(d_tree));
+    threads = 128;
+    blocks = n / threads;
+    blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
+    blocks = max(1, blocks);
 }
 
-// int nn(float *qp, struct Point *tree, float *dists, int dim, int index)
-// {
-//     float current_dist = dist(qp, tree, index);
-//     dists[index] = current_dist;
+void queryAll(Point *h_query_points, Point *h_tree, int n_qp, int n_tree, int k, int *h_result)
+{
+    int *d_result, numBlocks, numThreads;
+    Point *d_tree, *d_query_points;
 
-//     if (tree[index].left == -1 && tree[index].right == -1)
-//     {
-//         return index;
-//     }
 
-//     int target, other, d = dim % 3,
+    checkCudaErrors(cudaMalloc(&d_result, n_qp * k  * sizeof(int)));
+    checkCudaErrors(cudaMalloc(&d_query_points, n_qp * sizeof(Point)));
+    checkCudaErrors(cudaMalloc(&d_tree, n_tree * sizeof(Point)));
 
-//         target_index = tree[index].right,
-//         other_index = tree[index].left;
+    checkCudaErrors(cudaMemcpy(d_query_points, h_query_points, n_qp * sizeof(Point), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_tree, h_tree, n_tree * sizeof(Point), cudaMemcpyHostToDevice));
 
-//     dim++;
+    getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
+    dQueryAll <<< numBlocks, numThreads>>>(d_tree, d_tree, n_qp, n_tree, k, d_result);
 
-//     if (tree[index].p[d] > qp[d] || target_index == -1)
-//     {
-//         int temp = target_index;
-
-//         target_index = other_index;
-//         other_index = temp;
-//     }
-
-//     target = nn(qp, tree, dists, dim, target_index);
-//     float target_dist = dists[target];
-
-//     if (current_dist < target_dist)
-//     {
-//         target_dist = current_dist;
-//         target = index;
-//     }
-
-//     if ((tree[index].p[d] - qp[d])*(tree[index].p[d] - qp[d]) > target_dist || other_index == -1)
-//     {
-//         return target;
-//     }
-
-//     other = nn(qp, tree, dists, dim, other_index);
-//     float other_distance = dists[other];
-
-//     if (other_distance > target_dist)
-//     {
-//         return target;
-//     }
-//     return other;
-// }
+    checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaFree(d_tree));
+    checkCudaErrors(cudaFree(d_query_points));
+    checkCudaErrors(cudaFree(d_result));
+}

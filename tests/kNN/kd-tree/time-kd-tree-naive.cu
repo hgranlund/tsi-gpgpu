@@ -13,6 +13,43 @@
 
 #define debug 0
 
+void writePoints(char *file_path, int n, Point *points)
+{
+    printf("writing points...\n");
+
+    FILE *file = fopen(file_path, "w");
+    if (file == NULL)
+    {
+        fputs ("File error\n", stderr);
+        exit (1);
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        fwrite(&points[i].p, sizeof(float), 3, file);
+    }
+
+    fclose(file);
+
+}
+
+
+void readPoints(const char *file_path, int n, Point *points)
+{
+    printf("Reading points...\n");
+
+    FILE *file = fopen(file_path, "rb");
+    if (file == NULL)
+    {
+        fputs ("File error\n", stderr);
+        exit (1);
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        fread(&points[i].p, sizeof(float), 3, file);
+    }
+
+    fclose(file);
+}
 
 
 __host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug = 0)
@@ -68,15 +105,35 @@ void print_tree(Point *tree, int level, int lower, int upper, int n)
     }
 }
 
+void populatePoints(Point *points, int n)
+{
+    srand(time(NULL));
+    for (int i = 0; i < n; ++i)
+    {
+        Point t;
+        t.p[0] = rand();
+        t.p[1] = rand();
+        t.p[2] = rand();
+        points[i]    = t;
+    }
+}
+
 int main(int argc, char const *argv[])
 {
-    int i, n, nu, ni = 8388608,
-                  step = 250000;
-    n = nu = ni;
+    int n, nu, ni = 8388608,
+               step = 250000;
+    bool from_file = 0;
+
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
         printf("Running kd-tree-build with n = %d\n", nu);
+    }
+    else if (argc == 3)
+    {
+        nu = ni = atoi(argv[1]);
+        from_file = 1;
+        printf("Running kd-tree-build from file '%s' with n = %d\n", argv[2], nu);
     }
     else if (argc == 4)
     {
@@ -92,22 +149,18 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        cudaDeviceReset();
-        float temp;
         Point *points;
         points = (Point *) malloc(n  * sizeof(Point));
-        srand(time(NULL));
-        for ( i = 0; i < n; ++i)
+
+        if (from_file)
         {
-            temp = n - i - 1;
-            Point t;
-            t.p[0] = temp;
-            t.p[1] = temp;
-            t.p[2] = temp;
-            points[i]    = t;
-
+            readPoints(argv[2], n, points);
         }
-
+        else
+        {
+            populatePoints(points, n);
+        }
+        cudaDeviceReset();
         cudaEvent_t start, stop;
         unsigned int bytes = n * (sizeof(Point));
         checkCudaErrors(cudaEventCreate(&start));
