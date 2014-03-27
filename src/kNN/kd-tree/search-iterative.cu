@@ -30,22 +30,56 @@ float dist(float *qp, Point *points, int x)
     return dx * dx + dy * dy + dz * dz;
 }
 
-void push(int *stack, int pop, int value)
+void push(int *stack, int *eos, int value)
 {
-    pop++;
-    stack[pop] = value;
+    (*eos)++;
+    stack[*eos] = value;
+}
+
+int pop(int *stack, int *eos)
+{
+    if (*eos > -1)
+    {
+        (*eos)--;
+        return stack[*eos + 1];
+    } else {
+        return -1;
+    }
 }
 
 int dfs(Point *tree, int n)
 {
-    int pop = 0,
-        *stack = (int *) malloc(n * sizeof stack);
+    int eos = -1,
+        *stack = (int *) malloc(n * sizeof stack),
 
+        current,
+        target,
+        other;
 
-    for (int i = 0; i < n; ++i)
+    push(stack, &eos, floor(n / 2));
+
+    while(eos > -1)
     {
-        printf("(%3.1f, %3.1f, %3.1f)\n", tree[i].p[0], tree[i].p[1], tree[i].p[2]);
+        current = pop(stack, &eos);
+
+        printf("(%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
+
+        target = tree[current].right;
+        other = tree[current].left;
+
+        // printf("Current: %d, Target: %d, Other: %d, EOS: %d\n", current, target, other, eos);
+
+        if (target > -1)
+        {
+            push(stack, &eos, target);
+        }
+        if (other > -1)
+        {
+            push(stack, &eos, other);
+        }
     }
+
+    return 0;
 }
 
 int query_k(float *qp, Point *tree, int dim, int index)

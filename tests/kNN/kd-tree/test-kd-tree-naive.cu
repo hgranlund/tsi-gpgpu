@@ -68,6 +68,26 @@ void print_tree(Point *tree, int level, int lower, int upper, int n)
     }
 }
 
+void _print_t(Point *tree, int level, int lower, int upper, int n)
+{
+    if (lower >= upper)
+    {
+        return;
+    }
+
+    int i, r = floor((upper - lower) / 2) + lower;
+
+    printf("|");
+    for (i = 0; i < level; ++i)
+    {
+        printf("--");
+    }
+    printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
+
+    _print_t(tree, 1 + level, lower, r, n);
+    _print_t(tree, 1 + level, r + 1, upper, n);
+}
+
 TEST(kd_tree_naive, kd_tree_naive_correctness)
 {
     int i, j, n = 8;
@@ -166,6 +186,37 @@ TEST(kd_tree_naive, kd_tree_naive_time)
         free(points);
     }
 }
+
+
+///////////////////////////////////////////////
+// Failing spec from Teodor
+
+// TEST(search_iterative, search_iterative_dfs){
+//     int wn = 6;
+//     struct Point *wiki = (Point*) malloc(wn  * sizeof(Point));
+
+
+//     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
+//     wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
+//     wiki[1].p[0] = 5, wiki[1].p[1] = 4, wiki[1].p[2] = 0;
+//     wiki[2].p[0] = 9, wiki[2].p[1] = 6, wiki[2].p[2] = 0;
+//     wiki[3].p[0] = 4, wiki[3].p[1] = 7, wiki[3].p[2] = 0;
+//     wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
+//     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
+
+//     cudaDeviceReset();
+
+//     build_kd_tree(wiki, wn);
+//     _print_t(wiki, 0, 0, wn, wn);
+//     printf("\n");
+
+//     _printPointsArray(wiki, wn, "Wikipedia");
+//     printf("\n");
+
+//     // _build_kd_tree(wiki, wn);
+//     // _print_t(wiki, 0, 0, wn, wn);
+//     // printf("\n");
+// }
 
 
 // TEST(kd_tree_naive, kd_tree_naive_step_time){
