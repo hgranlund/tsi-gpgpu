@@ -42,9 +42,9 @@ TEST(kernels, quick_selection)
     int numBlocks, numThreads;
     float temp;
     unsigned int i, n, p;
-    for (n = 8; n <= 9; n <<= 1)
+    for (n = 4; n <= 4; n <<= 1)
     {
-        p = 16;
+        p = 32;
         numBlocks = p;
         n = n * p;
         h_points = (Point *) malloc(n * sizeof(Point));
@@ -66,7 +66,7 @@ TEST(kernels, quick_selection)
             cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
         h_printPointsArray_(h_points, n, "h_points", 0);
-        cuQuickSelectShared<8> <<< 2, 2>>>(d_points, n / p, p, 0);
+        cuQuickSelectShared<4> <<< 2, 2>>>(d_points, n / p, p, 0);
 
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
