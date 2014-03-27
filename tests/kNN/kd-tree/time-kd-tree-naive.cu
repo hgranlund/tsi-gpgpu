@@ -15,10 +15,14 @@
 
 void writePoints(char *file_path, int n, Point *points)
 {
-    printf("writing points\n");
+    printf("writing points...\n");
 
     FILE *file = fopen(file_path, "w");
-
+    if (file == NULL)
+    {
+        fputs ("File error\n", stderr);
+        exit (1);
+    }
     for (int i = 0; i < n; ++i)
     {
         fwrite(&points[i].p, sizeof(float), 3, file);
@@ -31,10 +35,14 @@ void writePoints(char *file_path, int n, Point *points)
 
 void readPoints(const char *file_path, int n, Point *points)
 {
-    printf("Reading points\n");
+    printf("Reading points...\n");
 
-    FILE *file = fopen(file_path, "r");
-
+    FILE *file = fopen(file_path, "rb");
+    if (file == NULL)
+    {
+        fputs ("File error\n", stderr);
+        exit (1);
+    }
     for (int i = 0; i < n; ++i)
     {
         fread(&points[i].p, sizeof(float), 3, file);
@@ -115,7 +123,6 @@ int main(int argc, char const *argv[])
     int n, nu, ni = 8388608,
                step = 250000;
     bool from_file = 0;
-    n = nu = ni = 8;
 
     if (argc == 2)
     {
@@ -154,7 +161,6 @@ int main(int argc, char const *argv[])
             populatePoints(points, n);
         }
         cudaDeviceReset();
-        h_printPointsArray__(points, n, "pints");
         cudaEvent_t start, stop;
         unsigned int bytes = n * (sizeof(Point));
         checkCudaErrors(cudaEventCreate(&start));
