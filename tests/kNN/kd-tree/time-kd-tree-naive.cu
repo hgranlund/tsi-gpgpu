@@ -29,11 +29,11 @@ void writePoints(char *file_path, int n, Point *points)
 }
 
 
-void readPoints(char *file_path, int n, Point *points)
+void readPoints(const char *file_path, int n, Point *points)
 {
     printf("Reading points\n");
 
-    FILE *file = fopen(file_path, "w");
+    FILE *file = fopen(file_path, "r");
 
     for (int i = 0; i < n; ++i)
     {
@@ -97,15 +97,36 @@ void print_tree(Point *tree, int level, int lower, int upper, int n)
     }
 }
 
+void populatePoints(Point *points, int n)
+{
+    srand(time(NULL));
+    for (int i = 0; i < n; ++i)
+    {
+        Point t;
+        t.p[0] = rand();
+        t.p[1] = rand();
+        t.p[2] = rand();
+        points[i]    = t;
+    }
+}
+
 int main(int argc, char const *argv[])
 {
-    int i, n, nu, ni = 8388608,
-                  step = 250000;
+    int n, nu, ni = 8388608,
+               step = 250000;
+    bool from_file = 0;
     n = nu = ni = 8;
+
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
         printf("Running kd-tree-build with n = %d\n", nu);
+    }
+    else if (argc == 3)
+    {
+        nu = ni = atoi(argv[1]);
+        from_file = 1;
+        printf("Running kd-tree-build from file '%s' with n = %d\n", argv[2], nu);
     }
     else if (argc == 4)
     {
@@ -121,21 +142,18 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        cudaDeviceReset();
-        float temp;
         Point *points;
         points = (Point *) malloc(n  * sizeof(Point));
-        srand(time(NULL));
-        for ( i = 0; i < n; ++i)
-        {
-            temp = n - i - 1;
-            Point t;
-            t.p[0] = temp;
-            t.p[1] = temp;
-            t.p[2] = temp;
-            points[i]    = t;
 
+        if (from_file)
+        {
+            readPoints(argv[2], n, points);
         }
+        else
+        {
+            populatePoints(points, n);
+        }
+        cudaDeviceReset();
         h_printPointsArray__(points, n, "pints");
         cudaEvent_t start, stop;
         unsigned int bytes = n * (sizeof(Point));
