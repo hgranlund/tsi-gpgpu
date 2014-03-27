@@ -13,6 +13,7 @@
 __device__
 void d_printIntArray___(int *l, int n, char *s)
 {
+#if __CUDA_ARCH__ >= 200
     if (debug && threadIdx.x == 0)
     {
         int i;
@@ -23,8 +24,9 @@ void d_printIntArray___(int *l, int n, char *s)
             printf(", %d", l[i] );
         }
         printf("]\n");
+        __syncthreads();
     }
-    __syncthreads();
+#endif
 }
 
 void h_printIntArray___(int *l, int n, char *s)
