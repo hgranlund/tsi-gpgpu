@@ -26,6 +26,22 @@ void d_printIntArray___(int *l, int n, char *s)
     }
     __syncthreads();
 }
+__device__
+void d_printPoints___(Point *l, int n, char *s)
+{
+    if (debug && threadIdx.x == 0)
+    {
+        int i;
+        printf("%s: ", s);
+        printf("[%3.1f", l[0].p[0] );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %3.1f", l[i].p[0] );
+        }
+        printf("]\n");
+    }
+    __syncthreads();
+}
 
 void h_printIntArray___(int *l, int n, char *s)
 {
@@ -183,9 +199,11 @@ __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partitio
         zero_count[threadIdx.x] += !is_bigger;
         tid += blockDim.x;
     }
+
     __syncthreads();
     cuAccumulateIndex_(zero_count, blockDim.x);
     cuAccumulateIndex_(one_count, blockDim.x);
+
     tid = threadIdx.x;
     __syncthreads();
     one_count--;
