@@ -63,22 +63,25 @@ void print_tree(Point *tree, int level, int lower, int upper, int n)
 
 void _print_t(Point *tree, int level, int lower, int upper, int n)
 {
-    if (lower >= upper)
+    if (debug)
     {
-        return;
+        if (lower >= upper)
+        {
+            return;
+        }
+
+        int i, r = floor((float)(upper - lower) / 2) + lower;
+
+        printf("|");
+        for (i = 0; i < level; ++i)
+        {
+            printf("--");
+        }
+        printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
+
+        _print_t(tree, 1 + level, lower, r, n);
+        _print_t(tree, 1 + level, r + 1, upper, n);
     }
-
-    int i, r = floor((float)(upper - lower) / 2) + lower;
-
-    printf("|");
-    for (i = 0; i < level; ++i)
-    {
-        printf("--");
-    }
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
-
-    _print_t(tree, 1 + level, lower, r, n);
-    _print_t(tree, 1 + level, r + 1, upper, n);
 }
 
 TEST(kd_tree_naive, kd_tree_naive_correctness)
@@ -186,8 +189,10 @@ TEST(kd_tree_naive, kd_tree_naive_time)
 
 TEST(kd_tree_naive, wikipedia_exsample)
 {
+    cudaDeviceReset();
     int wn = 6;
     struct Point *wiki = (Point *) malloc(wn  * sizeof(Point));
+    struct Point *wiki_correct = (Point *) malloc(wn  * sizeof(Point));
 
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
@@ -198,15 +203,26 @@ TEST(kd_tree_naive, wikipedia_exsample)
     wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
 
-    cudaDeviceReset();
 
-    h_printPointsArray__(wiki, wn, "Wikipedia", 1);
     build_kd_tree(wiki, wn);
     _print_t(wiki, 0, 0, wn, wn);
-    printf("\n");
 
-    h_printPointsArray__(wiki, wn, "Wikipedia", 1);
-    printf("\n");
+
+    wiki_correct[0].p[0] = 2, wiki_correct[0].p[1] = 3, wiki_correct[0].p[2] = 0;
+    wiki_correct[1].p[0] = 5, wiki_correct[1].p[1] = 4, wiki_correct[1].p[2] = 0;
+    wiki_correct[2].p[0] = 4, wiki_correct[2].p[1] = 7, wiki_correct[2].p[2] = 0;
+    wiki_correct[3].p[0] = 7, wiki_correct[3].p[1] = 2, wiki_correct[3].p[2] = 0;
+    wiki_correct[4].p[0] = 8, wiki_correct[4].p[1] = 1, wiki_correct[4].p[2] = 0;
+    wiki_correct[5].p[0] = 9, wiki_correct[5].p[1] = 6, wiki_correct[5].p[2] = 0;
+    _print_t(wiki_correct, 0, 0, wn, wn);
+
+    for (int i = 0; i < wn; ++i)
+
+    {
+        ASSERT_EQ(wiki_correct[i].p[0], wiki[i].p[0]) << "failed at i = " << i;
+        ASSERT_EQ(wiki_correct[i].p[1], wiki[i].p[1]) << "failed at i = " << i;
+        ASSERT_EQ(wiki_correct[i].p[2], wiki[i].p[2]) << "failed at i = " << i;
+    }
 
     // _build_kd_tree(wiki, wn);
     // _print_t(wiki, 0, 0, wn, wn);
