@@ -4,6 +4,8 @@
 
 #include <search-iterative.cuh>
 
+#define debug 0
+
 int cashe_indexes(Point *tree, int lower, int upper, int n)
 {
     int r;
@@ -13,7 +15,7 @@ int cashe_indexes(Point *tree, int lower, int upper, int n)
         return -1;
     }
 
-    r = (int) floor((upper - lower) / 2) + lower;
+    r = (int) floor((float)(upper - lower) / 2) + lower;
 
     tree[r].left = cashe_indexes(tree, lower, r, n);
     tree[r].right = cashe_indexes(tree, r + 1, upper, n);
@@ -42,7 +44,9 @@ int pop(int *stack, int *eos)
     {
         (*eos)--;
         return stack[*eos + 1];
-    } else {
+    }
+    else
+    {
         return -1;
     }
 }
@@ -52,17 +56,19 @@ int dfs(Point *tree, int n)
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),
 
-        current,
-        target,
-        other;
+         current,
+         target,
+         other;
 
-    push(stack, &eos, floor(n / 2));
+    push(stack, &eos, floor((float)n / 2));
 
-    while(eos > -1)
+    while (eos > -1)
     {
         current = pop(stack, &eos);
-
-        printf("(%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
+        if (debug)
+        {
+            printf("(%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
+        }
 
         target = tree[current].right;
         other = tree[current].left;

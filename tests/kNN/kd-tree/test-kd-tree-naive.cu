@@ -68,7 +68,7 @@ void _print_t(Point *tree, int level, int lower, int upper, int n)
         return;
     }
 
-    int i, r = floor((upper - lower) / 2) + lower;
+    int i, r = floor((float)(upper - lower) / 2) + lower;
 
     printf("|");
     for (i = 0; i < level; ++i)

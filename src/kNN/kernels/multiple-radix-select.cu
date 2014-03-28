@@ -10,6 +10,7 @@
 __device__
 void printIntArray__(int *l, int n, char *s)
 {
+#if __CUDA_ARCH__ >= 200
     if (debug && threadIdx.x == 0)
     {
         printf("%s: ", s);
@@ -20,6 +21,7 @@ void printIntArray__(int *l, int n, char *s)
         }
         printf("]\n");
     }
+#endif
 }
 
 __device__  void cuAccumulateIndex(int *list, int n)
