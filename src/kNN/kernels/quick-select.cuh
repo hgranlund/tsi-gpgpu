@@ -3,7 +3,7 @@
 #include "point.h"
 
 #define MAX_SHARED_MEM 49152U
-#define THREADS_PER_BLOCK_QUICK 128U
+#define THREADS_PER_BLOCK_QUICK 64U
 #define MAX_BLOCK_DIM_SIZE 65535U
 
 void quickSelectAndPartition(Point *points, int n, int p, int dir);
