@@ -149,17 +149,17 @@ void quickSelectShared(Point *points, int n, int p, int dir, int size, int numBl
 {
     if (size > 16)
     {
-        cuQuickSelectGlobal <<< numBlocks, numThreads>>>(points, n, p, dir);
+        // cuQuickSelectGlobal <<< numBlocks, numThreads>>>(points, n, p, dir);
+        cuQuickSelectShared<32> <<< numBlocks, numThreads>>>(points, n, p, dir);
     }
     else if (size > 8)
     {
-        cuQuickSelectGlobal <<< numBlocks, numThreads>>>(points, n, p, dir);
-        // cuQuickSelectShared<16> <<< numBlocks, numThreads>>>(points, n, p, dir);
+        // cuQuickSelectGlobal <<< numBlocks, numThreads>>>(points, n, p, dir);
+        cuQuickSelectShared<16> <<< numBlocks, numThreads>>>(points, n, p, dir);
     }
     else if (size > 4)
     {
-        cuQuickSelectGlobal <<< numBlocks, numThreads>>>(points, n, p, dir);
-        // cuQuickSelectShared<8> <<< numBlocks, numThreads>>>(points, n, p, dir);
+        cuQuickSelectShared<8> <<< numBlocks, numThreads>>>(points, n, p, dir);
     }
     else
     {
