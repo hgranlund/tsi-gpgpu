@@ -1,10 +1,5 @@
-#include <quick-select.cuh>
+#include "quick-select.cuh"
 #include <stdio.h>
-
-
-#define THREADS_PER_BLOCK_QUICK 64U
-#define MAX_BLOCK_DIM_SIZE 65535U
-
 
 __device__ void cuPointSwap(Point *p, int a, int b)
 {
@@ -15,22 +10,23 @@ __device__ void cuPointSwap(Point *p, int a, int b)
 template <int maxStep> __global__
 void cuQuickSelectShared(Point *points, int step, int p, int dir)
 {
-    __shared__ Point ss_points[maxStep * 64];
+    __shared__ Point ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
     Point *s_points = ss_points;
     float pivot;
     int pos, i, left, right,
         n = step,
-        listInBlock = p / gridDim.x,
+        list_in_block = p / gridDim.x,
         tid = threadIdx.x,
-        m = n >> 1;   // same as n/2;
+        m;
 
-    points += listInBlock * blockIdx.x * (1 + step);
+    points += list_in_block * blockIdx.x * (1 + step);
     points += (1 + step) * tid;
     s_points += (tid * maxStep);
-    while ( tid < listInBlock)
+
+    while ( tid < list_in_block)
     {
         n = step - tid;
-        // printf("tid = %d, from = %d, to = %d\n", tid, (1 + step)*tid, (1 + step)*tid + n );
+        m = n >> 1;   // same as n/2;
         for (i = 0; i < n; ++i)
         {
             s_points[i] = points[i];
@@ -67,16 +63,16 @@ __global__
 void cuQuickSelectGlobal(Point *points, int step, int p, int dir)
 {
     int pos, i,
-        listInBlock = p / gridDim.x,
+        list_in_block = p / gridDim.x,
         tid = threadIdx.x,
         left,
         right,
         n = step,
         m;
-    points += listInBlock * blockIdx.x * n;
+    points += list_in_block * blockIdx.x * n;
     points += (1 + step) * tid;
     float pivot;
-    while ( tid < listInBlock)
+    while ( tid < list_in_block)
     {
         n = step - tid;
         m = n >> 1;   // same as n/2;
@@ -174,7 +170,7 @@ void quickSelectShared(Point *points, int n, int p, int dir, int size, int numBl
 
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads)
 {
-    threads = THREADS_PER_BLOCK_QUICK;
+    threads = min(THREADS_PER_BLOCK_QUICK, p);
     blocks = p / threads;
     blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
     blocks = max(1, blocks);
