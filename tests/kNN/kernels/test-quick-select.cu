@@ -39,15 +39,20 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug = 0)
 TEST(kernels, quick_selection_shared)
 {
     Point *h_points, *d_points;
-    int numBlocks, numThreads;
+    int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
-    for (n = 4; n <= 1000; n <<= 1)
+    for (n = 8; n <= 1000; n <<= 1)
     {
-        p = 4;
-        h_points = (Point *) malloc(n * p * sizeof(Point));
+        p = 2;
+        h_steps = (int *) malloc(p * 2 * sizeof(int));
+        h_steps[0] = 0;
+        h_steps[1] = n / p;
+        h_steps[2] = n / p + 1;
+        h_steps[3] = n;
+        h_points = (Point *) malloc(n  * sizeof(Point));
         srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n * p; i++)
+        for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
             Point t;
@@ -56,28 +61,32 @@ TEST(kernels, quick_selection_shared)
             t.p[2] = temp;
             h_points[i]    = t;
         }
-        getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * p * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(Point)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * p * sizeof(Point), cudaMemcpyHostToDevice));
-
-        h_printPointsArray_(h_points, n * p, "h_points", 0);
-
-        quickSelectAndPartition(d_points, n , p, 0);
+            cudaMalloc((void **)&d_steps, p * 2  * sizeof(Point)));
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * p * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(d_points, h_points, n  * sizeof(Point), cudaMemcpyHostToDevice));
+        checkCudaErrors(
+            cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
 
-        h_printPointsArray_(h_points, n * p, "h_points after", 0);
+        h_printPointsArray_(h_points, n , "h_points      ", 0);
+
+        quickSelectAndPartition(d_points, d_steps, n , p, 0);
+
+        checkCudaErrors(
+            cudaMemcpy(h_points, d_points, n  * sizeof(Point), cudaMemcpyDeviceToHost));
+
+        h_printPointsArray_(h_points, n , "h_points after", 0);
 
         Point *t_points;
         int nn = n;
         for (int i = 0; i < p; ++i)
         {
-            t_points = h_points + i * (1 + n);
-            nn =  n - i;
+            t_points = h_points + h_steps[i * 2];
+            nn =  h_steps[i * 2 + 1] - h_steps[i * 2];
             for (int i = 0; i < nn / 2; ++i)
             {
                 ASSERT_LE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
@@ -90,81 +99,84 @@ TEST(kernels, quick_selection_shared)
 
         checkCudaErrors(
             cudaFree(d_points));
+        checkCudaErrors(
+            cudaFree(d_steps));
+        free(h_steps);
         free(h_points);
         cudaDeviceSynchronize();
         cudaDeviceReset();
     }
 }
 
-TEST(kernels, quick_selection_time)
-{
-    Point *h_points, *d_points;
-    int numBlocks, numThreads;
-    float temp;
-    unsigned int i, n, p;
-    for (n = 2048; n <= 2048; n <<= 1)
-    {
-        p = 64;
-        h_points = (Point *) malloc(n * p * sizeof(Point));
-        srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n * p; i++)
-        {
-            temp =  (float) rand() / 100000000;
-            Point t;
-            t.p[0] = temp;
-            t.p[1] = temp;
-            t.p[2] = temp;
-            h_points[i]    = t;
-        }
-        getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
+// TEST(kernels, quick_selection_time)
+// {
+//     Point *h_points, *d_points;
+//     int numBlocks, numThreads;
+//     float temp;
+//     unsigned int i, n, p;
+//     for (n = 2048; n <= 2048; n <<= 1)
+//     {
+//         p = 64;
+//         h_points = (Point *) malloc(n  * sizeof(Point));
+//         srand ( (unsigned int)time(NULL) );
+//         for (i = 0 ; i < n ; i++)
+//         {
+//             temp =  (float) rand() / 100000000;
+//             Point t;
+//             t.p[0] = temp;
+//             t.p[1] = temp;
+//             t.p[2] = temp;
+//             h_points[i]    = t;
+//         }
+//         getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
 
-        checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * p * sizeof(Point)));
-        checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * p * sizeof(Point), cudaMemcpyHostToDevice));
-
-
-        cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(Point));
-        checkCudaErrors(cudaEventCreate(&start));
-        checkCudaErrors(cudaEventCreate(&stop));
-        float elapsed_time = 0;
-        checkCudaErrors(cudaEventRecord(start, 0));
-
-        quickSelectAndPartition(d_points, n , p, 0);
+//         checkCudaErrors(
+//             cudaMalloc((void **)&d_points, n  * sizeof(Point)));
+//         checkCudaErrors(
+//             cudaMemcpy(d_points, h_points, n  * sizeof(Point), cudaMemcpyHostToDevice));
 
 
-        checkCudaErrors(cudaEventRecord(stop, 0));
-        cudaEventSynchronize(start);
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&elapsed_time, start, stop);
-        elapsed_time = elapsed_time ;
-        double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
-        printf("quick_selection, Throughput = %.4f GB/s, Time = %.5f ms, Size = %d, p = %d, NumDevsUsed = %d\n",
-               throughput, elapsed_time, n, p, 1);
-        checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * p * sizeof(Point), cudaMemcpyDeviceToHost));
+//         cudaEvent_t start, stop;
+//         unsigned int bytes = n * (sizeof(Point));
+//         checkCudaErrors(cudaEventCreate(&start));
+//         checkCudaErrors(cudaEventCreate(&stop));
+//         float elapsed_time = 0;
+//         checkCudaErrors(cudaEventRecord(start, 0));
 
-        Point *t_points;
-        int nn = n;
-        for (int i = 0; i < p; ++i)
-        {
-            t_points = h_points + i * (1 + n);
-            nn =  n - i;
-            for (int i = 0; i < nn / 2; ++i)
-            {
-                ASSERT_LE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
-            }
-            for (int i = n / 2; i < nn; ++i)
-            {
-                ASSERT_GE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
-            }
-        }
+//         quickSelectAndPartition(d_points, n , p, 0);
 
-        checkCudaErrors(
-            cudaFree(d_points));
-        free(h_points);
-        cudaDeviceSynchronize();
-        cudaDeviceReset();
-    }
-}
+
+//         checkCudaErrors(cudaEventRecord(stop, 0));
+//         cudaEventSynchronize(start);
+//         cudaEventSynchronize(stop);
+//         cudaEventElapsedTime(&elapsed_time, start, stop);
+//         elapsed_time = elapsed_time ;
+//         double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
+//         printf("quick_selection, Throughput = %.4f GB/s, Time = %.5f ms, Size = %d, p = %d, NumDevsUsed = %d\n",
+//                throughput, elapsed_time, n, p, 1);
+//         checkCudaErrors(
+//             cudaMemcpy(h_points, d_points, n  * sizeof(Point), cudaMemcpyDeviceToHost));
+
+//         Point *t_points;
+//         int nn = n;
+//         for (int i = 0; i < p; ++i)
+//         {
+//             t_points = h_points + i * (1 + n);
+//             nn =  n - i;
+//             for (int i = 0; i < nn / 2; ++i)
+//             {
+//                 ASSERT_LE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
+//             }
+//             for (int i = n / 2; i < nn; ++i)
+//             {
+//                 ASSERT_GE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
+//             }
+//         }
+
+//         checkCudaErrors(
+//             cudaFree(d_points));
+//         free(h_points);
+//         cudaDeviceSynchronize();
+//         cudaDeviceReset();
+//     }
+// }

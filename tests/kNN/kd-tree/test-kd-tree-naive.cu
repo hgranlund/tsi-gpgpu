@@ -229,6 +229,42 @@ TEST(kd_tree_naive, wikipedia_exsample)
     // printf("\n");
 }
 
+// TEST(kd_build, list_partitioning)
+// {
+
+
+//     int  h, p = 1, n, i, step, from, to, nn, sum_p = 0, n_current, rest;
+
+//     for ( n = 17; n <= 17; n++)
+//     {
+//         n_current = n;
+//         for ( h = 0; h < log2((float)n); ++h)
+//         {
+//             step = n_current / p;
+//             rest = n_current % p;
+//             // printf("rest = %d\n", rest);
+//             for ( i = 0; i < p; ++i)
+//             {
+//                 from = (1 + step) * i;
+//                 nn = step;
+//                 if ((i + 1) <= rest)
+//                 {
+//                     nn++;
+//                 }
+//                 else
+//                 {
+//                     from += rest;
+//                 }
+//                 // printf("n = %d, p = %d, h = %d, from %2d to %2d with n = %2d \n", n, p, h, from, from + nn - 1, nn);
+//             }
+//             n_current -= p;
+//             sum_p += p;
+//             p <<= 1;
+//             printf("\n");
+//         }
+//     }
+
+// }
 
 // TEST(kd_tree_naive, kd_tree_naive_step_time){
 //   int i, n, p, numBlocks, numThreads, *d_partition;
