@@ -36,13 +36,33 @@ void cuBalanceBranchLeafs(Point *points, int n, int dir)
     }
 }
 
+void nextStep(int *steps_new, int *steps_old, int n)
+{
+    int midpoint;
+    for (int i = 0; i < n / 2; ++i)
+    {
+        midpoint = steps_old[i * 2 + 1] / steps_old[i * 2];
+        steps_new[i * 4] = steps_old[i * 2];
+        steps_new[i * 4 + 1] = steps_old[midpoint];
+        steps_new[i * 4 + 2] = steps_old[midpoint + 1];
+        steps_new[i * 4 + 3] = steps_old[i * 2 + 1];
+    }
+}
+
+
 void build_kd_tree(Point *h_points, int n)
 {
 
 
     Point *d_points, *d_swap;
     int p, i, j, numBlocks, numThreads, step;
-    int *d_partition;
+    int *d_partition , *d_steps, *h_steps_old, *h_steps_new;
+
+    h_steps_new = (int *)malloc(n * sizeof(int));
+    h_steps_old = (int *)malloc(n * sizeof(int));
+
+    checkCudaErrors(
+        cudaMalloc(&d_steps, n * sizeof(int)));
 
     checkCudaErrors(
         cudaMalloc(&d_partition, n * sizeof(int)));
@@ -59,23 +79,30 @@ void build_kd_tree(Point *h_points, int n)
     p = 1;
     step = n / p;
     i = 0;
+    h_steps_new[0] = 0;
+    h_steps_old[0] = 0;
+    h_steps_old[1] = n;
+    h_steps_new[1] = n;
     while (step >= 8388608 && p <= 2)
     {
         int nn, offset;
         for (j = 0; j < p; j ++)
         {
-            nn = step - j;
-            offset = (1 + step) * j;
+            offset = h_steps_new[j * 2];
+            nn = h_steps_new[j * 2 + 1] - offset;
             radixSelectAndPartition(d_points + offset, d_swap + offset, d_partition + offset, nn, i % 3);
         }
-        p <<= 1;
-        step = n / p;
+        nextStep(h_steps_new, h_steps_old, p <<= 1);
+        // p <<= 1;
         i++;
     }
     while (step > 256)
     {
+        // nextStep(h_steps_new, h_steps_old, p <<= 1);
+        // checkCudaErrors(
+        // cudaMemcpy(d_steps, h_steps_new, p * sizeof(int), cudaMemcpyHostToDevice));
         multiRadixSelectAndPartition(d_points, d_swap, d_partition, step, p, i % 3);
-        p <<= 1;
+        // p <<= 1;
         step = n / p;
         i++;
     }
