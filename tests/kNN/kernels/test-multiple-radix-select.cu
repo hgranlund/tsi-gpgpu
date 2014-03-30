@@ -111,7 +111,8 @@ unsigned int prevPowerOf21(unsigned int n)
     return n >>= 1;
 }
 
-TEST(kernels, multi_radix_selection)
+
+TEST(kernels, multi_radix_selection_one_list)
 {
     Point *h_points;
     int numBlocks, numThreads;
@@ -134,12 +135,12 @@ TEST(kernels, multi_radix_selection)
 
         printPoints(h_points, n);
 
-        Point *d_points, *d_temp;
+        Point *d_points, *d_swap;
         int *partition;
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n * sizeof(Point)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * sizeof(Point)));
+            cudaMalloc((void **)&d_swap, n * sizeof(Point)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * sizeof(int)));
         checkCudaErrors(
@@ -149,7 +150,7 @@ TEST(kernels, multi_radix_selection)
         Point cpu_result = cpu_radixselect(h_points, 0, n - 1, n / 2, 0);
         getThreadAndBlockCountMulRadix(n, 1, numBlocks, numThreads);
         debugf("threads = %d, n = %d\n", numThreads, n);
-        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n, partition, 0);
+        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_swap, n, partition, 0);
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
@@ -178,6 +179,77 @@ TEST(kernels, multi_radix_selection)
     }
 }
 
+TEST(kernels, multi_radix_selection)
+{
+    Point *h_points;
+    int numBlocks, numThreads;
+    float temp;
+    int i, n, p;
+    for (n = 4; n <= 1000; n <<= 1)
+    {
+        p = 4;
+        h_points = (Point *) malloc(n * p * sizeof(Point));
+        srand ( (unsigned int)time(NULL) );
+        for (i = 0 ; i < n * p; i++)
+        {
+            temp =  (float) i;
+            temp =  (float) rand() / 100000000;
+            Point t;
+            t.p[0] = temp;
+            t.p[1] = temp;
+            t.p[2] = temp;
+            h_points[i]    = t;
+        }
+
+        printPoints(h_points, n * p);
+
+        Point *d_points, *d_swap;
+        int *partition;
+        checkCudaErrors(
+            cudaMalloc((void **)&d_points, n * p * sizeof(Point)));
+        checkCudaErrors(
+            cudaMalloc((void **)&d_swap, n * p * sizeof(Point)));
+        checkCudaErrors(
+            cudaMalloc((void **)&partition, n * p * sizeof(int)));
+        checkCudaErrors(
+            cudaMemcpy(d_points, h_points, n * p * sizeof(Point), cudaMemcpyHostToDevice));
+
+
+        multiRadixSelectAndPartition(d_points, d_swap, partition, n, p, 0);
+
+        checkCudaErrors(
+            cudaMemcpy(h_points, d_points, n * p * sizeof(Point), cudaMemcpyDeviceToHost));
+
+        printPoints(h_points, n * p);
+
+
+        Point *t_points;
+        int nn = n;
+        for (int i = 0; i < p; ++i)
+        {
+            t_points = h_points + i * (1 + n);
+            nn =  n - i;
+            for (int i = 0; i < nn / 2; ++i)
+            {
+                ASSERT_LE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
+            }
+            for (int i = n / 2; i < nn; ++i)
+            {
+                ASSERT_GE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
+            }
+        }
+
+        checkCudaErrors(
+            cudaFree(d_points));
+        checkCudaErrors(
+            cudaFree(d_swap));
+        checkCudaErrors(
+            cudaFree(partition));
+        free(h_points);
+        cudaDeviceSynchronize();
+        cudaDeviceReset();
+    }
+}
 TEST(kernels, multi_radix_selection_time)
 {
     Point *h_points;
@@ -203,14 +275,12 @@ TEST(kernels, multi_radix_selection_time)
             h_points[i]    = t;
         }
 
-        printPoints(h_points, n);
-
-        Point *d_points, *d_temp;
+        Point *d_points, *d_swap;
         int *partition;
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n * p * sizeof(Point)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * p * sizeof(Point)));
+            cudaMalloc((void **)&d_swap, n * p * sizeof(Point)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * p * sizeof(int)));
         checkCudaErrors(
@@ -226,7 +296,7 @@ TEST(kernels, multi_radix_selection_time)
         checkCudaErrors(cudaEventRecord(start, 0));
 
         getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
-        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n, partition, 0);
+        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_swap, n, partition, 0);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -240,14 +310,12 @@ TEST(kernels, multi_radix_selection_time)
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
-        printPoints(h_points, n);
-
         checkCudaErrors(
             cudaFree(d_points));
         checkCudaErrors(
             cudaFree(partition));
         checkCudaErrors(
-            cudaFree(d_temp));
+            cudaFree(d_swap));
         free(h_points);
         cudaDeviceReset();
     }

@@ -193,7 +193,7 @@ __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition,
     return cuSumReduce(zero_count, blockDim.x);
 }
 
-__device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int n, int *partition, int dir)
+__device__ void cuRadixSelect(Point *data, Point *data_copy, int n, int *partition, int dir)
 {
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
@@ -253,13 +253,16 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int n, int
 }
 
 __global__
-void cuBalanceBranch(Point *points, Point *swap, int *partition, int n, int p, int dir)
+void cuBalanceBranch(Point *points, Point *swap, int *partition, int step, int p, int dir)
 {
 
-    int bid = blockIdx.x;
+    int bid = blockIdx.x,
+        blockoffset,
+        n;
     while (bid < p)
     {
-        int blockoffset = n * bid;
+        blockoffset = (step + 1) * bid;
+        n = step - bid;
         cuRadixSelect(points + blockoffset, swap + blockoffset, n, partition + blockoffset, dir);
         bid += gridDim.x;
     }
@@ -270,7 +273,6 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *p
 {
     cuRadixSelect(data, data_copy, n, partition, dir);
 }
-
 
 
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
