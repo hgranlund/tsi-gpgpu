@@ -7,6 +7,7 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 # define debug 0
+
 __device__
 void printIntArray__(int *l, int n, char *s)
 {
@@ -273,7 +274,6 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *p
 {
     cuRadixSelect(data, data_copy, n, partition, dir);
 }
-
 
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
 {

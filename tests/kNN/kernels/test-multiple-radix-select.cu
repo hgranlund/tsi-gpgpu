@@ -2,17 +2,12 @@
 #include "multiple-radix-select.cuh"
 #include <knn_gpgpu.h>
 #include <stdio.h>
+
 #include <gtest/gtest.h>
 
-#include <math.h>
-#include <cuda.h>
-#include <time.h>
-#include <assert.h>
-#include <helper_functions.h>
 #include <helper_cuda.h>
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
-#define inf 0x7f800000
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
 #define debug 0
@@ -172,6 +167,8 @@ TEST(kernels, multi_radix_selection_one_list)
         checkCudaErrors(
             cudaFree(d_points));
         checkCudaErrors(
+            cudaFree(d_swap));
+        checkCudaErrors(
             cudaFree(partition));
         free(h_points);
         cudaDeviceSynchronize();
@@ -182,7 +179,6 @@ TEST(kernels, multi_radix_selection_one_list)
 TEST(kernels, multi_radix_selection)
 {
     Point *h_points;
-    int numBlocks, numThreads;
     float temp;
     int i, n, p;
     for (n = 4; n <= 1000; n <<= 1)
@@ -200,7 +196,6 @@ TEST(kernels, multi_radix_selection)
             t.p[2] = temp;
             h_points[i]    = t;
         }
-
         printPoints(h_points, n * p);
 
         Point *d_points, *d_swap;
@@ -213,7 +208,6 @@ TEST(kernels, multi_radix_selection)
             cudaMalloc((void **)&partition, n * p * sizeof(int)));
         checkCudaErrors(
             cudaMemcpy(d_points, h_points, n * p * sizeof(Point), cudaMemcpyHostToDevice));
-
 
         multiRadixSelectAndPartition(d_points, d_swap, partition, n, p, 0);
 
