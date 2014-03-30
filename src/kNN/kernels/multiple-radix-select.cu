@@ -7,6 +7,9 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 # define debug 0
+#define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
 
 __device__
 void printIntArray__(int *l, int n, char *s)
@@ -254,7 +257,7 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, int n, int *partiti
 }
 
 __global__
-void cuBalanceBranch(Point *points, Point *swap, int *partition, int step, int p, int dir)
+void cuBalanceBranch(Point *points, Point *swap, int *partition, int *steps, int p, int dir)
 {
 
     int bid = blockIdx.x,
@@ -262,8 +265,9 @@ void cuBalanceBranch(Point *points, Point *swap, int *partition, int step, int p
         n;
     while (bid < p)
     {
-        blockoffset = (step + 1) * bid;
-        n = step - bid;
+
+        blockoffset = steps[bid * 2];
+        n = steps[bid * 2 + 1] - blockoffset;
         cuRadixSelect(points + blockoffset, swap + blockoffset, n, partition + blockoffset, dir);
         bid += gridDim.x;
     }
@@ -277,18 +281,19 @@ __global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *p
 
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
 {
-    n--;
-    threads = prevPowTwo(n / 4);
-    blocks = min(MAX_BLOCK_DIM_SIZE, p);
+    threads = n - 1;
+    threads = prevPowTwo(threads / 4);
+    blocks = min(MAX_BLOCK_DIM_SIZE_MULTI_RADIX, p);
     blocks = max(1, blocks);
-    threads = min(THREADS_PER_BLOCK, threads);
+    threads = min(THREADS_PER_BLOCK_MULTI_RADIX, threads);
     threads = max(128, threads);
+    debugf("N =%d, p = %d, blocks = %d, threads = %d\n", n, p, blocks, threads);
 }
 
 
-void  multiRadixSelectAndPartition(Point *data, Point *data_copy, int *partition, int n, int p,  int dir)
+void  multiRadixSelectAndPartition(Point *d_data, Point *d_data_copy, int *d_partition, int *d_steps, int n, int p,  int dir)
 {
     int numBlocks, numThreads;
     getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
-    cuBalanceBranch <<< numBlocks, numThreads>>>(data, data_copy, partition, n, p, dir);
+    cuBalanceBranch <<< numBlocks, numThreads>>>(d_data, d_data_copy, d_partition, d_steps, p, dir);
 }
