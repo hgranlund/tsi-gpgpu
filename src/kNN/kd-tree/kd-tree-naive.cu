@@ -61,9 +61,12 @@ void build_kd_tree(Point *h_points, int n)
     i = 0;
     while (step >= 8388608 && p <= 2)
     {
-        for (j = 0; j < n; j += n / p)
+        int nn, offset;
+        for (j = 0; j < p; j ++)
         {
-            radixSelectAndPartition(d_points + j, d_swap + j, d_partition + j, step, i % 3);
+            nn = step - j;
+            offset = (1 + step) * j;
+            radixSelectAndPartition(d_points + offset, d_swap + offset, d_partition + offset, nn, i % 3);
         }
         p <<= 1;
         step = n / p;
