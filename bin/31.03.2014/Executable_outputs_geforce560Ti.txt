@@ -1,0 +1,92 @@
+## Executable outputs
+
+C:\Users\simenhg\Documents\GitHub\tsi-gpgpu\bin\31.03.2014 [master +4 ~0 -1 !]> .\time_kd_tree_build.exe 1000000 13000000 1000000
+Running kd-tree-build from n = 1000000 to n = 13000000 with step = 1000000
+build_kd_tree_naive, Throughput = 0.0530 GB/s, Time = 226.47981 ms, Size = 1000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0515 GB/s, Time = 466.10678 ms, Size = 2000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0467 GB/s, Time = 770.39331 ms, Size = 3000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0506 GB/s, Time = 949.50220 ms, Size = 4000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0430 GB/s, Time = 1396.61658 ms, Size = 5000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0457 GB/s, Time = 1576.26233 ms, Size = 6000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0476 GB/s, Time = 1765.69739 ms, Size = 7000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0493 GB/s, Time = 1947.60254 ms, Size = 8000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0403 GB/s, Time = 2681.96631 ms, Size = 9000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0417 GB/s, Time = 2877.65112 ms, Size = 10000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0431 GB/s, Time = 3061.24854 ms, Size = 11000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0443 GB/s, Time = 3251.72949 ms, Size = 12000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive, Throughput = 0.0452 GB/s, Time = 3454.39355 ms, Size = 13000000 Elements, NumDevsUsed = 1
+
+
+
+#######################################################################################################################################################
+#######################################################################################################################################################
+#######################################################################################################################################################
+#######################################################################################################################################################
+
+
+
+C:\Users\simenhg\Documents\GitHub\tsi-gpgpu\bin\31.03.2014 [master +4 ~1 -1 !]> .\runUnitTests.exe
+Running main() from gtest_main.cc
+[==========] Running 18 tests from 5 test cases.
+[----------] Global test environment set-up.
+[----------] 8 tests from kernels
+[ RUN      ] kernels.min_reduce_mod
+[       OK ] kernels.min_reduce_mod (989 ms)
+[ RUN      ] kernels.min_reduce_mod_time
+Reduction_mod, Throughput = 52.9397 GB/s, Time = 1.90147 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.min_reduce_mod_time (126 ms)
+[ RUN      ] kernels.multi_radix_selection
+[       OK ] kernels.multi_radix_selection (217 ms)
+[ RUN      ] kernels.multi_radix_selection_time
+multi-radix-select, Throughput = 0.1091 GB/s, Time = 307.69025 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.multi_radix_selection_time (580 ms)
+[ RUN      ] kernels.radix_selection
+[       OK ] kernels.radix_selection (378 ms)
+[ RUN      ] kernels.radix_selection_time
+radix-select, Throughput = 0.8488 GB/s, Time = 197.65773 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.radix_selection_time (524 ms)
+[ RUN      ] kernels.quick_selection
+[       OK ] kernels.quick_selection (320 ms)
+[ RUN      ] kernels.quick_selection_time
+quick_selection, Throughput = 0.0103 GB/s, Time = 3.98214 ms, Size = 2048, p = 2, NumDevsUsed = 1
+[       OK ] kernels.quick_selection_time (36 ms)
+[----------] 8 tests from kernels (3183 ms total)
+
+[----------] 1 test from kd_search
+[ RUN      ] kd_search.kd_search_all_points
+Searched for n queries, throughput = 1.0956 GB/s, time = 1.82541 ms, n = 100000 elements
+[       OK ] kd_search.kd_search_all_points (100 ms)
+[----------] 1 test from kd_search (102 ms total)
+
+[----------] 2 tests from knn_brute_force
+[ RUN      ] knn_brute_force.test_knn_reduce_correctness
+[       OK ] knn_brute_force.test_knn_reduce_correctness (10 ms)
+[ RUN      ] knn_brute_force.test_knn_reduce_time
+kNN-brute-force-reduce, Throughput = 0.1497 GB/s, Time = 224.18643 ms, Size = 8388608 Elements, k = 100 NumDevsUsed = 1
+[       OK ] knn_brute_force.test_knn_reduce_time (347 ms)
+[----------] 2 tests from knn_brute_force (362 ms total)
+
+[----------] 3 tests from kd_tree_naive
+[ RUN      ] kd_tree_naive.kd_tree_naive_correctness
+[       OK ] kd_tree_naive.kd_tree_naive_correctness (2 ms)
+[ RUN      ] kd_tree_naive.kd_tree_naive_time
+build_kd_tree_naive, Throughput = 0.0708 GB/s, Time = 2370.65503 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kd_tree_naive.kd_tree_naive_time (2479 ms)
+[ RUN      ] kd_tree_naive.wikipedia_exsample
+[       OK ] kd_tree_naive.wikipedia_exsample (31 ms)
+[----------] 3 tests from kd_tree_naive (2517 ms total)
+
+[----------] 4 tests from search_iterative
+[ RUN      ] search_iterative.search_iterative_wiki_correctness
+[       OK ] search_iterative.search_iterative_wiki_correctness (30 ms)
+[ RUN      ] search_iterative.search_iterative_dfs
+[       OK ] search_iterative.search_iterative_dfs (0 ms)
+[ RUN      ] search_iterative.search_iterative_push
+[       OK ] search_iterative.search_iterative_push (0 ms)
+[ RUN      ] search_iterative.search_iterative_pop
+[       OK ] search_iterative.search_iterative_pop (0 ms)
+[----------] 4 tests from search_iterative (39 ms total)
+
+[----------] Global test environment tear-down
+[==========] 18 tests from 5 test cases ran. (6223 ms total)
+[  PASSED  ] 18 tests.
