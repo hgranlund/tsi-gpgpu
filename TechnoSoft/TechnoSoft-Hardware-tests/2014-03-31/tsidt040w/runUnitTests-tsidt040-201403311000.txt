@@ -1,0 +1,73 @@
+Running main() from gtest_main.cc
+[==========] Running 18 tests from 5 test cases.
+[----------] Global test environment set-up.
+[----------] 8 tests from kernels
+[ RUN      ] kernels.min_reduce_mod
+[       OK ] kernels.min_reduce_mod (1654 ms)
+[ RUN      ] kernels.min_reduce_mod_time
+Reduction_mod, Throughput = 30.7542 GB/s, Time = 3.27315 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.min_reduce_mod_time (203 ms)
+[ RUN      ] kernels.multi_radix_selection
+[       OK ] kernels.multi_radix_selection (390 ms)
+[ RUN      ] kernels.multi_radix_selection_time
+multi-radix-select, Throughput = 0.1013 GB/s, Time = 331.08963 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.multi_radix_selection_time (717 ms)
+[ RUN      ] kernels.radix_selection
+[       OK ] kernels.radix_selection (687 ms)
+[ RUN      ] kernels.radix_selection_time
+radix-select, Throughput = 0.7507 GB/s, Time = 223.47661 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kernels.radix_selection_time (608 ms)
+[ RUN      ] kernels.quick_selection
+[       OK ] kernels.quick_selection (608 ms)
+[ RUN      ] kernels.quick_selection_time
+quick_selection, Throughput = 0.0123 GB/s, Time = 3.34038 ms, Size = 2048, p = 2, NumDevsUsed = 1
+[       OK ] kernels.quick_selection_time (63 ms)
+[----------] 8 tests from kernels (4961 ms total)
+
+[----------] 1 test from kd_search
+[ RUN      ] kd_search.kd_search_all_points
+Searched for n queries, throughput = 0.9177 GB/s, time = 2.17936 ms, n = 100000 elements
+[       OK ] kd_search.kd_search_all_points (156 ms)
+[----------] 1 test from kd_search (156 ms total)
+
+[----------] 2 tests from knn_brute_force
+[ RUN      ] knn_brute_force.test_knn_reduce_correctness
+[       OK ] knn_brute_force.test_knn_reduce_correctness (15 ms)
+[ RUN      ] knn_brute_force.test_knn_reduce_time
+kNN-brute-force-reduce, Throughput = 0.1001 GB/s, Time = 335.28775 ms, Size = 8388608 Elements, k = 100 NumDevsUsed = 1
+C:/Users/simenhg/Documents/GitHub/tsi-gpgpu/tests/kNN/brute_force/test-knn-brute-force-reduce.cu(107): error: Value of: ref_nb - 1 - i
+  Actual: 8388606
+Expected: ind[i]
+Which is: 8387583
+Faild with i = 1 and n = 8388608
+[  FAILED  ] knn_brute_force.test_knn_reduce_time (437 ms)
+[----------] 2 tests from knn_brute_force (452 ms total)
+
+[----------] 3 tests from kd_tree_naive
+[ RUN      ] kd_tree_naive.kd_tree_naive_correctness
+[       OK ] kd_tree_naive.kd_tree_naive_correctness (0 ms)
+[ RUN      ] kd_tree_naive.kd_tree_naive_time
+build_kd_tree_naive, Throughput = 0.0419 GB/s, Time = 4008.44775 ms, Size = 8388608 Elements, NumDevsUsed = 1
+[       OK ] kd_tree_naive.kd_tree_naive_time (4134 ms)
+[ RUN      ] kd_tree_naive.wikipedia_exsample
+[       OK ] kd_tree_naive.wikipedia_exsample (63 ms)
+[----------] 3 tests from kd_tree_naive (4197 ms total)
+
+[----------] 4 tests from search_iterative
+[ RUN      ] search_iterative.search_iterative_wiki_correctness
+[       OK ] search_iterative.search_iterative_wiki_correctness (46 ms)
+[ RUN      ] search_iterative.search_iterative_dfs
+[       OK ] search_iterative.search_iterative_dfs (0 ms)
+[ RUN      ] search_iterative.search_iterative_push
+[       OK ] search_iterative.search_iterative_push (0 ms)
+[ RUN      ] search_iterative.search_iterative_pop
+[       OK ] search_iterative.search_iterative_pop (0 ms)
+[----------] 4 tests from search_iterative (46 ms total)
+
+[----------] Global test environment tear-down
+[==========] 18 tests from 5 test cases ran. (9812 ms total)
+[  PASSED  ] 17 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] knn_brute_force.test_knn_reduce_time
+
+ 1 FAILED TEST
