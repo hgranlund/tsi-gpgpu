@@ -75,7 +75,7 @@ void   singleRadixSelectAndPartition(Point *d_points, Point *d_swap, int *d_part
 void build_kd_tree(Point *h_points, int n)
 {
     Point *d_points, *d_swap;
-    int p, h, i, j, *d_partition,
+    int p, h, i, *d_partition,
         *d_steps, *h_steps_old, *h_steps_new;
 
     h_steps_new = (int *)malloc(n * 2 * sizeof(int));

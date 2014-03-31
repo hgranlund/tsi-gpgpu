@@ -104,6 +104,7 @@ void cuQuickSelectGlobal(Point *points, int *steps, int p, int dir)
 void quickSelectAndPartition(Point *d_points, int *d_steps, int n , int p, int dir)
 {
     int numBlocks, numThreads;
+    n = n / p;
     getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
     if (n > 16)
     {
