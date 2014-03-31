@@ -86,7 +86,7 @@ if (BUILD_TESTS)
     kNN/kernels/test-quick-select.cu
     kNN/kernels/test-kd-search.cu
     kNN/brute_force/test-knn-brute-force-reduce.cu
-    kNN/brute_force/test-knn-brute-force-bitonic.cu
+    # kNN/brute_force/test-knn-brute-force-bitonic.cu
     kNN/kd-tree/test-kd-tree-naive.cu
     kNN/kd-tree/test-search-iterative.cu
   )
