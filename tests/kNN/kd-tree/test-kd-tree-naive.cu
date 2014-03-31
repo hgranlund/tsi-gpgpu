@@ -125,7 +125,7 @@ TEST(kd_tree_naive, kd_tree_naive_correctness)
 
     build_kd_tree(points, n);
 
-    // h_printPointsArray__(points, n, "points coplete", 0);
+    h_printPointsArray__(points, n, "points coplete", 0);
 
     for ( i = 0; i < n; ++i)
     {

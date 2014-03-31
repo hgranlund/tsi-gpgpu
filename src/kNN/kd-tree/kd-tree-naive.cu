@@ -38,31 +38,51 @@ void cuBalanceBranchLeafs(Point *points, int n, int dir)
 
 void nextStep(int *steps_new, int *steps_old, int n)
 {
-    int midpoint;
+    int midpoint, from, to;
     for (int i = 0; i < n / 2; ++i)
     {
-        midpoint = steps_old[i * 2 + 1] / steps_old[i * 2];
-        steps_new[i * 4] = steps_old[i * 2];
-        steps_new[i * 4 + 1] = steps_old[midpoint];
-        steps_new[i * 4 + 2] = steps_old[midpoint + 1];
-        steps_new[i * 4 + 3] = steps_old[i * 2 + 1];
+        from = steps_old[i * 2];
+        to = steps_old[i * 2 + 1];
+        midpoint = (to - from) / 2 + from;
+        steps_new[i * 4] = from;
+        steps_new[i * 4 + 1] = midpoint;
+        steps_new[i * 4 + 2] = midpoint + 1;
+        steps_new[i * 4 + 3] = to;
     }
 }
 
+void swap_pointer(int **a, int **b)
+{
+    int *swap;
+    swap = *a, *a = *b, *b = swap;
+
+}
+
+void   singleRadixSelectAndPartition(Point *d_points, Point *d_swap, int *d_partition, int *h_steps, int p, int  dir)
+{
+    int nn, offset, j;
+    for (j = 0; j < p; j ++)
+    {
+        offset = h_steps[j * 2];
+        nn = h_steps[j * 2 + 1] - offset;
+        if (nn > 1)
+        {
+            radixSelectAndPartition(d_points + offset, d_swap + offset, d_partition + offset, nn, dir);
+        }
+    }
+}
 
 void build_kd_tree(Point *h_points, int n)
 {
-
-
     Point *d_points, *d_swap;
-    int p, i, j, numBlocks, numThreads, step;
-    int *d_partition , *d_steps, *h_steps_old, *h_steps_new;
+    int p, h, i, j, *d_partition,
+        *d_steps, *h_steps_old, *h_steps_new;
 
-    h_steps_new = (int *)malloc(n * sizeof(int));
-    h_steps_old = (int *)malloc(n * sizeof(int));
+    h_steps_new = (int *)malloc(n * 2 * sizeof(int));
+    h_steps_old = (int *)malloc(n * 2 * sizeof(int));
 
     checkCudaErrors(
-        cudaMalloc(&d_steps, n * sizeof(int)));
+        cudaMalloc(&d_steps, n * 2 * sizeof(int)));
 
     checkCudaErrors(
         cudaMalloc(&d_partition, n * sizeof(int)));
@@ -77,48 +97,36 @@ void build_kd_tree(Point *h_points, int n)
         cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
     p = 1;
-    step = n / p;
     i = 0;
+    h = ceil(log2((float)n + 1));
     h_steps_new[0] = 0;
     h_steps_old[0] = 0;
     h_steps_old[1] = n;
     h_steps_new[1] = n;
-    while (step >= 8388608 && p <= 2)
-    {
-        int nn, offset;
-        for (j = 0; j < p; j ++)
-        {
-            offset = h_steps_new[j * 2];
-            nn = h_steps_new[j * 2 + 1] - offset;
-            radixSelectAndPartition(d_points + offset, d_swap + offset, d_partition + offset, nn, i % 3);
-        }
-        nextStep(h_steps_new, h_steps_old, p <<= 1);
-        // p <<= 1;
-        i++;
-    }
-    while (step > 256)
-    {
-        // nextStep(h_steps_new, h_steps_old, p <<= 1);
-        // checkCudaErrors(
-        // cudaMemcpy(d_steps, h_steps_new, p * sizeof(int), cudaMemcpyHostToDevice));
-        multiRadixSelectAndPartition(d_points, d_swap, d_partition, step, p, i % 3);
-        // p <<= 1;
-        step = n / p;
-        i++;
-    }
-    while (step > 2)
-    {
-        quickSelectAndPartition(d_points, step, p, i % 3);
-        p <<= 1;
-        step = n / p;
-        i++;
-    }
 
-    numThreads = min(n, THREADS_PER_BLOCK / 2);
-    numBlocks = n / numThreads;
-    numBlocks = min(numBlocks, MAX_BLOCK_DIM_SIZE);
-    debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n / p, p, numBlocks, numThreads );
-    cuBalanceBranchLeafs <<< numBlocks, numThreads>>>(d_points, n, i % 3);
+    radixSelectAndPartition(d_points, d_swap, d_partition, n, i % 3);
+    i++;
+    while (i < h )
+    {
+        nextStep(h_steps_new, h_steps_old, p <<= 1);
+        checkCudaErrors(
+            cudaMemcpy(d_steps, h_steps_new, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+        if (n / p >= 8388608)
+        {
+            singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
+        }
+
+        else if (n / p > 256)
+        {
+            multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, i % 3);
+        }
+        else
+        {
+            quickSelectAndPartition(d_points, d_steps, n, p, i % 3);
+        }
+        swap_pointer(&h_steps_new, &h_steps_old);
+        i++;
+    }
 
     checkCudaErrors(
         cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));

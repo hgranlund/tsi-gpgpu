@@ -123,7 +123,7 @@ int main(int argc, char const *argv[])
     int n, nu, ni = 8388608,
                step = 250000;
     bool from_file = 0;
-
+    n = nu = ni;
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
