@@ -171,7 +171,7 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
 
-    cudaDeviceReset();
+    // cudaDeviceReset();
     _build_kd_tree(wiki, wn);
     cashe_indexes(wiki, 0, wn, wn);
 
@@ -189,6 +189,67 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 10, 0, 0, 8, 1, 0));
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 0, 10, 0, 4, 7, 0));
 }
+
+// TEST(kd_search, kd_search_timing){
+//     int i, n = 5100000;
+//     PointS *points;
+//     points = (PointS*) malloc(n  * sizeof(PointS));
+//     srand(time(NULL));
+
+//     for (i = 0; i < n; ++i)
+//     {
+//         PointS t;
+//         t.p[0] = rand();
+//         t.p[1] = rand();
+//         t.p[2] = rand();
+//         points[i] = t;
+//     }
+
+//     cudaDeviceReset();
+//     cudaEvent_t start, stop;
+//     unsigned int bytes = n * (sizeof(PointS));
+//     checkCudaErrors(cudaEventCreate(&start));
+//     checkCudaErrors(cudaEventCreate(&stop));
+//     float elapsed_time=0;
+
+//     checkCudaErrors(cudaEventRecord(start, 0));
+
+//     build_kd_tree(points, n);
+
+//     checkCudaErrors(cudaEventRecord(stop, 0));
+//     cudaEventSynchronize(start);
+//     cudaEventSynchronize(stop);
+//     cudaEventElapsedTime(&elapsed_time, start, stop);
+//     elapsed_time = elapsed_time;
+//     double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+
+//     // printf("Built kd-tree, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n",throughput, elapsed_time, n);
+
+//     store_locations(points, 0, n, n);
+
+//     int test_runs = 10000;
+//     float **query_data = (float**) malloc(test_runs * sizeof *query_data);
+
+//     for (i = 0; i < test_runs; i++)
+//     {
+//         query_data[i] = (float*) malloc(3 * sizeof *query_data[i]);
+//         query_data[i][0] = rand() % 1000;
+//         query_data[i][1] = rand() % 1000;
+//         query_data[i][2] = rand() % 1000;
+//     }
+
+//     for (i = 0; i < test_runs; i++) {
+//         nn(query_data[i], points, 0, mid);
+//     }
+
+//     for (i = 0; i < test_runs; ++i)
+//     {
+//         free(query_data[i]);
+//     }
+//     free(query_data);
+
+//     free(points);
+// }
 
 // TEST(search_iterative, search_iterative_dfs)
 // {

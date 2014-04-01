@@ -231,8 +231,8 @@ int query_a(float *qp, Point *tree, int n)
 
          previous = -1,
          current,
-         right,
-         left;
+         target,
+         other;
 
     float best_dist = FLT_MAX,
           current_dist;
@@ -243,14 +243,30 @@ int query_a(float *qp, Point *tree, int n)
     while (eos > -1)
     {
         current = peek(stack, eos);
-        left = tree[current].left;
-        right = tree[current].right;
+        target = tree[current].left;
+        other = tree[current].right;
 
-        if (previous == left)
+        current_dist = dist(qp, tree, current);
+
+        if (current_dist < best_dist)
         {
-            if (right > -1)
+            best_dist = current_dist;
+            best = current;
+        }
+
+        if (qp[dim] > tree[current].p[dim])
+        {
+            int temp = target;
+
+            target = other;
+            other = temp;
+        }
+
+        if (previous == target)
+        {
+            if (other > -1 && (tree[current].p[dim] - qp[dim]) * (tree[current].p[dim] - qp[dim]) < best_dist)
             {
-                push(stack, &eos, right);
+                push(stack, &eos, other);
                 upDim(&dim);
             }
             else
@@ -258,20 +274,20 @@ int query_a(float *qp, Point *tree, int n)
                 final_visit = 1;
             }
         }
-        else if (previous == right)
+        else if (previous == other)
         {
             final_visit = 1;
         }
         else
         {
-            if (left > -1)
+            if (target > -1)
             {
-                push(stack, &eos, left);
+                push(stack, &eos, target);
                 upDim(&dim);
             }
-            else if (right > -1)
+            else if (other > -1)
             {
-                push(stack, &eos, right);
+                push(stack, &eos, other);
                 upDim(&dim);
             }
             else
@@ -284,14 +300,6 @@ int query_a(float *qp, Point *tree, int n)
         {
             current = pop(stack, &eos);
             downDim(&dim);
-
-            current_dist = dist(qp, tree, current);
-
-            if (current_dist < best_dist)
-            {
-                best_dist = current_dist;
-                best = current;
-            }
             // printf("Current: (%3.1f, %3.1f, %3.1f) - dim: %d\n", tree[current].p[0], tree[current].p[1], tree[current].p[2], dim);
 
             final_visit = 0;

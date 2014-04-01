@@ -147,10 +147,12 @@ int nn(float *qp, struct Point *tree, int dim, int index)
         return index;
     }
 
-    int target, other, d = dim % 3,
+    int target,
+        other,
+        d = dim % 3,
 
-                       target_index = tree[index].right,
-                       other_index = tree[index].left;
+        target_index = tree[index].right,
+        other_index = tree[index].left;
 
     dim++;
 
