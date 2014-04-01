@@ -95,7 +95,7 @@ void _build_kd_tree(struct Point *x, int n)
         h = ceil(log2((float) (n + 1)) - 1);
     for (i = 0; i < h; ++i)
     {
-        p = pow(2, i);
+        p = (int) pow(2, i);
         step = (int) floor(n / p);
 
         for (j = 0; j < p; ++j)
