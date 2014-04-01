@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 
 #include <search-iterative.cuh>
 
@@ -47,10 +48,69 @@ int pop(int *stack, int *eos)
     }
 }
 
+int peek(int *stack, int eos)
+{
+    if (eos > -1)
+    {
+        return stack[eos];
+    } else {
+        return -1;
+    }
+}
+
+int find(int *stack, int eos, int value)
+{
+    int i;
+    for (i = 0; i <= eos; ++i)
+    {
+        if (stack[i] == value)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
+void upDim(int *dim)
+{
+    if (*dim >= 2)
+    {
+        (*dim) = 0;
+    }
+    else
+    {
+        (*dim)++;
+    }
+}
+
+void downDim(int *dim)
+{
+    if (*dim <= 0)
+    {
+        (*dim) = 2;
+    }
+    else
+    {
+        (*dim)--;
+    }
+}
+
+void explore(int *stack, int *eos, Point *tree, int current)
+{
+    while(current > -1)
+    {
+        push(stack, eos, current);
+        current = tree[current].left;
+    }
+}
+
 int dfs(Point *tree, int n)
 {
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),
+
+        v_eos = -1,
+        *visited = (int *) malloc(n * sizeof visited),
 
         current,
         target,
@@ -60,26 +120,82 @@ int dfs(Point *tree, int n)
 
     while(eos > -1)
     {
-        current = pop(stack, &eos);
-
-        printf("(%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
-
-        target = tree[current].right;
+        current = peek(stack, eos);
         other = tree[current].left;
-
-        // printf("Current: %d, Target: %d, Other: %d, EOS: %d\n", current, target, other, eos);
-
-        if (target > -1)
-        {
-            push(stack, &eos, target);
-        }
-        if (other > -1)
+        
+        if (other > -1 && find(visited, v_eos, other) == -1)
         {
             push(stack, &eos, other);
+        }
+        else
+        {
+            current = pop(stack, &eos);
+            printf("Current: (%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
+
+            push(visited, &v_eos, current);
+
+            target = tree[current].right;
+
+            if (target > -1)
+            {
+                push(stack, &eos, target);
+            }
         }
     }
 
     return 0;
+}
+
+int query_a(Point *qp, Point *tree, int n)
+{
+    int eos = -1,
+        *stack = (int *) malloc(n * sizeof stack),
+
+        v_eos = -1,
+        *visited = (int *) malloc(n * sizeof visited),
+
+        dim = 0,
+
+        current,
+        target,
+        other;
+
+    float best = FLT_MAX;
+
+    push(stack, &eos, floor(n / 2));
+
+    while(eos > -1)
+    {
+        current = peek(stack, eos);
+        target = tree[current].left;
+        
+        if (target > -1 && find(visited, v_eos, target) == -1)
+        {
+            push(stack, &eos, target);
+            upDim(&dim);
+        }
+        else
+        {
+            current = pop(stack, &eos);
+            printf("Current: (%3.1f, %3.1f, %3.1f) Dim: %d\n", tree[current].p[0], tree[current].p[1], tree[current].p[2], dim);
+
+            push(visited, &v_eos, current);
+
+            other = tree[current].right;
+
+            if (other > -1)
+            {
+                push(stack, &eos, other);
+                upDim(&dim);
+            }
+            else
+            {
+                downDim(&dim);
+            }
+        }
+    }
+
+    return best;
 }
 
 int query_k(float *qp, Point *tree, int dim, int index)
