@@ -6,14 +6,9 @@
 #include "helper_cuda.h"
 #include "gtest/gtest.h"
 
-
-
-
-
-
 #define debug 0
 
-void writePoints(char *file_path, int n, Point *points)
+void writePoints(char *file_path, int n, PointS *points)
 {
     printf("writing points...\n");
 
@@ -27,13 +22,11 @@ void writePoints(char *file_path, int n, Point *points)
     {
         fwrite(&points[i].p, sizeof(float), 3, file);
     }
-
     fclose(file);
-
 }
 
 
-void readPoints(const char *file_path, int n, Point *points)
+void readPoints(const char *file_path, int n, PointS *points)
 {
     printf("Reading points...\n");
 
@@ -52,7 +45,7 @@ void readPoints(const char *file_path, int n, Point *points)
 }
 
 
-__host__  void h_printPointsArray__(Point *l, int n, char *s, int l_debug = 0)
+__host__  void h_printPointsArray__(PointS *l, int n, char *s, int l_debug = 0)
 {
     if (debug || l_debug)
     {
@@ -71,9 +64,9 @@ int h_index(int i, int j, int n)
     return i + j * n;
 }
 
-void h_swap(Point *points, int a, int b, int n)
+void h_swap(PointS *points, int a, int b, int n)
 {
-    Point t = points[a];
+    PointS t = points[a];
     points[a] = points[b], points[b] = t;
 }
 
@@ -82,7 +75,7 @@ int midpoint(int lower, int upper)
     return (int) floor((float)(upper - lower) / 2) + lower;
 }
 
-void print_tree(Point *tree, int level, int lower, int upper, int n)
+void print_tree(PointS *tree, int level, int lower, int upper, int n)
 {
     if (debug)
     {
@@ -105,12 +98,12 @@ void print_tree(Point *tree, int level, int lower, int upper, int n)
     }
 }
 
-void populatePoints(Point *points, int n)
+void populatePoints(PointS *points, int n)
 {
     srand(time(NULL));
     for (int i = 0; i < n; ++i)
     {
-        Point t;
+        PointS t;
         t.p[0] = rand();
         t.p[1] = rand();
         t.p[2] = rand();
@@ -123,7 +116,7 @@ int main(int argc, char const *argv[])
     int n, nu, ni = 8388608,
                step = 250000;
     bool from_file = 0;
-
+    n = nu = ni;
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
@@ -149,8 +142,10 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        Point *points;
-        points = (Point *) malloc(n  * sizeof(Point));
+        PointS *points;
+        Point *points_out;
+        points_out = (Point *) malloc(n  * sizeof(Point));
+        points = (PointS *) malloc(n  * sizeof(PointS));
 
         if (from_file)
         {
@@ -160,16 +155,17 @@ int main(int argc, char const *argv[])
         {
             populatePoints(points, n);
         }
+        build_kd_tree(points, n, points_out); //warmup
         cudaDeviceReset();
         cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(Point));
+        unsigned int bytes = n * (sizeof(PointS));
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         float elapsed_time = 0;
 
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        build_kd_tree(points, n);
+        build_kd_tree(points, n, points_out);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -180,6 +176,7 @@ int main(int argc, char const *argv[])
         printf("build_kd_tree_naive, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
                throughput, elapsed_time, n, 1);
         free(points);
+        free(points_out);
     }
     return 0;
 

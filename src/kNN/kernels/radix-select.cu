@@ -10,37 +10,55 @@
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
-__device__
-void d_printIntArray___(int *l, int n, char *s)
-{
-    if (debug && threadIdx.x == 0)
-    {
-        int i;
-        printf("%s: ", s);
-        printf("[%d", l[0] );
-        for (i = 1; i < n; ++i)
-        {
-            printf(", %d", l[i] );
-        }
-        printf("]\n");
-    }
-    __syncthreads();
-}
+// __device__
+// void d_printIntArray___(int *l, int n, char *s)
+// {
+// #if __CUDA_ARCH__ >= 200
+//     if (debug && threadIdx.x == 0)
+//     {
+//         int i;
+//         printf("%s: ", s);
+//         printf("[%d", l[0] );
+//         for (i = 1; i < n; ++i)
+//         {
+//             printf(", %d", l[i] );
+//         }
+//         printf("]\n");
+//         __syncthreads();
+//     }
+// #endif
+// }
+// __device__
+// void d_printPoints___(PointS *l, int n, char *s)
+// {
+//     if (debug && threadIdx.x == 0)
+//     {
+//         int i;
+//         printf("%s: ", s);
+//         printf("[%3.1f", l[0].p[0] );
+//         for (i = 1; i < n; ++i)
+//         {
+//             printf(", %3.1f", l[i].p[0] );
+//         }
+//         printf("]\n");
+//     }
+//     __syncthreads();
+// }
 
-void h_printIntArray___(int *l, int n, char *s)
-{
-    if (debug)
-    {
-        int i;
-        printf("%s: ", s);
-        printf("[%d", l[0]);
-        for (i = 1; i < n; ++i)
-        {
-            printf(", %d", l[i] );
-        }
-        printf("]\n");
-    }
-}
+// void h_printIntArray___(int *l, int n, char *s)
+// {
+//     if (debug)
+//     {
+//         int i;
+//         printf("%s: ", s);
+//         printf("[%d", l[0]);
+//         for (i = 1; i < n; ++i)
+//         {
+//             printf(", %d", l[i] );
+//         }
+//         printf("]\n");
+//     }
+// }
 
 
 __device__  void cuAccumulateIndex_(int *list, int n)
@@ -144,11 +162,11 @@ __device__ void cuSumReduce_(int *list, int n)
 }
 
 
-__global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partition, int last, int dir)
+__global__ void cuPartitionSwap(PointS *points, PointS *swap, int n, int *partition, int last, int dir)
 {
     __shared__ int ones[1025];
     __shared__ int zeros[1025];
-    __shared__ Point median;
+    __shared__ PointS median;
 
     int
     tid = threadIdx.x,
@@ -183,9 +201,11 @@ __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partitio
         zero_count[threadIdx.x] += !is_bigger;
         tid += blockDim.x;
     }
+
     __syncthreads();
     cuAccumulateIndex_(zero_count, blockDim.x);
     cuAccumulateIndex_(one_count, blockDim.x);
+
     tid = threadIdx.x;
     __syncthreads();
     one_count--;
@@ -215,7 +235,7 @@ __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partitio
     }
 }
 
-__global__ void cuPartitionStep(Point *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
+__global__ void cuPartitionStep(PointS *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
 {
     __shared__ int zero_count[1024];
 
@@ -288,7 +308,7 @@ __global__ void fillArray(int *array, int value, int n)
     }
 }
 
-void radixSelectAndPartition(Point *points, Point *swap, int *partition, int n, int dir)
+void radixSelectAndPartition(PointS *points, PointS *swap, int *partition, int n, int dir)
 {
     int numBlocks, numThreads, cut,
         l = 0,

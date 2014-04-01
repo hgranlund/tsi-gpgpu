@@ -7,9 +7,14 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 # define debug 0
+#define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
+
 __device__
 void printIntArray__(int *l, int n, char *s)
 {
+#if __CUDA_ARCH__ >= 200
     if (debug && threadIdx.x == 0)
     {
         printf("%s: ", s);
@@ -20,6 +25,7 @@ void printIntArray__(int *l, int n, char *s)
         }
         printf("]\n");
     }
+#endif
 }
 
 __device__  void cuAccumulateIndex(int *list, int n)
@@ -122,7 +128,7 @@ __device__ int cuSumReduce(int *list, int n)
     return list[0];
 }
 
-__device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *partition, int *zero_count, int *one_count, Point median, int dir)
+__device__ void cuPartitionSwap(PointS *data, PointS *swap, unsigned int n, int *partition, int *zero_count, int *one_count, PointS median, int dir)
 {
     unsigned int
     tid = threadIdx.x,
@@ -167,7 +173,7 @@ __device__ void cuPartitionSwap(Point *data, Point *swap, unsigned int n, int *p
     }
 }
 
-__device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
+__device__ unsigned int cuPartition(PointS *data, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
 {
     unsigned int
     tid = threadIdx.x,
@@ -191,11 +197,11 @@ __device__ unsigned int cuPartition(Point *data, unsigned int n, int *partition,
     return cuSumReduce(zero_count, blockDim.x);
 }
 
-__device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int n, int *partition, int dir)
+__device__ void cuRadixSelect(PointS *data, PointS *data_copy, int n, int *partition, int dir)
 {
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
-    __shared__ Point median;
+    __shared__ PointS median;
 
 
     int l = 0,
@@ -251,40 +257,43 @@ __device__ void cuRadixSelect(Point *data, Point *data_copy, unsigned int n, int
 }
 
 __global__
-void cuBalanceBranch(Point *points, Point *swap, int *partition, int n, int p, int dir)
+void cuBalanceBranch(PointS *points, PointS *swap, int *partition, int *steps, int p, int dir)
 {
 
-    int bid = blockIdx.x;
+    int bid = blockIdx.x,
+        blockoffset,
+        n;
     while (bid < p)
     {
-        int blockoffset = n * bid;
+        blockoffset = steps[bid * 2];
+        n = steps[bid * 2 + 1] - blockoffset;
         cuRadixSelect(points + blockoffset, swap + blockoffset, n, partition + blockoffset, dir);
         bid += gridDim.x;
     }
 }
 
 //For testing - One cannot import a __device__ kernel
-__global__ void cuRadixSelectGlobal(Point *data, Point *data_copy, int n, int *partition, int dir)
+__global__ void cuRadixSelectGlobal(PointS *data, PointS *data_copy, int n, int *partition, int dir)
 {
     cuRadixSelect(data, data_copy, n, partition, dir);
 }
 
-
-
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
 {
-    n--;
-    threads = prevPowTwo(n / 4);
-    blocks = min(MAX_BLOCK_DIM_SIZE, p);
+    threads = n - 1;
+    threads = prevPowTwo(threads / 4);
+    blocks = min(MAX_BLOCK_DIM_SIZE_MULTI_RADIX, p);
     blocks = max(1, blocks);
-    threads = min(THREADS_PER_BLOCK, threads);
+    threads = min(THREADS_PER_BLOCK_MULTI_RADIX, threads);
     threads = max(128, threads);
+    debugf("N =%d, p = %d, blocks = %d, threads = %d\n", n, p, blocks, threads);
 }
 
 
-void  multiRadixSelectAndPartition(Point *data, Point *data_copy, int *partition, int n, int p,  int dir)
+void  multiRadixSelectAndPartition(PointS *d_data, PointS *d_data_copy, int *d_partition, int *d_steps, int n, int p,  int dir)
 {
     int numBlocks, numThreads;
     getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
-    cuBalanceBranch <<< numBlocks, numThreads>>>(data, data_copy, partition, n, p, dir);
+    cuBalanceBranch <<< numBlocks, numThreads>>>(d_data, d_data_copy, d_partition, d_steps, p, dir);
 }
+

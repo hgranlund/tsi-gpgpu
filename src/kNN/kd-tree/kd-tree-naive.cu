@@ -13,88 +13,154 @@
 
 
 __global__
-void cuBalanceBranchLeafs(Point *points, int n, int dir)
+void convertPoints(Point *points, PointS *points_small, int n)
 {
     int
-    step = n / gridDim.x,
-    blockOffset = step * blockIdx.x,
-    tid = threadIdx.x;
-    step = step >> 1;           // same as n / 2;
-    Point point1;
-    Point point2;
-    points += blockOffset;
-    while (tid < step)
+    block_stride = n / gridDim.x,
+    block_offset = block_stride * blockIdx.x,
+    tid = threadIdx.x,
+    rest = n % gridDim.x;
+    PointS point_s;
+    if (rest >= gridDim.x - blockIdx.x)
     {
-        point1 = points[tid * 2];
-        point2 = points[tid * 2 + 1];
-        if (point1.p[dir] > point2.p[dir])
-        {
-            points[tid * 2] = point2;
-            points[tid * 2 + 1] = point1;
-        }
+        block_offset += rest - (gridDim.x - blockIdx.x);
+        block_stride++;
+    }
+    points += block_offset;
+    while (tid < block_stride)
+    {
+        Point point;
+        point_s = points_small[tid];
+        point.p[0] = point_s.p[0];
+        point.p[1] = point_s.p[1];
+        point.p[2] = point_s.p[2];
+        points[tid] = point;
         tid += blockDim.x;
     }
 }
 
-void build_kd_tree(Point *h_points, int n)
+
+// int cashe_indexes(Point *tree, int lower, int upper, int n)
+// {
+//     int r;
+
+//     if (lower >= upper)
+//     {
+//         return -1;
+//     }
+
+//     r = (int) floor((float)(upper - lower) / 2) + lower;
+
+//     tree[r].left = cashe_indexes(tree, lower, r, n);
+//     tree[r].right = cashe_indexes(tree, r + 1, upper, n);
+
+//     return r;
+// }
+
+
+void nextStep(int *steps_new, int *steps_old, int n)
 {
+    int midpoint, from, to;
+    for (int i = 0; i < n / 2; ++i)
+    {
+        from = steps_old[i * 2];
+        to = steps_old[i * 2 + 1];
+        midpoint = (to - from) / 2 + from;
+        steps_new[i * 4] = from;
+        steps_new[i * 4 + 1] = midpoint;
+        steps_new[i * 4 + 2] = midpoint + 1;
+        steps_new[i * 4 + 3] = to;
+    }
+}
 
+void swap_pointer(int **a, int **b)
+{
+    int *swap;
+    swap = *a, *a = *b, *b = swap;
 
-    Point *d_points, *d_swap;
-    int p, i, j, numBlocks, numThreads, step;
-    int *d_partition;
+}
+
+void singleRadixSelectAndPartition(PointS *d_points, PointS *d_swap, int *d_partition, int *h_steps, int p, int  dir)
+{
+    int nn, offset, j;
+    for (j = 0; j < p; j ++)
+    {
+        offset = h_steps[j * 2];
+        nn = h_steps[j * 2 + 1] - offset;
+        if (nn > 1)
+        {
+            radixSelectAndPartition(d_points + offset, d_swap + offset, d_partition + offset, nn, dir);
+        }
+    }
+}
+
+void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
+{
+    PointS *d_points, *d_swap;
+    Point *d_points_out;
+    int p, h, i, *d_partition,
+        *d_steps, *h_steps_old, *h_steps_new;
+
+    h_steps_new = (int *)malloc(n * 2 * sizeof(int));
+    h_steps_old = (int *)malloc(n * 2 * sizeof(int));
+
+    checkCudaErrors(
+        cudaMalloc(&d_steps, n * 2 * sizeof(int)));
 
     checkCudaErrors(
         cudaMalloc(&d_partition, n * sizeof(int)));
 
     checkCudaErrors(
-        cudaMalloc(&d_points, n * sizeof(Point)));
+        cudaMalloc(&d_points, n * sizeof(PointS)));
 
     checkCudaErrors(
-        cudaMalloc(&d_swap, n * sizeof(Point)));
+        cudaMalloc(&d_swap, n * sizeof(PointS)));
 
     checkCudaErrors(
-        cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
+        cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
 
     p = 1;
-    step = n / p;
     i = 0;
-    while (step >= 8388608 && p <= 2)
+    h = ceil(log2((float)n + 1));
+    h_steps_new[0] = 0;
+    h_steps_old[0] = 0;
+    h_steps_old[1] = n;
+    h_steps_new[1] = n;
+
+    radixSelectAndPartition(d_points, d_swap, d_partition, n, i % 3);
+    i++;
+    while (i < h )
     {
-        for (j = 0; j < n; j += n / p)
+        nextStep(h_steps_new, h_steps_old, p <<= 1);
+        checkCudaErrors(
+            cudaMemcpy(d_steps, h_steps_new, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+        if (n / p >= 8388608)
         {
-            radixSelectAndPartition(d_points + j, d_swap + j, d_partition + j, step, i % 3);
+            singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
         }
-        p <<= 1;
-        step = n / p;
-        i++;
-    }
-    while (step > 256)
-    {
-        multiRadixSelectAndPartition(d_points, d_swap, d_partition, step, p, i % 3);
-        p <<= 1;
-        step = n / p;
-        i++;
-    }
-    while (step > 2)
-    {
-        quickSelectAndPartition(d_points, step, p, i % 3);
-        p <<= 1;
-        step = n / p;
-        i++;
-    }
 
-    numThreads = min(n, THREADS_PER_BLOCK / 2);
-    numBlocks = n / numThreads;
-    numBlocks = min(numBlocks, MAX_BLOCK_DIM_SIZE);
-    debugf("n = %d, p = %d, numblosck = %d, numThread =%d\n", n / p, p, numBlocks, numThreads );
-    cuBalanceBranchLeafs <<< numBlocks, numThreads>>>(d_points, n, i % 3);
-
-    checkCudaErrors(
-        cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaFree(d_points));
+        else if (n / p > 256)
+        {
+            multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, i % 3);
+        }
+        else
+        {
+            quickSelectAndPartition(d_points, d_steps, n, p, i % 3);
+        }
+        swap_pointer(&h_steps_new, &h_steps_old);
+        i++;
+    }
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));
+
+
+    checkCudaErrors(
+        cudaMalloc(&d_points_out, n * sizeof(Point)));
+
+    convertPoints <<< 1, 512>>>(d_points_out, d_points, n);
+    checkCudaErrors(
+        cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaFree(d_points));
 }
 
 

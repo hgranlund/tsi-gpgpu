@@ -23,7 +23,7 @@
 
 
 
-__host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug = 0)
+__host__  void h_printPointsArray_(PointS *l, int n, char *s, int l_debug = 0)
 {
     if (debug || l_debug)
     {
@@ -38,58 +38,70 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug = 0)
 
 TEST(kernels, quick_selection)
 {
-    Point *h_points, *d_points;
-    int numBlocks, numThreads;
+    PointS *h_points, *d_points;
+    int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
-    for (n = 8; n <= 9; n <<= 1)
+    for (n = 8; n <= 5000; n <<= 1)
     {
-        p = 16;
-        numBlocks = p;
-        n = n * p;
-        h_points = (Point *) malloc(n * sizeof(Point));
+        p = 2;
+        h_steps = (int *) malloc(p * 2 * sizeof(int));
+        h_steps[0] = 0;
+        h_steps[1] = n / p;
+        h_steps[2] = n / p + 1;
+        h_steps[3] = n;
+        h_points = (PointS *) malloc(n  * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n; i++)
+        for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
             h_points[i]    = t;
         }
-        getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
-
-        h_printPointsArray_(h_points, n, "h_points", 0);
-        cuQuickSelectShared<8> <<< 2, 2>>>(d_points, n / p, p, 0);
+            cudaMalloc((void **)&d_steps, p * 2  * sizeof(PointS)));
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+        checkCudaErrors(
+            cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
 
-        h_printPointsArray_(h_points, n, "h_points", 0);
+        h_printPointsArray_(h_points, n , "h_points      ", 0);
 
-        int step = n / p;
-        Point *t_points;
+        quickSelectAndPartition(d_points, d_steps, n , p, 0);
+
+        checkCudaErrors(
+            cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
+
+        h_printPointsArray_(h_points, n , "h_points after", 0);
+
+        PointS *t_points;
+        int nn = n;
         for (int i = 0; i < p; ++i)
         {
-            t_points = h_points + i * step;
-            for (int i = 0; i < step / 2; ++i)
+            t_points = h_points + h_steps[i * 2];
+            nn =  h_steps[i * 2 + 1] - h_steps[i * 2];
+            for (int i = 0; i < nn / 2; ++i)
             {
-                ASSERT_LE(t_points[i].p[0], t_points[step / 2].p[0]) << "Faild with n = " << n;
+                ASSERT_LE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
             }
-            for (int i = step / 2; i < step; ++i)
+            for (int i = n / 2; i < nn; ++i)
             {
-                ASSERT_GE(t_points[i].p[0], t_points[step / 2].p[0]) << "Faild with n = " << n;
+                ASSERT_GE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
             }
         }
 
         checkCudaErrors(
             cudaFree(d_points));
+        checkCudaErrors(
+            cudaFree(d_steps));
+        free(h_steps);
         free(h_points);
         cudaDeviceSynchronize();
         cudaDeviceReset();
@@ -97,42 +109,49 @@ TEST(kernels, quick_selection)
 }
 TEST(kernels, quick_selection_time)
 {
-    Point *h_points, *d_points;
-    int numBlocks, numThreads;
+    PointS *h_points, *d_points;
+    int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
-    for (n = 8; n <= 8; n <<= 1)
+    for (n = 2048; n <= 2048; n <<= 1)
     {
-        p = 1048576;
-        numBlocks = p;
-        n = n * p;
-        h_points = (Point *) malloc(n * sizeof(Point));
+        p = 2;
+        h_steps = (int *) malloc(p * 2 * sizeof(int));
+        h_steps[0] = 0;
+        h_steps[1] = n / p;
+        h_steps[2] = n / p + 1;
+        h_steps[3] = n;
+        h_points = (PointS *) malloc(n  * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n; i++)
+        for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
             h_points[i]    = t;
         }
-        getThreadAndBlockCountForQuickSelect(n, p, numBlocks, numThreads);
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
+            cudaMalloc((void **)&d_steps, p * 2  * sizeof(PointS)));
 
+        checkCudaErrors(
+            cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
 
         cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(Point));
+        unsigned int bytes = n * (sizeof(PointS));
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         float elapsed_time = 0;
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        cuQuickSelectGlobal <<< numBlocks, numThreads>>>(d_points, n / p, p, 0);
+        checkCudaErrors(
+            cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
+        quickSelectAndPartition(d_points, d_steps, n , p, 0);
+
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -144,27 +163,16 @@ TEST(kernels, quick_selection_time)
                throughput, elapsed_time, n, p, 1);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
-
-        int step = n / p;
-        Point *t_points;
-        for (int i = 0; i < p; ++i)
-        {
-            t_points = h_points + i * step;
-            for (int i = 0; i < step / 2; ++i)
-            {
-                ASSERT_LE(t_points[i].p[0], t_points[step / 2].p[0]) << "Faild with n = " << n;
-            }
-            for (int i = step / 2; i < step; ++i)
-            {
-                ASSERT_GE(t_points[i].p[0], t_points[step / 2].p[0]) << "Faild with n = " << n;
-            }
-        }
+            cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
 
         checkCudaErrors(
             cudaFree(d_points));
+        checkCudaErrors(
+            cudaFree(d_steps));
+        free(h_steps);
         free(h_points);
         cudaDeviceSynchronize();
         cudaDeviceReset();
     }
 }
+

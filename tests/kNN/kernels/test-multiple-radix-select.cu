@@ -2,17 +2,12 @@
 #include "multiple-radix-select.cuh"
 #include <knn_gpgpu.h>
 #include <stdio.h>
+
 #include <gtest/gtest.h>
 
-#include <math.h>
-#include <cuda.h>
-#include <time.h>
-#include <assert.h>
-#include <helper_functions.h>
 #include <helper_cuda.h>
 
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
-#define inf 0x7f800000
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
 #define debug 0
@@ -20,10 +15,10 @@
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
 
-int cpu_partition(Point *data, int l, int u, int bit)
+int cpu_partition(PointS *data, int l, int u, int bit)
 {
     unsigned int radix = (1 << 31 - bit);
-    Point *temp = (Point *)malloc(((u - l) + 1) * sizeof(Point));
+    PointS *temp = (PointS *)malloc(((u - l) + 1) * sizeof(PointS));
     int pos = 0;
     for (int i = l; i <= u; i++)
     {
@@ -50,10 +45,10 @@ int cpu_partition(Point *data, int l, int u, int bit)
     return result;
 }
 
-Point cpu_radixselect(Point *data, int l, int u, int m, int bit)
+PointS cpu_radixselect(PointS *data, int l, int u, int m, int bit)
 {
 
-    Point t;
+    PointS t;
     t.p[0] = 0;
     t.p[1] = 0;
     t.p[2] = 0;
@@ -68,7 +63,7 @@ Point cpu_radixselect(Point *data, int l, int u, int m, int bit)
     return cpu_radixselect(data, s + 1, u, m, bit + 1);
 }
 
-void printPoints(Point *l, int n)
+void printPoints(PointS *l, int n)
 {
     int i;
     if (debug)
@@ -111,68 +106,84 @@ unsigned int prevPowerOf21(unsigned int n)
     return n >>= 1;
 }
 
+
+
 TEST(kernels, multi_radix_selection)
 {
-    Point *h_points;
-    int numBlocks, numThreads;
+    PointS *h_points;
     float temp;
-    int i, n;
-    for (n = 4; n <= 5000; n <<= 1)
+    int i, n, p, *h_steps, *d_steps;
+    for (n = 8; n <= 1000; n <<= 1)
     {
-        h_points = (Point *) malloc(n * sizeof(Point));
+        p = 2;
+        h_steps = (int *) malloc(p * 2 * sizeof(int));
+        h_steps[0] = 0;
+        h_steps[1] = n / p;
+        h_steps[2] = n / p + 1;
+        h_steps[3] = n;
+        h_points = (PointS *) malloc(n * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n; i++)
+        for (i = 0 ; i < n ; i++)
         {
             temp =  (float) i;
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
             h_points[i]    = t;
         }
+        printPoints(h_points, n );
 
-        printPoints(h_points, n);
-
-        Point *d_points, *d_temp;
-        int *partition;
+        PointS *d_points, *d_swap;
+        int *d_partition;
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * sizeof(Point)));
+            cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&partition, n * sizeof(int)));
+            cudaMalloc((void **)&d_partition, n  * sizeof(int)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
-
-
-        Point cpu_result = cpu_radixselect(h_points, 0, n - 1, n / 2, 0);
-        getThreadAndBlockCountMulRadix(n, 1, numBlocks, numThreads);
-        debugf("threads = %d, n = %d\n", numThreads, n);
-        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n, partition, 0);
+            cudaMalloc((void **)&d_steps, p * 2 * sizeof(int)));
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+        checkCudaErrors(
+            cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
 
-        printPoints(h_points, n);
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
 
-        debugf("result = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
-        ASSERT_EQ(cpu_result.p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
-        ASSERT_EQ(cpu_result.p[1], h_points[n / 2].p[1]) << "Faild with n = " << n;
-        ASSERT_EQ(cpu_result.p[2], h_points[n / 2].p[2]) << "Faild with n = " << n;
+        checkCudaErrors(
+            cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
 
-        for (int i = 0; i < n / 2; ++i)
+        printPoints(h_points, n );
+
+
+        PointS *t_points;
+        int nn = n;
+        for (int i = 0; i < p; ++i)
         {
-            ASSERT_LE(h_points[i].p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
+            t_points = h_points + h_steps[i * 2];
+            nn =  h_steps[i * 2 + 1] - h_steps[i * 2];
+            for (int i = 0; i < nn / 2; ++i)
+            {
+                ASSERT_LE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
+            }
+            for (int i = n / 2; i < nn; ++i)
+            {
+                ASSERT_GE(t_points[i].p[0], t_points[nn / 2].p[0]) << "Faild with n = " << nn << " and p " << p;
+            }
         }
-        for (int i = n / 2; i < n; ++i)
-        {
-            ASSERT_GE(h_points[i].p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
-        }
+
         checkCudaErrors(
             cudaFree(d_points));
         checkCudaErrors(
-            cudaFree(partition));
+            cudaFree(d_steps));
+        checkCudaErrors(
+            cudaFree(d_swap));
+        checkCudaErrors(
+            cudaFree(d_partition));
         free(h_points);
+        free(h_steps);
         cudaDeviceSynchronize();
         cudaDeviceReset();
     }
@@ -180,43 +191,43 @@ TEST(kernels, multi_radix_selection)
 
 TEST(kernels, multi_radix_selection_time)
 {
-    Point *h_points;
-    unsigned int i, n;
-    n = 160000;
-    int numBlocks, numThreads,
-        p = 1;
+    PointS *h_points;
+    float temp;
+    int i, n, p, *h_steps, *d_steps;
     for (n = 8388608; n <= 8388608; n <<= 1)
     {
-        h_points = (Point *) malloc(n * p * sizeof(Point));
-
-        float temp;
-
-        h_points = (Point *) malloc(n * p * sizeof(Point));
+        p = 2;
+        h_steps = (int *) malloc(p * 2 * sizeof(int));
+        h_steps[0] = 0;
+        h_steps[1] = n / p;
+        h_steps[2] = n / p + 1;
+        h_steps[3] = n;
+        h_points = (PointS *) malloc(n * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n * p; i++)
+        for (i = 0 ; i < n ; i++)
         {
+            temp =  (float) i;
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
             h_points[i]    = t;
         }
+        printPoints(h_points, n );
 
-        printPoints(h_points, n);
-
-        Point *d_points, *d_temp;
-        int *partition;
+        PointS *d_points, *d_swap;
+        int *d_partition;
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * p * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * p * sizeof(Point)));
+            cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&partition, n * p * sizeof(int)));
+            cudaMalloc((void **)&d_partition, n  * sizeof(int)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * p * sizeof(Point), cudaMemcpyHostToDevice));
-
-
+            cudaMalloc((void **)&d_steps, p * 2 * sizeof(int)));
+        checkCudaErrors(
+            cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
 
         cudaEvent_t start, stop;
         unsigned int bytes = n * (sizeof(float)) ;
@@ -225,8 +236,9 @@ TEST(kernels, multi_radix_selection_time)
         float elapsed_time = 0;
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        getThreadAndBlockCountMulRadix(n, p, numBlocks, numThreads);
-        cuRadixSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_temp, n, partition, 0);
+        checkCudaErrors(
+            cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -237,19 +249,18 @@ TEST(kernels, multi_radix_selection_time)
         printf("multi-radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
                throughput, elapsed_time, n, 1);
 
-        checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
-
-        printPoints(h_points, n);
 
         checkCudaErrors(
             cudaFree(d_points));
         checkCudaErrors(
-            cudaFree(partition));
+            cudaFree(d_steps));
         checkCudaErrors(
-            cudaFree(d_temp));
+            cudaFree(d_swap));
+        checkCudaErrors(
+            cudaFree(d_partition));
         free(h_points);
+        free(h_steps);
+        cudaDeviceSynchronize();
         cudaDeviceReset();
     }
 }
-
