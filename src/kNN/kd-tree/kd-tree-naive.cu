@@ -40,22 +40,22 @@ void convertPoints(Point *points, PointS *points_small, int n)
 }
 
 
-int cashe_indexes(Point *tree, int lower, int upper, int n)
-{
-    int r;
+// int cashe_indexes(Point *tree, int lower, int upper, int n)
+// {
+//     int r;
 
-    if (lower >= upper)
-    {
-        return -1;
-    }
+//     if (lower >= upper)
+//     {
+//         return -1;
+//     }
 
-    r = (int) floor((float)(upper - lower) / 2) + lower;
+//     r = (int) floor((float)(upper - lower) / 2) + lower;
 
-    tree[r].left = cashe_indexes(tree, lower, r, n);
-    tree[r].right = cashe_indexes(tree, r + 1, upper, n);
+//     tree[r].left = cashe_indexes(tree, lower, r, n);
+//     tree[r].right = cashe_indexes(tree, r + 1, upper, n);
 
-    return r;
-}
+//     return r;
+// }
 
 
 void nextStep(int *steps_new, int *steps_old, int n)
