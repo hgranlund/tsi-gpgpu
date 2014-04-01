@@ -226,4 +226,7 @@ TEST(kd_tree_naive, wikipedia_exsample)
         ASSERT_EQ(wiki_correct[i].p[1], wiki_out[i].p[1]) << "failed at i = " << i;
         ASSERT_EQ(wiki_correct[i].p[2], wiki_out[i].p[2]) << "failed at i = " << i;
     }
+    free(wiki_out);
+    free(wiki);
+    free(wiki_correct);
 }

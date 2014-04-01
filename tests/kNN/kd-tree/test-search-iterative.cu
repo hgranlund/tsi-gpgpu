@@ -196,6 +196,9 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 2, 6, 0, 4, 7, 0));
     ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 10, 0, 0, 8, 1, 0));
     ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 0, 10, 0, 4, 7, 0));
+
+    free(wiki);
+    free(wiki_out);
 }
 
 TEST(search_iterative, search_iterative_dfs)
@@ -222,6 +225,7 @@ TEST(search_iterative, search_iterative_dfs)
     cashe_indexes(wiki, 0, wn, wn);
 
     dfs(wiki, wn);
+    free(wiki);
 }
 
 TEST(search_iterative, search_iterative_push)
