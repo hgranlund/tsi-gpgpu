@@ -121,6 +121,7 @@ void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
 
     p = 1;
     i = 0;
+    int step;
     h = ceil(log2((float)n + 1));
     h_steps_new[0] = 0;
     h_steps_old[0] = 0;
@@ -132,28 +133,28 @@ void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
     while (i < h )
     {
         nextStep(h_steps_new, h_steps_old, p <<= 1);
+        step = h_steps_new[1] - h_steps_new[0];
         checkCudaErrors(
             cudaMemcpy(d_steps, h_steps_new, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
-        if (n / p >= 8388608)
+        if (step >= 8388608)
         {
             singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
         }
 
-        else if (n / p > 256)
+        else if (step > 4000)
         {
-            multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, i % 3);
+            multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, step, p, i % 3);
         }
         else
         {
-            quickSelectAndPartition(d_points, d_steps, n, p, i % 3);
+            quickSelectAndPartition(d_points, d_steps, step, p, i % 3);
         }
         swap_pointer(&h_steps_new, &h_steps_old);
         i++;
     }
+
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));
-
-
     checkCudaErrors(
         cudaMalloc(&d_points_out, n * sizeof(Point)));
 
