@@ -1,0 +1,2 @@
+Running kd-tree-build with n = 8388608
+build_kd_tree_naive, Throughput = 0.0299 GB/s, Time = 3368.39648 ms, Size = 8388608 Elements, NumDevsUsed = 1
