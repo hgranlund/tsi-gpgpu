@@ -8,4 +8,11 @@ struct Point
     int right;
 };
 
+
+// Small point used in build kd-tree
+struct PointS
+{
+    float p[3];
+};
+
 #endif //  _DATA_TYPES_
