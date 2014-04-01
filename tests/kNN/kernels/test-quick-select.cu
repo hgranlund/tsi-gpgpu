@@ -51,6 +51,7 @@ TEST(kernels, quick_selection)
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
         h_points = (PointS *) malloc(n  * sizeof(PointS));
+        int step = h_steps[1] - h_steps[0];
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
@@ -74,7 +75,7 @@ TEST(kernels, quick_selection)
 
         h_printPointsArray_(h_points, n , "h_points      ", 0);
 
-        quickSelectAndPartition(d_points, d_steps, n , p, 0);
+        quickSelectAndPartition(d_points, d_steps, step , p, 0);
 
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
@@ -122,6 +123,8 @@ TEST(kernels, quick_selection_time)
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
         h_points = (PointS *) malloc(n  * sizeof(PointS));
+        int step = h_steps[1] - h_steps[0];
+
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
@@ -150,7 +153,7 @@ TEST(kernels, quick_selection_time)
 
         checkCudaErrors(
             cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
-        quickSelectAndPartition(d_points, d_steps, n , p, 0);
+        quickSelectAndPartition(d_points, d_steps, step , p, 0);
 
 
         checkCudaErrors(cudaEventRecord(stop, 0));
