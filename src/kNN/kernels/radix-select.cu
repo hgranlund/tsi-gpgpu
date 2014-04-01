@@ -29,7 +29,7 @@
 // #endif
 // }
 // __device__
-// void d_printPoints___(Point *l, int n, char *s)
+// void d_printPoints___(PointS *l, int n, char *s)
 // {
 //     if (debug && threadIdx.x == 0)
 //     {
@@ -162,11 +162,11 @@ __device__ void cuSumReduce_(int *list, int n)
 }
 
 
-__global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partition, int last, int dir)
+__global__ void cuPartitionSwap(PointS *points, PointS *swap, int n, int *partition, int last, int dir)
 {
     __shared__ int ones[1025];
     __shared__ int zeros[1025];
-    __shared__ Point median;
+    __shared__ PointS median;
 
     int
     tid = threadIdx.x,
@@ -235,7 +235,7 @@ __global__ void cuPartitionSwap(Point *points, Point *swap, int n, int *partitio
     }
 }
 
-__global__ void cuPartitionStep(Point *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
+__global__ void cuPartitionStep(PointS *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
 {
     __shared__ int zero_count[1024];
 
@@ -308,7 +308,7 @@ __global__ void fillArray(int *array, int value, int n)
     }
 }
 
-void radixSelectAndPartition(Point *points, Point *swap, int *partition, int n, int dir)
+void radixSelectAndPartition(PointS *points, PointS *swap, int *partition, int n, int dir)
 {
     int numBlocks, numThreads, cut,
         l = 0,

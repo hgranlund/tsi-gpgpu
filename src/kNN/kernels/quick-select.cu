@@ -1,17 +1,17 @@
 #include "quick-select.cuh"
 #include <stdio.h>
 
-__device__ void cuPointSwap(Point *p, int a, int b)
+__device__ void cuPointSwap(PointS *p, int a, int b)
 {
-    Point temp = p[a];
+    PointS temp = p[a];
     p[a] = p[b], p[b] = temp;
 }
 
 template <int maxStep> __global__
-void cuQuickSelectShared(Point *points, int *steps, int p, int dir)
+void cuQuickSelectShared(PointS *points, int *steps, int p, int dir)
 {
-    __shared__ Point ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
-    Point *s_points = ss_points, *l_points;
+    __shared__ PointS ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
+    PointS *s_points = ss_points, *l_points;
     float pivot;
     int pos, i, left, right, step_num,
         n,
@@ -59,7 +59,7 @@ void cuQuickSelectShared(Point *points, int *steps, int p, int dir)
 }
 
 __global__
-void cuQuickSelectGlobal(Point *points, int *steps, int p, int dir)
+void cuQuickSelectGlobal(PointS *points, int *steps, int p, int dir)
 {
     int pos, i,
         list_in_block = p / gridDim.x,
@@ -70,7 +70,7 @@ void cuQuickSelectGlobal(Point *points, int *steps, int p, int dir)
         n,
         m;
 
-    Point  *l_points;
+    PointS  *l_points;
     float pivot;
     while ( tid < list_in_block)
     {
@@ -101,7 +101,7 @@ void cuQuickSelectGlobal(Point *points, int *steps, int p, int dir)
     }
 }
 
-void quickSelectAndPartition(Point *d_points, int *d_steps, int n , int p, int dir)
+void quickSelectAndPartition(PointS *d_points, int *d_steps, int n , int p, int dir)
 {
     int numBlocks, numThreads;
     n = n / p;
@@ -112,7 +112,7 @@ void quickSelectAndPartition(Point *d_points, int *d_steps, int n , int p, int d
     }
     else if (n > 8)
     {
-        if (16 * sizeof(Point) * numThreads < MAX_SHARED_MEM)
+        if (16 * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
         {
             quickSelectShared(d_points, d_steps, p, dir, 16, numBlocks, numThreads);
         }
@@ -123,7 +123,7 @@ void quickSelectAndPartition(Point *d_points, int *d_steps, int n , int p, int d
     }
     else if (n > 4)
     {
-        if (8 * sizeof(Point) * numThreads < MAX_SHARED_MEM)
+        if (8 * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
         {
             quickSelectShared(d_points, d_steps, p, dir, 8, numBlocks, numThreads);
         }
@@ -134,7 +134,7 @@ void quickSelectAndPartition(Point *d_points, int *d_steps, int n , int p, int d
     }
     else
     {
-        if (4 * sizeof(Point) * numThreads < MAX_SHARED_MEM)
+        if (4 * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
         {
             quickSelectShared(d_points, d_steps, p, dir, 4, numBlocks, numThreads);
         }
@@ -147,7 +147,7 @@ void quickSelectAndPartition(Point *d_points, int *d_steps, int n , int p, int d
 
 
 
-void quickSelectShared(Point *d_points, int *d_steps, int p, int dir, int size, int numBlocks, int numThreads)
+void quickSelectShared(PointS *d_points, int *d_steps, int p, int dir, int size, int numBlocks, int numThreads)
 {
     if (size > 16)
     {

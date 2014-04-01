@@ -23,7 +23,7 @@
 
 
 
-__host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug = 0)
+__host__  void h_printPointsArray_(PointS *l, int n, char *s, int l_debug = 0)
 {
     if (debug || l_debug)
     {
@@ -38,7 +38,7 @@ __host__  void h_printPointsArray_(Point *l, int n, char *s, int l_debug = 0)
 
 TEST(kernels, quick_selection)
 {
-    Point *h_points, *d_points;
+    PointS *h_points, *d_points;
     int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
@@ -50,12 +50,12 @@ TEST(kernels, quick_selection)
         h_steps[1] = n / p;
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
-        h_points = (Point *) malloc(n  * sizeof(Point));
+        h_points = (PointS *) malloc(n  * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
@@ -63,12 +63,12 @@ TEST(kernels, quick_selection)
         }
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n  * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_steps, p * 2  * sizeof(Point)));
+            cudaMalloc((void **)&d_steps, p * 2  * sizeof(PointS)));
 
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n  * sizeof(Point), cudaMemcpyHostToDevice));
+            cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
         checkCudaErrors(
             cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
 
@@ -77,11 +77,11 @@ TEST(kernels, quick_selection)
         quickSelectAndPartition(d_points, d_steps, n , p, 0);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n  * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
 
         h_printPointsArray_(h_points, n , "h_points after", 0);
 
-        Point *t_points;
+        PointS *t_points;
         int nn = n;
         for (int i = 0; i < p; ++i)
         {
@@ -109,7 +109,7 @@ TEST(kernels, quick_selection)
 }
 TEST(kernels, quick_selection_time)
 {
-    Point *h_points, *d_points;
+    PointS *h_points, *d_points;
     int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
@@ -121,12 +121,12 @@ TEST(kernels, quick_selection_time)
         h_steps[1] = n / p;
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
-        h_points = (Point *) malloc(n  * sizeof(Point));
+        h_points = (PointS *) malloc(n  * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
@@ -134,15 +134,15 @@ TEST(kernels, quick_selection_time)
         }
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n  * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_steps, p * 2  * sizeof(Point)));
+            cudaMalloc((void **)&d_steps, p * 2  * sizeof(PointS)));
 
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n  * sizeof(Point), cudaMemcpyHostToDevice));
+            cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
 
         cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(Point));
+        unsigned int bytes = n * (sizeof(PointS));
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         float elapsed_time = 0;
@@ -163,7 +163,7 @@ TEST(kernels, quick_selection_time)
                throughput, elapsed_time, n, p, 1);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n  * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
 
         checkCudaErrors(
             cudaFree(d_points));

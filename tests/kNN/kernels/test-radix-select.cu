@@ -20,10 +20,10 @@
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
 
-int cpu_partition1(Point *data, int l, int u, int bit)
+int cpu_partition1(PointS *data, int l, int u, int bit)
 {
     unsigned int radix = (1 << 31 - bit);
-    Point *temp = (Point *)malloc(((u - l) + 1) * sizeof(Point));
+    PointS *temp = (PointS *)malloc(((u - l) + 1) * sizeof(PointS));
     int pos = 0;
     for (int i = l; i <= u; i++)
     {
@@ -50,10 +50,10 @@ int cpu_partition1(Point *data, int l, int u, int bit)
     return result;
 }
 
-Point cpu_radixselect1(Point *data, int l, int u, int m, int bit)
+PointS cpu_radixselect1(PointS *data, int l, int u, int m, int bit)
 {
 
-    Point t;
+    PointS t;
     t.p[0] = 0;
     t.p[1] = 0;
     t.p[2] = 0;
@@ -73,7 +73,7 @@ Point cpu_radixselect1(Point *data, int l, int u, int m, int bit)
 
 
 
-void printPoints1(Point *l, int n)
+void printPoints1(PointS *l, int n)
 {
     int i;
     if (debug)
@@ -121,18 +121,18 @@ unsigned int prevPowerOf22(unsigned int n)
 
 TEST(kernels, radix_selection)
 {
-    Point *h_points;
+    PointS *h_points;
     float temp;
     int i, n;
     for (n = 4; n <= 16384; n <<= 1)
     {
-        h_points = (Point *) malloc(n * sizeof(Point));
+        h_points = (PointS *) malloc(n * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n; i++)
         {
             temp =  (float) rand() / 100000000;
             temp =  (float) i;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
@@ -141,24 +141,24 @@ TEST(kernels, radix_selection)
 
         printPoints1(h_points, n);
 
-        Point *d_points, *d_temp;
+        PointS *d_points, *d_temp;
         int *partition;
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * sizeof(Point)));
+            cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * sizeof(int)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
+            cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
 
 
-        Point cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
+        PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
 
         radixSelectAndPartition(d_points, d_temp, partition, n, 0);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
         printPoints1(h_points, n);
 
@@ -189,38 +189,38 @@ TEST(kernels, radix_selection)
 
 TEST(kernels, radix_selection_time)
 {
-    Point *h_points;
+    PointS *h_points;
     float temp;
     int i, n;
     for (n = 8388608; n <= 8388608; n <<= 1)
     {
-        h_points = (Point *) malloc(n * sizeof(Point));
+        h_points = (PointS *) malloc(n * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n; i++)
         {
             temp =  (float) n - 1 - i;
             temp =  (float) rand() / 100000000;
-            Point t;
+            PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
             h_points[i]    = t;
         }
 
-        Point *d_points, *d_temp;
+        PointS *d_points, *d_temp;
         int *partition;
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(Point)));
+            cudaMalloc((void **)&d_points, n * sizeof(PointS)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * sizeof(Point)));
+            cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * sizeof(int)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
+            cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
 
 
         cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(Point)) ;
+        unsigned int bytes = n * (sizeof(PointS)) ;
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         float elapsed_time = 0;
@@ -239,7 +239,7 @@ TEST(kernels, radix_selection_time)
                throughput, elapsed_time, n, 1);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
 
         checkCudaErrors(
