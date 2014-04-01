@@ -221,51 +221,72 @@ int query_a(Point *qp, Point *tree, int n)
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),
 
-        v_eos = -1,
-        *visited = (int *) malloc(n * sizeof visited),
-
+        final_visit = 0,
         dim = 0,
 
+        previous = -1,
         current,
-        target,
-        other;
+        right,
+        left;
 
-    float best = FLT_MAX;
+    float best_dist = FLT_MAX;
 
     push(stack, &eos, floor(n / 2));
+    upDim(&dim);
 
     while(eos > -1)
     {
         current = peek(stack, eos);
-        target = tree[current].left;
-        
-        if (target > -1 && find(visited, v_eos, target) == -1)
+        left = tree[current].left;
+        right = tree[current].right;
+
+        if (previous == left)
         {
-            push(stack, &eos, target);
-            upDim(&dim);
+            if(right > -1)
+            {
+                push(stack, &eos, right);
+                upDim(&dim); 
+            }
+            else
+            {
+                final_visit = 1;
+            }
+        }
+        else if (previous == right)
+        {
+            final_visit = 1;
         }
         else
         {
-            current = pop(stack, &eos);
-            printf("Current: (%3.1f, %3.1f, %3.1f) Dim: %d\n", tree[current].p[0], tree[current].p[1], tree[current].p[2], dim);
-
-            push(visited, &v_eos, current);
-
-            other = tree[current].right;
-
-            if (other > -1)
+            if (left > -1)
             {
-                push(stack, &eos, other);
+                push(stack, &eos, left);
+                upDim(&dim);
+            }
+            else if(right > -1)
+            {
+                push(stack, &eos, right);
                 upDim(&dim);
             }
             else
             {
-                downDim(&dim);
+                final_visit = 1;
             }
         }
+
+        if (final_visit)
+        {
+            current = pop(stack, &eos);
+            downDim(&dim);
+            // printf("Current: (%3.1f, %3.1f, %3.1f) - dim: %d\n", tree[current].p[0], tree[current].p[1], tree[current].p[2], dim);
+
+            final_visit = 0;
+        }
+
+        previous = current;
     }
 
-    return best;
+    return 0;
 }
 
 int query_k(float *qp, Point *tree, int dim, int index)
