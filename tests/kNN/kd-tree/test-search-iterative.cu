@@ -167,7 +167,8 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
 TEST(search_iterative, search_iterative_wiki_correctness)
 {
     int wn = 6;
-    struct Point *wiki = (Point *) malloc(wn  * sizeof(Point));
+    struct PointS *wiki = (PointS *) malloc(wn  * sizeof(PointS));
+    struct Point *wiki_out = (Point *) malloc(wn  * sizeof(Point));
 
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
@@ -179,22 +180,22 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(wiki, wn);
-    cashe_indexes(wiki, 0, wn, wn);
+    build_kd_tree(wiki, wn, wiki_out);
+    cashe_indexes(wiki_out, 0, wn, wn);
 
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 2, 3, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 5, 4, 0, 5, 4, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 9, 6, 0, 9, 6, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 4, 7, 0, 4, 7, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 8, 1, 0, 8, 1, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 7, 2, 0, 7, 2, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 10, 10, 0, 9, 6, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 0, 0, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 4, 4, 0, 5, 4, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 3, 2, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 2, 6, 0, 4, 7, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 10, 0, 0, 8, 1, 0));
-    ASSERT_EQ(true, isExpectedPoint(wiki, wn, 0, 10, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 2, 3, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 5, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 9, 6, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 4, 7, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 8, 1, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 7, 2, 0, 7, 2, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 10, 10, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 0, 0, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 4, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 3, 2, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 2, 6, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 10, 0, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 0, 10, 0, 4, 7, 0));
 }
 
 TEST(search_iterative, search_iterative_dfs)

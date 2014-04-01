@@ -7,7 +7,7 @@
 #include <helper_cuda.h>
 #include "gtest/gtest.h"
 
-// void ASSERT_QUERY_EQ(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
+// void ASSERT_QUERY_EQ(struct PointS *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
 // {
 //     float dists[n];
 
@@ -26,7 +26,7 @@
 
 // TEST(kd_search, kd_search_wiki_correctness){
 //     int i, wn = 6;
-//     struct Point *wiki = (Point*) malloc(wn  * sizeof(Point));
+//     struct PointS *wiki = (PointS*) malloc(wn  * sizeof(PointS));
 
 //     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
 //     wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
@@ -57,13 +57,13 @@
 
 // TEST(kd_search, kd_search_timing){
 //     int i, n = 5100000;
-//     Point *points;
-//     points = (Point*) malloc(n  * sizeof(Point));
+//     PointS *points;
+//     points = (PointS*) malloc(n  * sizeof(PointS));
 //     srand(time(NULL));
 
 //     for (i = 0; i < n; ++i)
 //     {
-//         Point t;
+//         PointS t;
 //         t.p[0] = rand();
 //         t.p[1] = rand();
 //         t.p[2] = rand();
@@ -72,7 +72,7 @@
 
 //     cudaDeviceReset();
 //     cudaEvent_t start, stop;
-//     unsigned int bytes = n * (sizeof(Point));
+//     unsigned int bytes = n * (sizeof(PointS));
 //     checkCudaErrors(cudaEventCreate(&start));
 //     checkCudaErrors(cudaEventCreate(&stop));
 //     float elapsed_time=0;
@@ -118,50 +118,50 @@
 //     free(points);
 // }
 
-TEST(kd_search, kd_search_all_points)
-{
-    int i,
-        n = 100000,
-        n_qp = n,
-        k = 1,
-        *result;
-    Point *points;
-    points = (Point *) malloc(n  * sizeof(Point));
-    result = (int *) malloc(n_qp  * k * sizeof(int));
-    srand(time(NULL));
+// TEST(kd_search, kd_search_all_points)
+// {
+//     int i,
+//         n = 100000,
+//         n_qp = n,
+//         k = 1,
+//         *result;
+//     PointS *points;
+//     points = (PointS *) malloc(n  * sizeof(PointS));
+//     result = (int *) malloc(n_qp  * k * sizeof(int));
+//     srand(time(NULL));
 
-    for (i = 0; i < n; ++i)
-    {
-        Point t;
-        t.p[0] = rand();
-        t.p[1] = rand();
-        t.p[2] = rand();
-        points[i] = t;
-    }
+//     for (i = 0; i < n; ++i)
+//     {
+//         PointS t;
+//         t.p[0] = rand();
+//         t.p[1] = rand();
+//         t.p[2] = rand();
+//         points[i] = t;
+//     }
 
-    cudaDeviceReset();
-    build_kd_tree(points, n);
-    store_locations(points, 0, n, n);
+//     cudaDeviceReset();
+//     build_kd_tree(points, n);
+//     store_locations(points, 0, n, n);
 
-    cudaDeviceReset();
-    cudaEvent_t start, stop;
-    unsigned int bytes = n * (sizeof(Point));
-    checkCudaErrors(cudaEventCreate(&start));
-    checkCudaErrors(cudaEventCreate(&stop));
-    float elapsed_time = 0;
+//     cudaDeviceReset();
+//     cudaEvent_t start, stop;
+//     unsigned int bytes = n * (sizeof(PointS));
+//     checkCudaErrors(cudaEventCreate(&start));
+//     checkCudaErrors(cudaEventCreate(&stop));
+//     float elapsed_time = 0;
 
-    checkCudaErrors(cudaEventRecord(start, 0));
+//     checkCudaErrors(cudaEventRecord(start, 0));
 
-    queryAll(points, points, n, n, k, result);
+//     queryAll(points, points, n, n, k, result);
 
-    checkCudaErrors(cudaEventRecord(stop, 0));
-    cudaEventSynchronize(start);
-    cudaEventSynchronize(stop);
-    cudaEventElapsedTime(&elapsed_time, start, stop);
-    elapsed_time = elapsed_time;
-    double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
+//     checkCudaErrors(cudaEventRecord(stop, 0));
+//     cudaEventSynchronize(start);
+//     cudaEventSynchronize(stop);
+//     cudaEventElapsedTime(&elapsed_time, start, stop);
+//     elapsed_time = elapsed_time;
+//     double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
 
-    printf("Searched for n queries, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n", throughput, elapsed_time, n);
+//     printf("Searched for n queries, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n", throughput, elapsed_time, n);
 
-    free(points);
-}
+//     free(points);
+// }
