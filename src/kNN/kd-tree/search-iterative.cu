@@ -95,56 +95,126 @@ void downDim(int *dim)
     }
 }
 
-void explore(int *stack, int *eos, Point *tree, int current)
-{
-    while(current > -1)
-    {
-        push(stack, eos, current);
-        current = tree[current].left;
-    }
-}
-
 int dfs(Point *tree, int n)
 {
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),
 
-        v_eos = -1,
-        *visited = (int *) malloc(n * sizeof visited),
+        final_visit = 0,
 
+        previous = -1,
         current,
-        target,
-        other;
+        right,
+        left;
 
     push(stack, &eos, floor(n / 2));
 
     while(eos > -1)
     {
+        // We use a prev variable to keep track of the previously-traversed node. 
+        // Let’s assume curr is the current node that’s on top of the stack. 
+        // When prev is curr‘s parent, we are traversing down the tree. 
+        // In this case, we try to traverse to curr‘s left child if available (ie, push left child to the stack). 
+        // If it is not available, we look at curr‘s right child. 
+        // If both left and right child do not exist (ie, curr is a leaf node), we print curr‘s value and pop it off the stack.
+
+        // If prev is curr‘s left child, we are traversing up the tree from the left. 
+        // We look at curr‘s right child. If it is available, then traverse down the right child (ie, push right child to the stack), 
+        // otherwise print curr‘s value and pop it off the stack.
+
+        // If prev is curr‘s right child, we are traversing up the tree from the right. 
+        // In this case, we print curr‘s value and pop it off the stack.
+
         current = peek(stack, eos);
-        other = tree[current].left;
-        
-        if (other > -1 && find(visited, v_eos, other) == -1)
+        left = tree[current].left;
+        right = tree[current].right;
+
+        if (previous == left)
         {
-            push(stack, &eos, other);
+            if(right > -1)
+            {
+                push(stack, &eos, right);   
+            }
+            else
+            {
+                final_visit = 1;
+            }
+        }
+        else if (previous == right)
+        {
+            final_visit = 1;
         }
         else
+        {
+            if (left > -1)
+            {
+                push(stack, &eos, left);
+            }
+            else if(right > -1)
+            {
+                push(stack, &eos, right);   
+            }
+            else
+            {
+                final_visit = 1;
+            }
+        }
+
+        if (final_visit)
         {
             current = pop(stack, &eos);
             printf("Current: (%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
 
-            push(visited, &v_eos, current);
-
-            target = tree[current].right;
-
-            if (target > -1)
-            {
-                push(stack, &eos, target);
-            }
+            final_visit = 0;
         }
+
+        previous = current;
     }
 
     return 0;
 }
+
+// int dfs(Point *tree, int n)
+// {
+//     int eos = -1,
+//         *stack = (int *) malloc(n * sizeof stack),
+
+//         v_eos = -1,
+//         *visited = (int *) malloc(n * sizeof visited),
+
+//         current,
+//         target,
+//         other;
+
+//     push(stack, &eos, floor(n / 2));
+
+//     while(eos > -1)
+//     {
+//         current = peek(stack, eos);
+//         other = tree[current].left;
+        
+//         if (other > -1 && find(visited, v_eos, other) == -1)
+//         {
+//             push(stack, &eos, other);
+//         }
+//         else
+//         {
+//             current = pop(stack, &eos);
+//             printf("Current: (%3.1f, %3.1f, %3.1f)\n", tree[current].p[0], tree[current].p[1], tree[current].p[2]);
+
+//             push(visited, &v_eos, current);
+
+//             target = tree[current].right;
+
+//             if (target > -1)
+//             {
+//                 push(stack, &eos, target);
+//             }
+//         }
+//     }
+
+//     return 0;
+// }
 
 int query_a(Point *qp, Point *tree, int n)
 {
