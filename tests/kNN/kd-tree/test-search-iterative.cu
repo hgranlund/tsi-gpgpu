@@ -145,7 +145,7 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
 
     // // int best_fit = nn(query_point, tree, dists, 0, _midpoint(0, n));
     int mid = (int) floor((n) / 2);
-    int best_fit = query_k(query_point, tree, 0, mid);
+    int best_fit = query_a(query_point, tree, n);
 
     float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
     float expected = ex + ey + ez;
@@ -213,29 +213,29 @@ TEST(search_iterative, search_iterative_wiki_correctness)
 //     dfs(wiki, wn);
 // }
 
-TEST(search_iterative, search_iterative_query_a)
-{
-    int wn = 6;
-    struct Point *wiki = (Point *) malloc(wn  * sizeof(Point)),
-                  *qp = (Point *) malloc(sizeof(Point));
+// TEST(search_iterative, search_iterative_query_a)
+// {
+//     int wn = 6;
+//     struct Point *wiki = (Point *) malloc(wn  * sizeof(Point)),
+//                   *qp = (Point *) malloc(sizeof(Point));
 
-    // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
-    wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
-    wiki[1].p[0] = 5, wiki[1].p[1] = 4, wiki[1].p[2] = 0;
-    wiki[2].p[0] = 9, wiki[2].p[1] = 6, wiki[2].p[2] = 0;
-    wiki[3].p[0] = 4, wiki[3].p[1] = 7, wiki[3].p[2] = 0;
-    wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
-    wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
+//     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
+//     wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
+//     wiki[1].p[0] = 5, wiki[1].p[1] = 4, wiki[1].p[2] = 0;
+//     wiki[2].p[0] = 9, wiki[2].p[1] = 6, wiki[2].p[2] = 0;
+//     wiki[3].p[0] = 4, wiki[3].p[1] = 7, wiki[3].p[2] = 0;
+//     wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
+//     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
 
-    // cudaDeviceReset();
-    _build_kd_tree(wiki, wn);
-    // print_t(wiki, 0, 0, wn, wn);
-    printf("\n");
+//     // cudaDeviceReset();
+//     _build_kd_tree(wiki, wn);
+//     print_t(wiki, 0, 0, wn, wn);
+//     printf("\n");
 
-    cashe_indexes(wiki, 0, wn, wn);
+//     cashe_indexes(wiki, 0, wn, wn);
 
-    query_a(qp, wiki, wn);
-}
+//     query_a(qp, wiki, wn);
+// }
 
 TEST(search_iterative, search_iterative_push)
 {

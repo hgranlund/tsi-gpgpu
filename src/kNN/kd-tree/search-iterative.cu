@@ -43,7 +43,9 @@ int pop(int *stack, int *eos)
     {
         (*eos)--;
         return stack[*eos + 1];
-    } else {
+    }
+    else
+    {
         return -1;
     }
 }
@@ -53,7 +55,9 @@ int peek(int *stack, int eos)
     if (eos > -1)
     {
         return stack[eos];
-    } else {
+    }
+    else
+    {
         return -1;
     }
 }
@@ -100,29 +104,29 @@ int dfs(Point *tree, int n)
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),
 
-        final_visit = 0,
+         final_visit = 0,
 
-        previous = -1,
-        current,
-        right,
-        left;
+         previous = -1,
+         current,
+         right,
+         left;
 
     push(stack, &eos, floor(n / 2));
 
-    while(eos > -1)
+    while (eos > -1)
     {
-        // We use a prev variable to keep track of the previously-traversed node. 
-        // Let’s assume curr is the current node that’s on top of the stack. 
-        // When prev is curr‘s parent, we are traversing down the tree. 
-        // In this case, we try to traverse to curr‘s left child if available (ie, push left child to the stack). 
-        // If it is not available, we look at curr‘s right child. 
+        // We use a prev variable to keep track of the previously-traversed node.
+        // Let’s assume curr is the current node that’s on top of the stack.
+        // When prev is curr‘s parent, we are traversing down the tree.
+        // In this case, we try to traverse to curr‘s left child if available (ie, push left child to the stack).
+        // If it is not available, we look at curr‘s right child.
         // If both left and right child do not exist (ie, curr is a leaf node), we print curr‘s value and pop it off the stack.
 
-        // If prev is curr‘s left child, we are traversing up the tree from the left. 
-        // We look at curr‘s right child. If it is available, then traverse down the right child (ie, push right child to the stack), 
+        // If prev is curr‘s left child, we are traversing up the tree from the left.
+        // We look at curr‘s right child. If it is available, then traverse down the right child (ie, push right child to the stack),
         // otherwise print curr‘s value and pop it off the stack.
 
-        // If prev is curr‘s right child, we are traversing up the tree from the right. 
+        // If prev is curr‘s right child, we are traversing up the tree from the right.
         // In this case, we print curr‘s value and pop it off the stack.
 
         current = peek(stack, eos);
@@ -131,9 +135,9 @@ int dfs(Point *tree, int n)
 
         if (previous == left)
         {
-            if(right > -1)
+            if (right > -1)
             {
-                push(stack, &eos, right);   
+                push(stack, &eos, right);
             }
             else
             {
@@ -150,9 +154,9 @@ int dfs(Point *tree, int n)
             {
                 push(stack, &eos, left);
             }
-            else if(right > -1)
+            else if (right > -1)
             {
-                push(stack, &eos, right);   
+                push(stack, &eos, right);
             }
             else
             {
@@ -192,7 +196,7 @@ int dfs(Point *tree, int n)
 //     {
 //         current = peek(stack, eos);
 //         other = tree[current].left;
-        
+
 //         if (other > -1 && find(visited, v_eos, other) == -1)
 //         {
 //             push(stack, &eos, other);
@@ -216,25 +220,27 @@ int dfs(Point *tree, int n)
 //     return 0;
 // }
 
-int query_a(Point *qp, Point *tree, int n)
+int query_a(float *qp, Point *tree, int n)
 {
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),
 
-        final_visit = 0,
-        dim = 0,
+         final_visit = 0,
+         dim = 0,
+         best,
 
-        previous = -1,
-        current,
-        right,
-        left;
+         previous = -1,
+         current,
+         right,
+         left;
 
-    float best_dist = FLT_MAX;
+    float best_dist = FLT_MAX,
+          current_dist;
 
     push(stack, &eos, floor(n / 2));
     upDim(&dim);
 
-    while(eos > -1)
+    while (eos > -1)
     {
         current = peek(stack, eos);
         left = tree[current].left;
@@ -242,10 +248,10 @@ int query_a(Point *qp, Point *tree, int n)
 
         if (previous == left)
         {
-            if(right > -1)
+            if (right > -1)
             {
                 push(stack, &eos, right);
-                upDim(&dim); 
+                upDim(&dim);
             }
             else
             {
@@ -263,7 +269,7 @@ int query_a(Point *qp, Point *tree, int n)
                 push(stack, &eos, left);
                 upDim(&dim);
             }
-            else if(right > -1)
+            else if (right > -1)
             {
                 push(stack, &eos, right);
                 upDim(&dim);
@@ -278,6 +284,14 @@ int query_a(Point *qp, Point *tree, int n)
         {
             current = pop(stack, &eos);
             downDim(&dim);
+
+            current_dist = dist(qp, tree, current);
+
+            if (current_dist < best_dist)
+            {
+                best_dist = current_dist;
+                best = current;
+            }
             // printf("Current: (%3.1f, %3.1f, %3.1f) - dim: %d\n", tree[current].p[0], tree[current].p[1], tree[current].p[2], dim);
 
             final_visit = 0;
@@ -286,7 +300,7 @@ int query_a(Point *qp, Point *tree, int n)
         previous = current;
     }
 
-    return 0;
+    return best;
 }
 
 int query_k(float *qp, Point *tree, int dim, int index)
