@@ -7,6 +7,7 @@
 #include <helper_cuda.h>
 #include "gtest/gtest.h"
 
+#define debug 0
 
 void _swap(struct Point *points, int a, int b)
 {
@@ -16,7 +17,7 @@ void _swap(struct Point *points, int a, int b)
 
 int _midpoint(int lower, int upper)
 {
-    return (int) floor((upper - lower) / 2) + lower;
+    return (int) floor((float)(upper - lower) / 2) + lower;
 }
 
 float _quick_select(int k, struct Point *x, int lower, int upper, int dim)
@@ -95,8 +96,8 @@ void _build_kd_tree(struct Point *x, int n)
         h = ceil(log2((float) (n + 1)) - 1);
     for (i = 0; i < h; ++i)
     {
-        p = pow(2, i);
-        step = (int) floor(n / p);
+        p = pow(2.0, i);
+        step = (int) floor((float)n / p);
 
         for (j = 0; j < p; ++j)
         {
@@ -108,32 +109,38 @@ void _build_kd_tree(struct Point *x, int n)
 
 void print_t(Point *tree, int level, int lower, int upper, int n)
 {
-    if (lower >= upper)
+    if (debug)
     {
-        return;
+        if (lower >= upper)
+        {
+            return;
+        }
+
+        int i, r = floor((float)(upper - lower) / 2) + lower;
+
+        printf("|");
+        for (i = 0; i < level; ++i)
+        {
+            printf("--");
+        }
+        printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
+
+        print_t(tree, 1 + level, lower, r, n);
+        print_t(tree, 1 + level, r + 1, upper, n);
     }
-
-    int i, r = floor((upper - lower) / 2) + lower;
-
-    printf("|");
-    for (i = 0; i < level; ++i)
-    {
-        printf("--");
-    }
-    printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
-
-    print_t(tree, 1 + level, lower, r, n);
-    print_t(tree, 1 + level, r + 1, upper, n);
 }
 
 void _printPointsArray(Point *l, int n, char *s)
 {
-    printf("%10s: [ ", s);
-    for (int i = 0; i < n; ++i)
+    if (debug)
     {
-        printf("%3.1f, ", l[i].p[0]);
+        printf("%10s: [ ", s);
+        for (int i = 0; i < n; ++i)
+        {
+            printf("%3.1f, ", l[i].p[0]);
+        }
+        printf("]\n");
     }
-    printf("]\n");
 }
 
 bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
@@ -144,8 +151,8 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
 
     // // int best_fit = nn(query_point, tree, dists, 0, _midpoint(0, n));
-    int mid = (int) floor((n) / 2);
-    int best_fit = query_a(query_point, tree, n);
+    int mid = (int) floor((float)(n) / 2);
+    int best_fit = query_k(query_point, tree, 0, mid);
 
     float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
     float expected = ex + ey + ez;
@@ -160,7 +167,12 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
 TEST(search_iterative, search_iterative_wiki_correctness)
 {
     int wn = 6;
+<<<<<<< HEAD
     struct Point *wiki = (Point *) malloc(wn  * sizeof(Point));
+=======
+    struct PointS *wiki = (PointS *) malloc(wn  * sizeof(PointS));
+    struct Point *wiki_out = (Point *) malloc(wn  * sizeof(Point));
+>>>>>>> 2f88dee1af476a390b0b0d6ba2216b1101625d44
 
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
@@ -172,7 +184,8 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
 
     cudaDeviceReset();
-    _build_kd_tree(wiki, wn);
+<<<<<<< HEAD
+    build_kd_tree(wiki, wn);
     cashe_indexes(wiki, 0, wn, wn);
 
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 2, 3, 0, 2, 3, 0));
@@ -213,29 +226,69 @@ TEST(search_iterative, search_iterative_wiki_correctness)
 //     dfs(wiki, wn);
 // }
 
-// TEST(search_iterative, search_iterative_query_a)
-// {
-//     int wn = 6;
-//     struct Point *wiki = (Point *) malloc(wn  * sizeof(Point)),
-//                   *qp = (Point *) malloc(sizeof(Point));
+TEST(search_iterative, search_iterative_query_a)
+{
+    int wn = 6;
+    struct Point *wiki = (Point *) malloc(wn  * sizeof(Point)),
+                  *qp = (Point *) malloc(sizeof(Point));
+=======
+    build_kd_tree(wiki, wn, wiki_out);
+    cashe_indexes(wiki_out, 0, wn, wn);
 
-//     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
-//     wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
-//     wiki[1].p[0] = 5, wiki[1].p[1] = 4, wiki[1].p[2] = 0;
-//     wiki[2].p[0] = 9, wiki[2].p[1] = 6, wiki[2].p[2] = 0;
-//     wiki[3].p[0] = 4, wiki[3].p[1] = 7, wiki[3].p[2] = 0;
-//     wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
-//     wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 2, 3, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 5, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 9, 6, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 4, 7, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 8, 1, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 7, 2, 0, 7, 2, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 10, 10, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 0, 0, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 4, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 3, 2, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 2, 6, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 10, 0, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(wiki_out, wn, 0, 10, 0, 4, 7, 0));
 
-//     // cudaDeviceReset();
-//     _build_kd_tree(wiki, wn);
-//     print_t(wiki, 0, 0, wn, wn);
-//     printf("\n");
+    free(wiki);
+    free(wiki_out);
+}
 
-//     cashe_indexes(wiki, 0, wn, wn);
+TEST(search_iterative, search_iterative_dfs)
+{
+    int wn = 6;
+    struct Point *wiki = (Point *) malloc(wn  * sizeof(Point));
+>>>>>>> 2f88dee1af476a390b0b0d6ba2216b1101625d44
 
-//     query_a(qp, wiki, wn);
-// }
+    // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
+    wiki[0].p[0] = 2, wiki[0].p[1] = 3, wiki[0].p[2] = 0;
+    wiki[1].p[0] = 5, wiki[1].p[1] = 4, wiki[1].p[2] = 0;
+    wiki[2].p[0] = 9, wiki[2].p[1] = 6, wiki[2].p[2] = 0;
+    wiki[3].p[0] = 4, wiki[3].p[1] = 7, wiki[3].p[2] = 0;
+    wiki[4].p[0] = 8, wiki[4].p[1] = 1, wiki[4].p[2] = 0;
+    wiki[5].p[0] = 7, wiki[5].p[1] = 2, wiki[5].p[2] = 0;
+
+    // cudaDeviceReset();
+    _build_kd_tree(wiki, wn);
+<<<<<<< HEAD
+    // print_t(wiki, 0, 0, wn, wn);
+    printf("\n");
+
+    cashe_indexes(wiki, 0, wn, wn);
+
+    query_a(qp, wiki, wn);
+=======
+    if (debug)
+    {
+        print_t(wiki, 0, 0, wn, wn);
+        printf("\n");
+    }
+
+    cashe_indexes(wiki, 0, wn, wn);
+
+    dfs(wiki, wn);
+    free(wiki);
+>>>>>>> 2f88dee1af476a390b0b0d6ba2216b1101625d44
+}
 
 TEST(search_iterative, search_iterative_push)
 {
