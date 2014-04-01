@@ -111,7 +111,7 @@ int dfs(Point *tree, int n)
          right,
          left;
 
-    push(stack, &eos, floor(n / 2));
+    push(stack, &eos, (int) floor(n / 2));
 
     while (eos > -1)
     {
@@ -237,7 +237,7 @@ int query_a(float *qp, Point *tree, int n)
     float best_dist = FLT_MAX,
           current_dist;
 
-    push(stack, &eos, floor(n / 2));
+    push(stack, &eos, (int) floor(n / 2));
     upDim(&dim);
 
     while (eos > -1)
