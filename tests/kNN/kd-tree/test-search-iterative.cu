@@ -16,7 +16,7 @@ void _swap(struct Point *points, int a, int b)
 
 int _midpoint(int lower, int upper)
 {
-    return (int) floor((upper - lower) / 2) + lower;
+    return (int) ((upper - lower) / 2) + lower;
 }
 
 float _quick_select(int k, struct Point *x, int lower, int upper, int dim)
@@ -95,8 +95,8 @@ void _build_kd_tree(struct Point *x, int n)
         h = ceil(log2((float) (n + 1)) - 1);
     for (i = 0; i < h; ++i)
     {
-        p = (int) pow(2, i);
-        step = (int) floor(n / p);
+        p = (int) pow(2.0, i);
+        step = (int) (n / p);
 
         for (j = 0; j < p; ++j)
         {
@@ -113,7 +113,7 @@ void print_t(Point *tree, int level, int lower, int upper, int n)
         return;
     }
 
-    int i, r = floor((upper - lower) / 2) + lower;
+    int i, r = ((upper - lower) / 2) + lower;
 
     printf("|");
     for (i = 0; i < level; ++i)
@@ -144,7 +144,7 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
 
     // // int best_fit = nn(query_point, tree, dists, 0, _midpoint(0, n));
-    int mid = (int) floor((n) / 2);
+    int mid = (int) ((n) / 2);
     int best_fit = query_a(query_point, tree, n);
 
     float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
