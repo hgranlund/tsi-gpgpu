@@ -198,10 +198,11 @@ void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, in
         block_step++;
     }
     query_points += block_offset;
-    // printf("blockIdx: %d, threadIdx: %d, gridDim: %d, blockDim: %d\n", blockIdx.x, threadIdx.x, gridDim.x, blockDim.x);
+    result += block_offset;
     while (tid < block_step)
     {
         result[tid] = cuSearch(query_points[tid], tree, stack, n_tree, k);
+        // printf("tid = %d, result = %d\n", tid, result[tid]);
         tid += blockDim.x;
     }
 }
@@ -228,7 +229,7 @@ void queryAll(Point *h_query_points, Point *h_tree, int n_qp, int n_tree, int k,
     checkCudaErrors(cudaMemcpy(d_tree, h_tree, n_tree * sizeof(Point), cudaMemcpyHostToDevice));
 
     getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
-    dQueryAll<200> <<< numBlocks, numThreads>>>(d_tree, d_tree, n_qp, n_tree, k, d_result);
+    dQueryAll<100> <<< numBlocks, numThreads>>>(d_tree, d_tree, n_qp, n_tree, k, d_result);
 
     checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaFree(d_tree));
