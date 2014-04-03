@@ -13,7 +13,7 @@
 
 
 __global__
-void convertPoints(Point *points, PointS *points_small, int n)
+void convertPoints( PointS *points_small, int n, Point *points)
 {
     int
     block_stride = n / gridDim.x,
@@ -158,9 +158,10 @@ void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
     checkCudaErrors(
         cudaMalloc(&d_points_out, n * sizeof(Point)));
 
-    convertPoints <<< 1, 512>>>(d_points_out, d_points, n);
+    convertPoints <<< 1, 512>>>(d_points, n, d_points_out);
     checkCudaErrors(
         cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
+
     checkCudaErrors(cudaFree(d_points));
 }
 
