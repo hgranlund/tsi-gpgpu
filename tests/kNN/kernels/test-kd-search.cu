@@ -7,6 +7,15 @@
 #include <helper_cuda.h>
 #include "gtest/gtest.h"
 
+
+#define debug 0
+
+#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
+#define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+#define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
+
+
 // void ASSERT_QUERY_EQ(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
 // {
 
@@ -45,13 +54,14 @@ TEST(kd_search, kd_search_wiki_correctness)
     store_locations(wiki_out, 0, wn, wn);
     queryAll(wiki_out, wiki_out, wn, wn, 1, result);
 
-    for (int i = 0; i < wn; ++i)
-    {
-        printf("%d, ", result[i]);
-        // printf("(%3.1f, %3.1f, %3.1f)\n", wiki_out[result[i]].p[0], wiki_out[result[i]].p[1], wiki_out[result[i]].p[2]);
-    }
-    printf("\n");
-
+    // for (int i = 0; i < wn; ++i)
+    // {
+    // printf("%d, ", result[i]);
+    // printf("(%3.1f, %3.1f, %3.1f)\n", wiki_out[result[i]].p[0], wiki_out[result[i]].p[1], wiki_out[result[i]].p[2]);
+    // }
+    // printf("\n");
+    free(wiki);
+    free(wiki_out);
     // ASSERT_QUERY_EQ(wiki_out, wn, 2, 3, 0, 2, 3, 0);
     // ASSERT_QUERY_EQ(wiki_out, wn, 5, 4, 0, 5, 4, 0);
     // ASSERT_QUERY_EQ(wiki_out, wn, 9, 6, 0, 9, 6, 0);
@@ -67,68 +77,71 @@ TEST(kd_search, kd_search_wiki_correctness)
     // ASSERT_QUERY_EQ(wiki_out, wn, 0, 10, 0, 4, 7, 0);
 }
 
-// TEST(kd_search, kd_search_timing){
-//     int i, n = 5100000;
-//     Point *points;
-//     points = (Point*) malloc(n  * sizeof(Point));
-//     srand(time(NULL));
+TEST(kd_search, kd_search_timing)
+{
+    int i, n, k = 1;
 
-//     for (i = 0; i < n; ++i)
-//     {
-//         Point t;
-//         t.p[0] = rand();
-//         t.p[1] = rand();
-//         t.p[2] = rand();
-//         points[i] = t;
-//     }
 
-//     cudaDeviceReset();
-//     cudaEvent_t start, stop;
-//     unsigned int bytes = n * (sizeof(Point));
-//     checkCudaErrors(cudaEventCreate(&start));
-//     checkCudaErrors(cudaEventCreate(&stop));
-//     float elapsed_time=0;
+    for (n = 1000000; n <= 1000000; n += 1000000)
+    {
+        PointS *points = (PointS *) malloc(n  * sizeof(PointS));
+        Point *points_out = (Point *) malloc(n  * sizeof(Point));
+        srand(time(NULL));
 
-//     checkCudaErrors(cudaEventRecord(start, 0));
+        for (i = 0; i < n; ++i)
+        {
+            PointS t;
+            t.p[0] = rand() % 1000;
+            t.p[1] = rand() % 1000;
+            t.p[2] = rand() % 1000;
+            points[i] = t;
+        }
 
-//     build_kd_tree(points, n);
 
-//     checkCudaErrors(cudaEventRecord(stop, 0));
-//     cudaEventSynchronize(start);
-//     cudaEventSynchronize(stop);
-//     cudaEventElapsedTime(&elapsed_time, start, stop);
-//     elapsed_time = elapsed_time;
-//     double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+        build_kd_tree(points, n, points_out);
 
-//     // printf("Built kd-tree, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n",throughput, elapsed_time, n);
 
-//     store_locations(points, 0, n, n);
 
-//     int test_runs = 10000;
-//     float **query_data = (float**) malloc(test_runs * sizeof *query_data);
+        store_locations(points_out, 0, n, n);
 
-//     for (i = 0; i < test_runs; i++)
-//     {
-//         query_data[i] = (float*) malloc(3 * sizeof *query_data[i]);
-//         query_data[i][0] = rand() % 1000;
-//         query_data[i][1] = rand() % 1000;
-//         query_data[i][2] = rand() % 1000;
-//     }
+        int test_runs = 1;
+        Point *query_data = (Point *) malloc(test_runs * sizeof(Point));
+        int *result = (int *) malloc(test_runs * k * sizeof(int));
 
-//     for (i = 0; i < test_runs; i++) {
-//         // nn(query_data[i], points, dists, 0, midpoint(0, n));
-//         int mid = (int) floor((n) / 2);
-//         nn(query_data[i], points, 0, mid);
-//     }
+        for (i = 0; i < test_runs; i++)
+        {
+            Point point;
+            point.p[0] = rand() % 1000;
+            point.p[1] = rand() % 1000;
+            point.p[2] = rand() % 1000;
+            query_data[i] = point;
+        }
+        // printf("Build finish...\n");
+        cudaDeviceReset();
+        cudaEvent_t start, stop;
+        unsigned int bytes = n * (sizeof(Point));
+        checkCudaErrors(cudaEventCreate(&start));
+        checkCudaErrors(cudaEventCreate(&stop));
+        float elapsed_time = 0;
 
-//     for (i = 0; i < test_runs; ++i)
-//     {
-//         free(query_data[i]);
-//     }
-//     free(query_data);
+        checkCudaErrors(cudaEventRecord(start, 0));
 
-//     free(points);
-// }
+        queryAll(query_data, points_out, test_runs, n, k, result);
+
+        checkCudaErrors(cudaEventRecord(stop, 0));
+        cudaEventSynchronize(start);
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&elapsed_time, start, stop);
+        elapsed_time = elapsed_time;
+        double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
+        debugf("Search n query points, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n", throughput, elapsed_time, n);
+
+        free(query_data);
+        free(points_out);
+        free(points);
+        cudaDeviceReset();
+    };
+};
 
 // TEST(kd_search, kd_search_all_points)
 // {
