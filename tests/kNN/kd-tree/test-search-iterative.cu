@@ -8,6 +8,25 @@
 #include "gtest/gtest.h"
 
 
+
+int store_locations_(Point *tree, int lower, int upper, int n)
+{
+    int r;
+
+    if (lower >= upper)
+    {
+        return -1;
+    }
+
+    r = (int) ((upper - lower) / 2) + lower;
+
+    tree[r].left = store_locations_(tree, lower, r, n);
+    tree[r].right = store_locations_(tree, r + 1, upper, n);
+
+    return r;
+}
+
+
 void _swap(struct Point *points, int a, int b)
 {
     struct Point t = points[a];
@@ -190,10 +209,13 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     ASSERT_EQ(true, isExpectedPoint(wiki, wn, 0, 10, 0, 4, 7, 0));
 }
 
-// TEST(kd_search, kd_search_timing){
-//     int i, n = 5100000;
+// TEST(kd_search, kd_search_timing_cpu)
+// {
+//     int i, n = 1000000;
 //     PointS *points;
-//     points = (PointS*) malloc(n  * sizeof(PointS));
+//     Point *points_out;
+//     points = (PointS *) malloc(n  * sizeof(PointS));
+//     points_out = (Point *) malloc(n  * sizeof(Point));
 //     srand(time(NULL));
 
 //     for (i = 0; i < n; ++i)
@@ -206,41 +228,48 @@ TEST(search_iterative, search_iterative_wiki_correctness)
 //     }
 
 //     cudaDeviceReset();
-//     cudaEvent_t start, stop;
-//     unsigned int bytes = n * (sizeof(PointS));
-//     checkCudaErrors(cudaEventCreate(&start));
-//     checkCudaErrors(cudaEventCreate(&stop));
-//     float elapsed_time=0;
 
-//     checkCudaErrors(cudaEventRecord(start, 0));
 
-//     build_kd_tree(points, n);
 
-//     checkCudaErrors(cudaEventRecord(stop, 0));
-//     cudaEventSynchronize(start);
-//     cudaEventSynchronize(stop);
-//     cudaEventElapsedTime(&elapsed_time, start, stop);
-//     elapsed_time = elapsed_time;
-//     double throughput = 1.0e-9 * ((double)bytes)/(elapsed_time* 1e-3);
+//     build_kd_tree(points, n, points_out);
 
-//     // printf("Built kd-tree, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n",throughput, elapsed_time, n);
 
-//     store_locations(points, 0, n, n);
+//     store_locations_(points_out, 0, n, n);
 
-//     int test_runs = 10000;
-//     float **query_data = (float**) malloc(test_runs * sizeof *query_data);
+//     int test_runs = 1;
+//     float **query_data = (float **) malloc(test_runs * sizeof * query_data);
 
 //     for (i = 0; i < test_runs; i++)
 //     {
-//         query_data[i] = (float*) malloc(3 * sizeof *query_data[i]);
+//         query_data[i] = (float *) malloc(3 * sizeof * query_data[i]);
 //         query_data[i][0] = rand() % 1000;
 //         query_data[i][1] = rand() % 1000;
 //         query_data[i][2] = rand() % 1000;
 //     }
 
-//     for (i = 0; i < test_runs; i++) {
-//         nn(query_data[i], points, 0, mid);
+//     cudaEvent_t start, stop;
+//     unsigned int bytes = n * (sizeof(Point) + sizeof(int));
+//     checkCudaErrors(cudaEventCreate(&start));
+//     checkCudaErrors(cudaEventCreate(&stop));
+//     float elapsed_time = 0;
+
+//     checkCudaErrors(cudaEventRecord(start, 0));
+
+//     for (i = 0; i < test_runs; i++)
+//     {
+//         query_a(query_data[i], points_out,  n);
 //     }
+
+
+//     checkCudaErrors(cudaEventRecord(stop, 0));
+//     cudaEventSynchronize(start);
+//     cudaEventSynchronize(stop);
+//     cudaEventElapsedTime(&elapsed_time, start, stop);
+//     elapsed_time = elapsed_time ;
+//     double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
+//     printf("query_a, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+//            throughput, elapsed_time, n, 1);
+
 
 //     for (i = 0; i < test_runs; ++i)
 //     {
