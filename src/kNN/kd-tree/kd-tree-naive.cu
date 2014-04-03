@@ -163,6 +163,7 @@ void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
         cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
     checkCudaErrors(cudaFree(d_points));
+    checkCudaErrors(cudaFree(d_steps));
 }
 
 
