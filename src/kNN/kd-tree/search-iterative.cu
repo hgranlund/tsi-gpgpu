@@ -14,7 +14,7 @@ int cashe_indexes(Point *tree, int lower, int upper, int n)
         return -1;
     }
 
-    r = (int) floor((upper - lower) / 2) + lower;
+    r = (int) ((upper - lower) / 2) + lower;
 
     tree[r].left = cashe_indexes(tree, lower, r, n);
     tree[r].right = cashe_indexes(tree, r + 1, upper, n);
@@ -111,7 +111,7 @@ int dfs(Point *tree, int n)
          right,
          left;
 
-    push(stack, &eos, (int) floor(n / 2));
+    push(stack, &eos, (int) (n / 2));
 
     while (eos > -1)
     {
@@ -190,7 +190,7 @@ int dfs(Point *tree, int n)
 //         target,
 //         other;
 
-//     push(stack, &eos, floor(n / 2));
+//     push(stack, &eos, (n / 2));
 
 //     while(eos > -1)
 //     {
@@ -237,7 +237,7 @@ int query_a(float *qp, Point *tree, int n)
     float best_dist = FLT_MAX,
           current_dist;
 
-    push(stack, &eos, (int) floor(n / 2));
+    push(stack, &eos, (int) (n / 2));
     upDim(&dim);
 
     while (eos > -1)
