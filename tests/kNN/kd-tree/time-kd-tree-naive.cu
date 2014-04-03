@@ -142,6 +142,7 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
+        cudaDeviceReset();
         PointS *points;
         Point *points_out;
         points_out = (Point *) malloc(n  * sizeof(Point));
@@ -155,8 +156,6 @@ int main(int argc, char const *argv[])
         {
             populatePoints(points, n);
         }
-        build_kd_tree(points, n, points_out); //warmup
-        cudaDeviceReset();
         cudaEvent_t start, stop;
         unsigned int bytes = n * (sizeof(PointS));
         checkCudaErrors(cudaEventCreate(&start));
