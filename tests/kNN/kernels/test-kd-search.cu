@@ -82,7 +82,7 @@ TEST(kd_search, kd_search_timing)
     int i, n, k = 1;
 
 
-    for (n = 1000000; n <= 1000000; n += 1000000)
+    for (n = 100000; n <= 100000; n += 250000)
     {
         PointS *points = (PointS *) malloc(n  * sizeof(PointS));
         Point *points_out = (Point *) malloc(n  * sizeof(Point));
@@ -97,14 +97,11 @@ TEST(kd_search, kd_search_timing)
             points[i] = t;
         }
 
-
         build_kd_tree(points, n, points_out);
-
-
 
         store_locations(points_out, 0, n, n);
 
-        int test_runs = 1;
+        int test_runs = n;
         Point *query_data = (Point *) malloc(test_runs * sizeof(Point));
         int *result = (int *) malloc(test_runs * k * sizeof(int));
 
@@ -116,7 +113,7 @@ TEST(kd_search, kd_search_timing)
             point.p[2] = rand() % 1000;
             query_data[i] = point;
         }
-        // printf("Build finish...\n");
+        printf("Build finish...\n");
         cudaDeviceReset();
         cudaEvent_t start, stop;
         unsigned int bytes = n * (sizeof(Point));
@@ -134,7 +131,7 @@ TEST(kd_search, kd_search_timing)
         cudaEventElapsedTime(&elapsed_time, start, stop);
         elapsed_time = elapsed_time;
         double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
-        debugf("Search n query points, throughput = %.4f GB/s, time = %.5f ms, n = %u elements\n", throughput, elapsed_time, n);
+        printf("Search n query points, throughput = %.4f GB/s, time = %.5f ms, n = %u elements, query_points = %d\n", throughput, elapsed_time, n, test_runs);
 
         free(query_data);
         free(points_out);
