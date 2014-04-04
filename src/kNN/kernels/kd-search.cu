@@ -245,7 +245,7 @@ void queryAll(Point *h_query_points, Point *h_tree, int n_qp, int n_tree, int k,
     checkCudaErrors(cudaMemcpy(d_tree, h_tree, n_tree * sizeof(Point), cudaMemcpyHostToDevice));
 
     getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
-    dQueryAll<150> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
+    dQueryAll<50> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
 
     checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaFree(d_tree));
