@@ -211,8 +211,7 @@ void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, in
     result += block_offset * k;
     while (tid < block_step)
     {
-
-        result[tid] = cuSearch(query_points[tid], tree, stack, n_tree, k);
+        result[tid] = cuSearch(query_points[tid], tree, l_stack, n_tree, k);
         // printf("tid = %d, result = %d, query_point = %3.1f\n", tid, result[tid], query_points[tid].p[0]);
         tid += blockDim.x;
     }
