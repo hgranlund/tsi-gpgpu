@@ -2,7 +2,7 @@
 #define _KD_SEARCH_
 #include "point.h"
 
-#define THREADS_PER_BLOCK_SEARCH 1U
+#define THREADS_PER_BLOCK_SEARCH 32U
 #define MAX_BLOCK_DIM_SIZE 65535U
 
 int store_locations(Point *tree, int lower, int upper, int n);
