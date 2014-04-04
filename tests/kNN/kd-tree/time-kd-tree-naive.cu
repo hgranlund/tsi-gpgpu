@@ -44,60 +44,6 @@ void readPoints(const char *file_path, int n, PointS *points)
     fclose(file);
 }
 
-
-__host__  void h_printPointsArray__(PointS *l, int n, char *s, int l_debug = 0)
-{
-    if (debug || l_debug)
-    {
-        printf("%10s: [ ", s);
-        for (int i = 0; i < n; ++i)
-        {
-            printf("%3.1f, ", l[i].p[0]);
-        }
-        printf("]\n");
-    }
-}
-
-
-int h_index(int i, int j, int n)
-{
-    return i + j * n;
-}
-
-void h_swap(PointS *points, int a, int b, int n)
-{
-    PointS t = points[a];
-    points[a] = points[b], points[b] = t;
-}
-
-int midpoint(int lower, int upper)
-{
-    return (int) floor((float)(upper - lower) / 2) + lower;
-}
-
-void print_tree(PointS *tree, int level, int lower, int upper, int n)
-{
-    if (debug)
-    {
-        if (lower >= upper)
-        {
-            return;
-        }
-
-        int i, r = midpoint(lower, upper);
-
-        printf("|");
-        for (i = 0; i < level; ++i)
-        {
-            printf("--");
-        }
-        printf("(%3.1f, %3.1f, %3.1f)\n", tree[r].p[0], tree[r].p[1], tree[r].p[2]);
-
-        print_tree(tree, 1 + level, lower, r, n);
-        print_tree(tree, 1 + level, r + 1, upper, n);
-    }
-}
-
 void populatePoints(PointS *points, int n)
 {
     srand(time(NULL));
@@ -157,7 +103,6 @@ int main(int argc, char const *argv[])
             populatePoints(points, n);
         }
         cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(PointS));
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         float elapsed_time = 0;
@@ -170,12 +115,13 @@ int main(int argc, char const *argv[])
         cudaEventSynchronize(start);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&elapsed_time, start, stop);
-        elapsed_time = elapsed_time ;
-        double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
-        printf("build_kd_tree_naive, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
-               throughput, elapsed_time, n, 1);
+
+        printf("build_kd_tree_naive,  Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+               elapsed_time, n, 1);
+
         free(points);
         free(points_out);
+        sleep(5);
     }
     return 0;
 
