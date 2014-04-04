@@ -97,11 +97,8 @@ __device__
 int cuSearch(Point qp, Point *tree, int *stack, int n, int k)
 {
     int eos = -1,
-        // *stack = (int *) malloc(2 * log2((float) n) * sizeof stack),
-
         dim = 0,
         best = -1,
-
         previous = -1,
         current,
         target,
@@ -118,7 +115,6 @@ int cuSearch(Point qp, Point *tree, int *stack, int n, int k)
         current = cuPeek(stack, eos);
         target = tree[current].left;
         other = tree[current].right;
-
         current_dist = cuDist(qp, tree, current);
 
         if (current_dist < best_dist)
@@ -176,16 +172,8 @@ int cuSearch(Point qp, Point *tree, int *stack, int n, int k)
     return best;
 }
 
-// __device__
-// int cuSearch(Point qp, Point *tree, int *stack, int n, int k)
-// {
-//     printf("block/thread = %2d/%2d, qp = (%4.0f, %4.0f, %4.0f), n= %2d, k = %2d\n", blockIdx.x, threadIdx.x, qp.p[0], qp.p[1], qp.p[2], n, k );
-//     return 0;
-// }
-
 template <int thread_stack_size>
-__global__
-void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, int *result)
+__global__ void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
         rest = n_qp % gridDim.x,
@@ -202,11 +190,7 @@ void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, in
         block_offset += rest - (gridDim.x - blockIdx.x);
         block_step++;
     }
-    // if (tid == 0)
-    // {
-    //     printf("block/tread = %d/%d, block_offset = %d, blockStep = %d, bloks/threads = %d/%d\n", blockIdx.x, threadIdx.x, block_offset, block_step, gridDim.x,
-    //            blockDim.x  );
-    // }
+
     query_points += block_offset;
     result += block_offset * k;
     while (tid < block_step)
@@ -231,12 +215,6 @@ void queryAll(Point *h_query_points, Point *h_tree, int n_qp, int n_tree, int k,
     int *d_result, numBlocks, numThreads;
     Point *d_tree, *d_query_points;
 
-    // printf("query points :[");
-    // for (int i = 0; i < n_qp; ++i)
-    // {
-    //     printf("(%3.1f, %3.1f, %3.1f)\n", h_query_points[i].p[0], h_query_points[i].p[1], h_query_points[i].p[2]);
-    // }
-    // printf("\n" );
     checkCudaErrors(cudaMalloc(&d_result, n_qp * k  * sizeof(int)));
     checkCudaErrors(cudaMalloc(&d_query_points, n_qp * sizeof(Point)));
     checkCudaErrors(cudaMalloc(&d_tree, n_tree * sizeof(Point)));
