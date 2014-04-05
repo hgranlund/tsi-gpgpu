@@ -1,7 +1,6 @@
 #include "kd-tree-naive.cuh"
 #include "knn_gpgpu.h"
 #include "point.h"
-
 #include "stdio.h"
 #include "helper_cuda.h"
 #include "gtest/gtest.h"
@@ -121,9 +120,7 @@ int main(int argc, char const *argv[])
 
         free(points);
         free(points_out);
-        sleep(5);
     }
     return 0;
-
 }
 
