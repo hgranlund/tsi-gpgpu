@@ -12,6 +12,23 @@
 #include "common-debug.cuh"
 
 
+int store_locations(Point *tree, int lower, int upper, int n)
+{
+    int r;
+
+    if (lower >= upper)
+    {
+        return -1;
+    }
+
+    r = (int) ((upper - lower) / 2) + lower;
+
+    tree[r].left = store_locations(tree, lower, r, n);
+    tree[r].right = store_locations(tree, r + 1, upper, n);
+
+    return r;
+}
+
 __global__
 void convertPoints( PointS *points_small, int n, Point *points)
 {
@@ -38,25 +55,6 @@ void convertPoints( PointS *points_small, int n, Point *points)
         tid += blockDim.x;
     }
 }
-
-
-// int cashe_indexes(Point *tree, int lower, int upper, int n)
-// {
-//     int r;
-
-//     if (lower >= upper)
-//     {
-//         return -1;
-//     }
-
-//     r = (int) floor((float)(upper - lower) / 2) + lower;
-
-//     tree[r].left = cashe_indexes(tree, lower, r, n);
-//     tree[r].right = cashe_indexes(tree, r + 1, upper, n);
-
-//     return r;
-// }
-
 
 void nextStep(int *steps_new, int *steps_old, int n)
 {
@@ -158,9 +156,11 @@ void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
     checkCudaErrors(
         cudaMalloc(&d_points_out, n * sizeof(Point)));
 
-    convertPoints <<< 1, 512>>>(d_points, n, d_points_out);
+    convertPoints <<< max(1, n / 512), 512 >>> (d_points, n, d_points_out);
     checkCudaErrors(
         cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
+
+    store_locations(h_points_out, 0, n, n);
 
     checkCudaErrors(cudaFree(d_points));
     checkCudaErrors(cudaFree(d_steps));

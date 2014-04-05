@@ -6,22 +6,7 @@
 
 #include "kd-search.cuh"
 
-int store_locations(Point *tree, int lower, int upper, int n)
-{
-    int r;
 
-    if (lower >= upper)
-    {
-        return -1;
-    }
-
-    r = (int) ((upper - lower) / 2) + lower;
-
-    tree[r].left = store_locations(tree, lower, r, n);
-    tree[r].right = store_locations(tree, r + 1, upper, n);
-
-    return r;
-}
 
 __device__
 float cuDist(Point qp, Point *points, int x)

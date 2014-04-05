@@ -82,7 +82,7 @@ TEST(kd_search, kd_search_timing)
     int i, n, k = 1;
 
 
-    for (n = 100000; n <= 100000; n += 250000)
+    for (n = 10000; n <= 10000; n += 250000)
     {
         PointS *points = (PointS *) malloc(n  * sizeof(PointS));
         Point *points_out = (Point *) malloc(n  * sizeof(Point));
@@ -98,8 +98,6 @@ TEST(kd_search, kd_search_timing)
         }
 
         build_kd_tree(points, n, points_out);
-
-        store_locations(points_out, 0, n, n);
 
         int test_runs = n;
         Point *query_data = (Point *) malloc(test_runs * sizeof(Point));
