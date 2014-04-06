@@ -163,7 +163,6 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
     query_point[0] = qx, query_point[1] = qy, query_point[2] = qz;
 
     // // int best_fit = nn(query_point, tree, dists, 0, _midpoint(0, n));
-    int mid = (int) ((n) / 2);
     int best_fit = query_a(query_point, tree, n);
 
     float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
