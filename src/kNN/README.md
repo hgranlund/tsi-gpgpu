@@ -257,7 +257,7 @@ Tuning the algorithm to alternate between radix select and quick select, elimina
 V1.3 Release notes
 ------------------
 
-Version 1.3 introduces a couple of new features. Firstly the tree-building algorithm has been updated to also cache the location of the different children of each node in the tree. A small bug related to partition of the point-cloud list was also ironed out. This gives a three building algorithm whit the following runtime results:
+Version 1.3 introduces a couple of new features. Firstly the tree-building algorithm has been updated to also cache the location of the different children of each node in the tree. A small bug related to partition of the point-cloud list was also ironed out. This gives a tree building algorithm whit the following runtime results, comparable with the previous versions of this implementation:
 
 ![construction_v13_gtx_560](./images/construction_v13_gtx_560.png)
 
@@ -269,7 +269,7 @@ Unfortunately, this early parallelization gave us quite unstable results. The da
 
 ![scatter_n_queries_v13_gtx_560](./images/scatter_n_queries_v13_gtx_560.png)
 
-Some instability would be expected, as the amount of pruning that can be achieved when searching for points in the kd-tree is dependent on the value you search for, but this amount of spread was unexpected. This behavior should be investigated further.
+Some instability would be expected, as the amount of pruning that can be achieved when searching for points in the kd-tree is dependent on the value you search for, but this amount of spread was unexpected. This behavior should be investigated further, as it seems to be indicating some kind of implementation error.
 
 Combining the results from the search and the tree-building, gives the following runtime for a sequence of building and N queries:
 
@@ -279,4 +279,4 @@ Combining the results from the search and the tree-building, gives the following
 Work-plan for next week
 -----------------------
 
-The three-building algorithm is improving, but still more optimization can be done. Given the optimized serial implementation of the search algorithm, it is ready for parallelization when searching for a large number of query-points. These two tasks will run as parallel tracks the next week.
+Major improvements of the tree-building implementation is not to bee expected, so further work will focus on improving existing code through refactoring. The unstable behavior of the parallel search should be studied in more detail, in conjunction with expanding it to work with larger values of k, and improving the memory usage of this algorithm. Finally it might be beneficial to spend some time on getting the project to build at TSI HQ, so version 1.3 can be studied in more detail by Alok.
