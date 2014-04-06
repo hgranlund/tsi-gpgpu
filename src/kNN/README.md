@@ -1,7 +1,7 @@
 The quest for a fast KNN search
 ===============================
 
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm.
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the [release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v13-release-notes) for the most recent version of this project.
 
 Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
 
