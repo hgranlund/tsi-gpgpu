@@ -38,3 +38,4 @@ src/kNN/kd-tree/kd-tree
 src/kNN/kd-tree/kd-tree-iterative
 src/kNN/kd-tree/kd-tree-naive
 src/kNN/kd-tree/knn-serial
+release/
