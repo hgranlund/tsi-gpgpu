@@ -247,17 +247,23 @@ We also see a couple of large "jumps" in the graph. This happens when the number
 
 Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
 
-
-
-
-
-
-
 #### Further work
 
 * Look at memory optimization.
 * Improve utiliti methods like: accumulateindex, minReduce.
 * Forloop Unrolling.
+
+
+V1.3 Release notes
+------------------
+
+![construction_v13_gtx_560](./images/construction_v13_gtx_560.png)
+
+![n_queries_v13_gtx_560](./images/n_queries_v13_gtx_560.png)
+![scatter_n_queries_v13_gtx_560](./images/scatter_n_queries_v13_gtx_560.png)
+
+![constructionand_n_queries_v13_gtx_560](./images/constructionand_n_queries_v13_gtx_560.png)
+
 
 Work-plan for next week
 -----------------------
