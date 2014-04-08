@@ -12,7 +12,7 @@
 #include "common-debug.cuh"
 
 
-int store_locations(Point *tree, int lower, int upper, int n)
+int store_locations(struct Point *tree, int lower, int upper, int n)
 {
     int r;
 
@@ -30,14 +30,14 @@ int store_locations(Point *tree, int lower, int upper, int n)
 }
 
 __global__
-void convertPoints( PointS *points_small, int n, Point *points)
+void convertPoints(struct PointS *points_small, int n, struct Point *points)
 {
     int
     block_stride = n / gridDim.x,
     block_offset = block_stride * blockIdx.x,
     tid = threadIdx.x,
     rest = n % gridDim.x;
-    PointS point_s;
+    struct PointS point_s;
     if (rest >= gridDim.x - blockIdx.x)
     {
         block_offset += rest - (gridDim.x - blockIdx.x);
@@ -46,7 +46,7 @@ void convertPoints( PointS *points_small, int n, Point *points)
     points += block_offset;
     while (tid < block_stride)
     {
-        Point point;
+        struct Point point;
         point_s = points_small[tid];
         point.p[0] = point_s.p[0];
         point.p[1] = point_s.p[1];
@@ -78,7 +78,7 @@ void swap_pointer(int **a, int **b)
 
 }
 
-void singleRadixSelectAndPartition(PointS *d_points, PointS *d_swap, int *d_partition, int *h_steps, int p, int  dir)
+void singleRadixSelectAndPartition(struct PointS *d_points, struct PointS *d_swap, int *d_partition, int *h_steps, int p, int  dir)
 {
     int nn, offset, j;
     for (j = 0; j < p; j ++)
@@ -92,10 +92,10 @@ void singleRadixSelectAndPartition(PointS *d_points, PointS *d_swap, int *d_part
     }
 }
 
-void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
+void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
 {
-    PointS *d_points, *d_swap;
-    Point *d_points_out;
+    struct PointS *d_points, *d_swap;
+    struct Point *d_points_out;
     int p, h, i, *d_partition,
         *d_steps, *h_steps_old, *h_steps_new;
 
@@ -153,12 +153,11 @@ void build_kd_tree(PointS *h_points, int n, Point *h_points_out)
 
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));
-    checkCudaErrors(
-        cudaMalloc(&d_points_out, n * sizeof(Point)));
+
+    checkCudaErrors(cudaMalloc(&d_points_out, n * sizeof(Point)));
 
     convertPoints <<< max(1, n / 512), 512 >>> (d_points, n, d_points_out);
-    checkCudaErrors(
-        cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
     store_locations(h_points_out, 0, n, n);
 

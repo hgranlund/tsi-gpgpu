@@ -3,7 +3,7 @@
 
 #define debug 0
 
-void writePoints(char *file_path, int n, PointS *points)
+void writestruct Points(char *file_path, int n, struct PointS *points)
 {
     printf("writing points...\n");
 
@@ -21,7 +21,7 @@ void writePoints(char *file_path, int n, PointS *points)
 }
 
 
-void readPoints(const char *file_path, int n, PointS *points)
+void readstruct Points(const char *file_path, int n, struct PointS *points)
 {
     printf("Reading points...\n");
 
@@ -39,12 +39,12 @@ void readPoints(const char *file_path, int n, PointS *points)
     fclose(file);
 }
 
-void populatePoints(PointS *points, int n)
+void populatestruct Points(struct PointS *points, int n)
 {
     srand(time(NULL));
     for (int i = 0; i < n; ++i)
     {
-        PointS t;
+        struct PointS t;
         t.p[0] = rand();
         t.p[1] = rand();
         t.p[2] = rand();
@@ -85,19 +85,19 @@ int main(int argc, char const *argv[])
     for (n = nu; n <= ni ; n += step)
     {
         cudaDeviceReset();
-        PointS *points;
-        Point *points_out;
-        points_out = (Point *) malloc(n  * sizeof(Point));
-        points = (PointS *) malloc(n  * sizeof(PointS));
+        struct PointS *points;
+        struct Point *points_out;
+        points_out = (struct Point *) malloc(n  * sizeof(Point));
+        points = (struct PointS *) malloc(n  * sizeof(PointS));
         int *result = (int *) malloc(n * k * sizeof(int));
 
         if (from_file)
         {
-            readPoints(argv[2], n, points);
+            readstruct Points(argv[2], n, points);
         }
         else
         {
-            populatePoints(points, n);
+            populatestruct Points(points, n);
         }
         cudaEvent_t start, stop;
         checkCudaErrors(cudaEventCreate(&start));

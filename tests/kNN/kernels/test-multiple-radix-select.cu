@@ -11,10 +11,10 @@
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
 
-int cpu_partition(PointS *data, int l, int u, int bit)
+int cpu_partition(struct PointS *data, int l, int u, int bit)
 {
-    unsigned int radix = (1 << 31 - bit);
-    PointS *temp = (PointS *)malloc(((u - l) + 1) * sizeof(PointS));
+    unsigned int radix = (1 << (31 - bit));
+    struct PointS *temp = (struct PointS *)malloc(((u - l) + 1) * sizeof(PointS));
     int pos = 0;
     for (int i = l; i <= u; i++)
     {
@@ -41,10 +41,10 @@ int cpu_partition(PointS *data, int l, int u, int bit)
     return result;
 }
 
-PointS cpu_radixselect(PointS *data, int l, int u, int m, int bit)
+struct PointS cpu_radixselect(struct PointS *data, int l, int u, int m, int bit)
 {
 
-    PointS t;
+    struct PointS t;
     t.p[0] = 0;
     t.p[1] = 0;
     t.p[2] = 0;
@@ -59,7 +59,7 @@ PointS cpu_radixselect(PointS *data, int l, int u, int m, int bit)
     return cpu_radixselect(data, s + 1, u, m, bit + 1);
 }
 
-void printPoints(PointS *l, int n)
+void printPoints(struct PointS *l, int n)
 {
     int i;
     if (debug)
@@ -106,7 +106,7 @@ unsigned int prevPowerOf21(unsigned int n)
 
 TEST(multiple_radix_select, correctness)
 {
-    PointS *h_points;
+    struct PointS *h_points;
     float temp;
     int i, n, p, *h_steps, *d_steps;
     for (n = 8; n <= 1000; n <<= 1)
@@ -117,13 +117,13 @@ TEST(multiple_radix_select, correctness)
         h_steps[1] = n / p;
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
-        h_points = (PointS *) malloc(n * sizeof(PointS));
+        h_points = (struct PointS *) malloc(n * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
             temp =  (float) i;
             temp =  (float) rand() / 100000000;
-            PointS t;
+            struct PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
@@ -131,7 +131,7 @@ TEST(multiple_radix_select, correctness)
         }
         printPoints(h_points, n );
 
-        PointS *d_points, *d_swap;
+        struct PointS *d_points, *d_swap;
         int *d_partition;
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
@@ -154,7 +154,7 @@ TEST(multiple_radix_select, correctness)
         printPoints(h_points, n );
 
 
-        PointS *t_points;
+        struct PointS *t_points;
         int nn = n;
         for (int i = 0; i < p; ++i)
         {
@@ -187,7 +187,7 @@ TEST(multiple_radix_select, correctness)
 
 TEST(multiple_radix_select, timing)
 {
-    PointS *h_points;
+    struct PointS *h_points;
     float temp;
     int i, n, p, *h_steps, *d_steps;
     for (n = 8388608; n <= 8388608; n <<= 1)
@@ -198,13 +198,13 @@ TEST(multiple_radix_select, timing)
         h_steps[1] = n / p;
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
-        h_points = (PointS *) malloc(n * sizeof(PointS));
+        h_points = (struct PointS *) malloc(n * sizeof(PointS));
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
             temp =  (float) i;
             temp =  (float) rand() / 100000000;
-            PointS t;
+            struct PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
@@ -212,7 +212,7 @@ TEST(multiple_radix_select, timing)
         }
         printPoints(h_points, n );
 
-        PointS *d_points, *d_swap;
+        struct PointS *d_points, *d_swap;
         int *d_partition;
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n  * sizeof(PointS)));

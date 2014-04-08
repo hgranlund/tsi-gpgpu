@@ -1,7 +1,7 @@
 #include "test-common.cuh"
 
 
-void populatePoints(Point *points, int n)
+void populatePoints(struct Point *points, int n)
 {
     int i;
     float temp;
@@ -9,7 +9,7 @@ void populatePoints(Point *points, int n)
 
     for (i = 0; i < n; ++i)
     {
-        Point t;
+        struct Point t;
         temp = n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
@@ -17,7 +17,7 @@ void populatePoints(Point *points, int n)
         points[i] = t;
     }
 }
-void populatePointSs(PointS *points, int n)
+void populatePointSs(struct PointS *points, int n)
 {
     int i;
     float temp;
@@ -25,7 +25,7 @@ void populatePointSs(PointS *points, int n)
 
     for (i = 0; i < n; ++i)
     {
-        PointS t;
+        struct PointS t;
         temp = n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
@@ -57,7 +57,7 @@ void printCudaTiming(float elapsed_time, float bytes, int n)
     printf("Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements\n", throughput, elapsed_time, n);
 }
 
-void ASSERT_TREE_EQ(Point *expected_tree, Point *actual_tree, int n)
+void ASSERT_TREE_EQ(struct Point *expected_tree, struct Point *actual_tree, int n)
 {
     int i, j;
 

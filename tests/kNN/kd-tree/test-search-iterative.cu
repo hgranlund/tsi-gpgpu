@@ -24,8 +24,8 @@ TEST(search_iterative, wikipedia_example)
 {
     int n = 6;
 
-    struct PointS *points = (PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (Point *) malloc(n  * sizeof(Point));
+    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
     points[1].p[0] = 5, points[1].p[1] = 4, points[1].p[2] = 0;

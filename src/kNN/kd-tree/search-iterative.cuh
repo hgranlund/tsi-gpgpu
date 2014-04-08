@@ -8,6 +8,6 @@ int peek(int *stack, int eos);
 int find(int *stack, int eos, int value);
 void upDim(int *dim);
 void downDim(int *dim);
-int query_a(float *qp, Point *tree, int n);
+int query_a(float *qp, struct Point *tree, int n);
 
 #endif

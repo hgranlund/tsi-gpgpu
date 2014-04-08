@@ -33,8 +33,8 @@
 TEST(kd_search, wikipedia_example)
 {
     int wn = 6, k = 1;
-    struct PointS *wiki = (PointS *) malloc(wn  * sizeof(PointS));
-    struct Point *wiki_out = (Point *) malloc(wn  * sizeof(Point));
+    struct PointS *wiki = (struct PointS *) malloc(wn  * sizeof(PointS));
+    struct Point *wiki_out = (struct Point *) malloc(wn  * sizeof(Point));
     int *result =  (int *) malloc(wn * k * sizeof(int));
 
     // (2,3), (5,4), (9,6), (4,7), (8,1), (7,2).
@@ -80,13 +80,13 @@ TEST(kd_search, timing)
 
     for (n = 10000; n <= 10000; n += 250000)
     {
-        PointS *points = (PointS *) malloc(n  * sizeof(PointS));
-        Point *points_out = (Point *) malloc(n  * sizeof(Point));
+        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
         srand(time(NULL));
 
         for (i = 0; i < n; ++i)
         {
-            PointS t;
+            struct PointS t;
             t.p[0] = rand() % 1000;
             t.p[1] = rand() % 1000;
             t.p[2] = rand() % 1000;
@@ -96,12 +96,12 @@ TEST(kd_search, timing)
         build_kd_tree(points, n, points_out);
 
         int test_runs = n;
-        Point *query_data = (Point *) malloc(test_runs * sizeof(Point));
+        struct Point *query_data = (struct Point *) malloc(test_runs * sizeof(Point));
         int *result = (int *) malloc(test_runs * k * sizeof(int));
 
         for (i = 0; i < test_runs; i++)
         {
-            Point point;
+            struct Point point;
             point.p[0] = rand() % 1000;
             point.p[1] = rand() % 1000;
             point.p[2] = rand() % 1000;
@@ -141,14 +141,14 @@ TEST(kd_search, timing)
 //         n_qp = n,
 //         k = 1,
 //         *result;
-//     Point *points;
-//     points = (Point *) malloc(n  * sizeof(Point));
+//     struct Point *points;
+//     points = (struct Point *) malloc(n  * sizeof(Point));
 //     result = (int *) malloc(n_qp  * k * sizeof(int));
 //     srand(time(NULL));
 
 //     for (i = 0; i < n; ++i)
 //     {
-//         Point t;
+//         struct Point t;
 //         t.p[0] = rand();
 //         t.p[1] = rand();
 //         t.p[2] = rand();

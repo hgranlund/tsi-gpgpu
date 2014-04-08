@@ -1,17 +1,17 @@
 #include "quick-select.cuh"
 #include <stdio.h>
 
-__device__ void cuPointSwap(PointS *p, int a, int b)
+__device__ void cuPointSwap(struct PointS *p, int a, int b)
 {
-    PointS temp = p[a];
+    struct PointS temp = p[a];
     p[a] = p[b], p[b] = temp;
 }
 
 template <int maxStep> __global__
-void cuQuickSelectShared(PointS *points, int *steps, int p, int dir)
+void cuQuickSelectShared(struct PointS *points, int *steps, int p, int dir)
 {
-    __shared__ PointS ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
-    PointS *s_points = ss_points, *l_points;
+    __shared__ struct PointS ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
+    struct PointS *s_points = ss_points, *l_points;
     float pivot;
     int pos, i, left, right, step_num,
         n,
@@ -59,7 +59,7 @@ void cuQuickSelectShared(PointS *points, int *steps, int p, int dir)
 }
 
 __global__
-void cuQuickSelectGlobal(PointS *points, int *steps, int p, int dir)
+void cuQuickSelectGlobal(struct PointS *points, int *steps, int p, int dir)
 {
     int pos, i,
         list_in_block = p / gridDim.x,
@@ -70,7 +70,7 @@ void cuQuickSelectGlobal(PointS *points, int *steps, int p, int dir)
         n,
         m;
 
-    PointS  *l_points;
+    struct PointS  *l_points;
     float pivot;
     while ( tid < list_in_block)
     {
@@ -101,7 +101,7 @@ void cuQuickSelectGlobal(PointS *points, int *steps, int p, int dir)
     }
 }
 
-void quickSelectAndPartition(PointS *d_points, int *d_steps, int step , int p, int dir)
+void quickSelectAndPartition(struct PointS *d_points, int *d_steps, int step , int p, int dir)
 {
     int numBlocks, numThreads;
     getThreadAndBlockCountForQuickSelect(step, p, numBlocks, numThreads);

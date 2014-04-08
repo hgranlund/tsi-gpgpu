@@ -9,7 +9,7 @@
 
 
 __device__
-float cuDist(Point qp, Point *points, int x)
+float cuDist(struct Point qp, struct Point *points, int x)
 {
     float dx = qp.p[0] - points[x].p[0],
           dy = qp.p[1] - points[x].p[1],
@@ -79,7 +79,7 @@ void cuDownDim(int *dim)
 }
 
 __device__
-int cuSearch(Point qp, Point *tree, int *stack, int n, int k)
+int cuSearch(struct Point qp, struct Point *tree, int *stack, int n, int k)
 {
     int eos = -1,
         dim = 0,
@@ -158,7 +158,7 @@ int cuSearch(Point qp, Point *tree, int *stack, int n, int k)
 }
 
 template <int thread_stack_size>
-__global__ void dQueryAll(Point *query_points, Point *tree, int n_qp, int n_tree, int k, int *result)
+__global__ void dQueryAll(struct Point *query_points, struct Point *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
         rest = n_qp % gridDim.x,
@@ -195,10 +195,10 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
     // printf("blocks = %d, threads = %d, n= %d\n", blocks, threads, n);
 }
 
-void queryAll(Point *h_query_points, Point *h_tree, int n_qp, int n_tree, int k, int *h_result)
+void queryAll(struct Point *h_query_points, struct Point *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
     int *d_result, numBlocks, numThreads;
-    Point *d_tree, *d_query_points;
+    struct Point *d_tree, *d_query_points;
 
     checkCudaErrors(cudaMalloc(&d_result, n_qp * k  * sizeof(int)));
     checkCudaErrors(cudaMalloc(&d_query_points, n_qp * sizeof(Point)));

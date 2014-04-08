@@ -7,7 +7,7 @@
 #define MAX_BLOCK_DIM_SIZE 65535U
 #define MAX_SHARED_MEM 49152U
 
-void radixSelectAndPartition(PointS *points, PointS *swap, int *partition, int n, int dir);
+void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *partition, int n, int dir);
 
 #endif
 

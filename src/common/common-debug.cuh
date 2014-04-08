@@ -65,7 +65,7 @@ __device__ void printPointsInt_(int *l, int n, char *s)
 }
 
 
-void h_print_matrix_(Point *points, int n)
+void h_print_matrix_(struct Point *points, int n)
 {
     if (debug)
     {
@@ -85,7 +85,7 @@ void h_print_matrix_(Point *points, int n)
 
 
 __device__
-void printPointsMatrix(Point *points, int n, int offset)
+void printPointsMatrix(struct Point *points, int n, int offset)
 {
 #if __CUDA_ARCH__>=200
     if (debug)
@@ -111,7 +111,7 @@ void printPointsMatrix(Point *points, int n, int offset)
 #endif
 }
 
-__device__ void d_printPointsArray(Point *l, int n, char *s, int l_debug = 0)
+__device__ void d_printPointsArray(struct Point *l, int n, char *s, int l_debug = 0)
 {
     if (debug || l_debug)
     {
@@ -129,7 +129,7 @@ __device__ void d_printPointsArray(Point *l, int n, char *s, int l_debug = 0)
 #endif
     }
 }
-__host__  void h_printPointsArray(Point *l, int n, char *s, int l_debug = 0)
+__host__  void h_printPointsArray(struct Point *l, int n, char *s, int l_debug = 0)
 {
     if (debug || l_debug)
     {

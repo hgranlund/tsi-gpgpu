@@ -61,7 +61,7 @@ __device__ void cuCompare_r(Distance &distA,  Distance &distB, unsigned int dir)
 __global__ void min_reduction(Distance *dist, unsigned int n, unsigned int threadOffset)
 {
 
-    unsigned int  thread1, halfPoint, index1, index2, offset;
+    unsigned int  thread1, halfstruct Point, index1, index2, offset;
     unsigned int threadOffset1 = max(1, threadOffset);
     unsigned int elements_in_block = nextPow2(n);
     offset = elements_in_block - n;
@@ -69,20 +69,20 @@ __global__ void min_reduction(Distance *dist, unsigned int n, unsigned int threa
     while (elements_in_block > 1)
     {
         thread1 = threadIdx.x;
-        halfPoint = (elements_in_block / 2);
-        while (thread1 < halfPoint)
+        halfstruct Point = (elements_in_block / 2);
+        while (thread1 < halfstruct Point)
         {
-            if (thread1 + halfPoint   < elements_in_block - offset)
+            if (thread1 + halfstruct Point   < elements_in_block - offset)
             {
                 index1 = thread1 * threadOffset1;
-                index2 = index1  + halfPoint * threadOffset1;
+                index2 = index1  + halfstruct Point * threadOffset1;
                 cuCompare_r(dist[index1], dist[index2], 1);
             }
             thread1 += blockDim.x;
         }
         __syncthreads();
         offset = 0;
-        elements_in_block = halfPoint;
+        elements_in_block = halfstruct Point;
     }
 }
 

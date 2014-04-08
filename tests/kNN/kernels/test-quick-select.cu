@@ -17,7 +17,7 @@
 
 
 
-__host__  void h_printPointsArray_(PointS *l, int n, char *s, int l_debug = 0)
+void h_printPointsArray_(struct PointS *l, int n, char *s, int l_debug = 0)
 {
     if (debug || l_debug)
     {
@@ -32,7 +32,7 @@ __host__  void h_printPointsArray_(PointS *l, int n, char *s, int l_debug = 0)
 
 TEST(quick_selection, correctness)
 {
-    PointS *h_points, *d_points;
+    struct PointS *h_points, *d_points;
     int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
@@ -44,13 +44,13 @@ TEST(quick_selection, correctness)
         h_steps[1] = n / p;
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
-        h_points = (PointS *) malloc(n  * sizeof(PointS));
+        h_points = (struct PointS *) malloc(n  * sizeof(PointS));
         int step = h_steps[1] - h_steps[0];
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
-            PointS t;
+            struct PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;
@@ -76,7 +76,7 @@ TEST(quick_selection, correctness)
 
         h_printPointsArray_(h_points, n , "h_points after", 0);
 
-        PointS *t_points;
+        struct PointS *t_points;
         int nn = n;
         for (int i = 0; i < p; ++i)
         {
@@ -104,7 +104,7 @@ TEST(quick_selection, correctness)
 }
 TEST(quick_selection, timing)
 {
-    PointS *h_points, *d_points;
+    struct PointS *h_points, *d_points;
     int  *d_steps, *h_steps;
     float temp;
     unsigned int i, n, p;
@@ -116,14 +116,14 @@ TEST(quick_selection, timing)
         h_steps[1] = n / p;
         h_steps[2] = n / p + 1;
         h_steps[3] = n;
-        h_points = (PointS *) malloc(n  * sizeof(PointS));
+        h_points = (struct PointS *) malloc(n  * sizeof(PointS));
         int step = h_steps[1] - h_steps[0];
 
         srand ( (unsigned int)time(NULL) );
         for (i = 0 ; i < n ; i++)
         {
             temp =  (float) rand() / 100000000;
-            PointS t;
+            struct PointS t;
             t.p[0] = temp;
             t.p[1] = temp;
             t.p[2] = temp;

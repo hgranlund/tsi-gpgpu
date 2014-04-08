@@ -5,7 +5,7 @@
 
 #include <search-iterative.cuh>
 
-float dist(float *qp, Point *points, int x)
+float dist(float *qp, struct Point *points, int x)
 {
     float dx = qp[0] - points[x].p[0],
           dy = qp[1] - points[x].p[1],
@@ -82,7 +82,7 @@ void downDim(int *dim)
     }
 }
 
-int query_a(float *qp, Point *tree, int n)
+int query_a(float *qp, struct Point *tree, int n)
 {
     int eos = -1,
         *stack = (int *) malloc(n * sizeof stack),

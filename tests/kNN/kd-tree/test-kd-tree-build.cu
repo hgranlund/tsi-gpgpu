@@ -6,16 +6,16 @@ TEST(kd_tree_build, correctness)
     int i, n = 8;
     float temp;
 
-    struct PointS *points = (PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (Point *) malloc(n  * sizeof(Point));
-    struct Point *expected_points = (Point *) malloc(n * sizeof(Point));
+    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+    struct Point *expected_points = (struct Point *) malloc(n * sizeof(Point));
 
     srand(time(NULL));
 
     for (i = 0; i < n; ++i)
     {
-        Point t2;
-        PointS t;
+        struct Point t2;
+        struct PointS t;
         temp = n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
@@ -41,8 +41,8 @@ TEST(kd_tree_build, timing)
     // for (n = 8388608; n <= 8388608 ; n += 250000)
     for (n = 1024; n <= 1024 ; n += 250000)
     {
-        struct PointS *points = (PointS *) malloc(n * sizeof(PointS));
-        struct Point *points_out = (Point *) malloc(n * sizeof(Point));
+        struct PointS *points = (struct PointS *) malloc(n * sizeof(PointS));
+        struct Point *points_out = (struct Point *) malloc(n * sizeof(Point));
 
         populatePointSs(points, n);
         populatePoints(points_out, n);
@@ -66,9 +66,9 @@ TEST(kd_tree_build, wikipedia_example)
 {
     cudaDeviceReset();
     int n = 6;
-    struct PointS *points = (PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (Point *) malloc(n  * sizeof(Point));
-    struct PointS *points_correct = (PointS *) malloc(n  * sizeof(PointS));
+    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+    struct PointS *points_correct = (struct PointS *) malloc(n  * sizeof(PointS));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
     points[1].p[0] = 5, points[1].p[1] = 4, points[1].p[2] = 0;

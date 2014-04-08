@@ -9,10 +9,10 @@
 TEST(knn_garcia_tests, test_knn_brute_force_give_rigth_result_with_6553_points)
 {
 
-    float *ref;                 // Pointer to reference point array
-    float *query;               // Pointer to query point array
-    float *dist;                // Pointer to distance array
-    int   *ind;                 // Pointer to index array
+    float *ref;                 // struct Pointer to reference point array
+    float *query;               // struct Pointer to query point array
+    float *dist;                // struct Pointer to distance array
+    int   *ind;                 // struct Pointer to index array
     int    ref_nb;              // Reference point number, max=65535
     int    query_nb;            // Query point number,     max=65535
     int    dim;                 // Dimension of points
