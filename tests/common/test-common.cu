@@ -1,6 +1,5 @@
 #include "test-common.cuh"
 
-
 void populatePoints(struct Point *points, int n)
 {
     int i;
@@ -17,6 +16,7 @@ void populatePoints(struct Point *points, int n)
         points[i] = t;
     }
 }
+
 void populatePointSs(struct PointS *points, int n)
 {
     int i;
