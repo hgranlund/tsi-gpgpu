@@ -2,14 +2,9 @@
 #include <quick-select.cuh>
 #include <kd-tree-build.cuh>
 #include <knn_gpgpu.h>
-#include <stdio.h>
-#include <gtest/gtest.h>
+#include "test-common.cuh"
+
 #include <math.h>
-#include <cuda.h>
-#include <time.h>
-#include <assert.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
 
 #define inf 0x7f800000
 #define THREADS_PER_BLOCK 1024U
@@ -17,7 +12,6 @@
 
 #define debug 0
 
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 

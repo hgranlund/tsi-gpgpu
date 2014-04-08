@@ -1,17 +1,10 @@
 // Includes
 #include <radix-select.cuh>
 #include <knn_gpgpu.h>
-#include <stdio.h>
-#include <gtest/gtest.h>
+#include "test-common.cuh"
 
 #include <math.h>
-#include <cuda.h>
-#include <time.h>
-#include <assert.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
 
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U

@@ -1,16 +1,12 @@
 #include <kd-tree-build.cuh>
+#include "test-common.cuh"
+
+
 #include <kd-search.cuh>
 #include <knn_gpgpu.h>
-#include <point.h>
-
-#include <stdio.h>
-#include <helper_cuda.h>
-#include "gtest/gtest.h"
-
 
 #define debug 0
 
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 

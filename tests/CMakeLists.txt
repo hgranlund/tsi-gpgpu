@@ -4,13 +4,13 @@ project(tests)
 
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/common
- ${CMAKE_SOURCE_DIR}/tests/common/inc
- ${CMAKE_SOURCE_DIR}/tests/common
  ${CMAKE_SOURCE_DIR}/include
  ${CMAKE_SOURCE_DIR}/src/kNN
  ${CMAKE_SOURCE_DIR}/src/kNN/kernels
  ${CMAKE_SOURCE_DIR}/src/kNN/kd-tree
  ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
+ ${CMAKE_SOURCE_DIR}/tests/common
+ ${CMAKE_SOURCE_DIR}/tests/common/inc
 )
 
 link_directories(

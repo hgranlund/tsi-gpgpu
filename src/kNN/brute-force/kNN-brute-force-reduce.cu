@@ -1,13 +1,11 @@
 
 
-// Includes
-#include <kNN-brute-force-bitonic.cuh>
+#include "kNN-brute-force-bitonic.cuh"
 // #include "../kernels/reduction.cuh"
 #include "../kernels/reduction-mod.cuh"
 
 #include <stdio.h>
 #include <math.h>
-#include <cuda.h>
 
 #include "helper_cuda.h"
 

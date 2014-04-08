@@ -1,15 +1,6 @@
-
-
-// Includes
 #include <kNN-brute-force-bitonic.cuh>
 #include <knn_gpgpu.h>
-#include <stdio.h>
-#include "gtest/gtest.h"
-
-#include <math.h>
-#include <cuda.h>
-#include <time.h>
-#include <assert.h>
+#include "test-common.cuh"
 
 
 TEST(knn_brute_force_bitonic, correctness)

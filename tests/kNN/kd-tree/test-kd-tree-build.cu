@@ -1,10 +1,5 @@
 #include <knn_gpgpu.h>
-#include <point.h>
 #include "test-common.cuh"
-
-#include <stdio.h>
-#include <helper_cuda.h>
-#include "gtest/gtest.h"
 
 TEST(kd_tree_build, correctness)
 {

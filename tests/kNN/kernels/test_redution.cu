@@ -2,17 +2,8 @@
 // #include <reduction.cuh>
 #include <reduction-mod.cuh>
 #include <knn_gpgpu.h>
-#include <stdio.h>
-#include <gtest/gtest.h>
+#include "test-common.cuh"
 
-#include <math.h>
-#include <cuda.h>
-#include <time.h>
-#include <assert.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
-
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 #define inf 0x7f800000
 #define debug 0
 float cpu_min(float *in, int num_els)

@@ -1,9 +1,6 @@
 #include "kd-tree-build.cuh"
 #include "knn_gpgpu.h"
-#include "point.h"
-#include "stdio.h"
-#include "helper_cuda.h"
-#include "gtest/gtest.h"
+#include "test-common.cuh"
 
 #define debug 0
 

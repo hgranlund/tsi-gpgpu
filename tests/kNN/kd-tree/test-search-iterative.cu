@@ -1,11 +1,7 @@
 #include <kd-tree-build.cuh>
 #include <search-iterative.cuh>
 #include <knn_gpgpu.h>
-#include <point.h>
-
-#include <stdio.h>
-#include <helper_cuda.h>
-#include "gtest/gtest.h"
+#include "test-common.cuh"
 
 bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
 {

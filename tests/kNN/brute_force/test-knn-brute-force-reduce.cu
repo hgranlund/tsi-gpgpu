@@ -1,12 +1,6 @@
-#include <kNN-brute-force-reduce.cuh>
+#include "kNN-brute-force-reduce.cuh"
 #include <knn_gpgpu.h>
-#include "gtest/gtest.h"
-
-#include <stdio.h>
-#include <cuda.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
+#include "test-common.cuh"
 
 
 TEST(knn_brute_force_reduce, correctness)
