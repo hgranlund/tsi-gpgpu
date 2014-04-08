@@ -1,9 +1,8 @@
 #include "knn_gpgpu.h"
-#include "test-common.cuh"
+#include <stdio.h>
+#include <helper_cuda.h>
 
-#define debug 0
-
-void writestruct Points(char *file_path, int n, struct PointS *points)
+void writePoints(char *file_path, int n, struct PointS *points)
 {
     printf("writing points...\n");
 
@@ -20,8 +19,7 @@ void writestruct Points(char *file_path, int n, struct PointS *points)
     fclose(file);
 }
 
-
-void readstruct Points(const char *file_path, int n, struct PointS *points)
+void readPoints(const char *file_path, int n, struct PointS *points)
 {
     printf("Reading points...\n");
 
@@ -39,7 +37,7 @@ void readstruct Points(const char *file_path, int n, struct PointS *points)
     fclose(file);
 }
 
-void populatestruct Points(struct PointS *points, int n)
+void populatePoints(struct PointS *points, int n)
 {
     srand(time(NULL));
     for (int i = 0; i < n; ++i)
@@ -59,6 +57,7 @@ int main(int argc, char const *argv[])
                k = 1;
     bool from_file = 0;
     n = nu = ni;
+
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
@@ -84,26 +83,23 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        cudaDeviceReset();
-        struct PointS *points;
-        struct Point *points_out;
-        points_out = (struct Point *) malloc(n  * sizeof(Point));
-        points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         int *result = (int *) malloc(n * k * sizeof(int));
 
         if (from_file)
         {
-            readstruct Points(argv[2], n, points);
+            readPoints(argv[2], n, points);
         }
         else
         {
-            populatestruct Points(points, n);
+            populatePoints(points, n);
         }
+
         cudaEvent_t start, stop;
+        float elapsed_time_build = 0;
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
-        float elapsed_time_build = 0;
-
         checkCudaErrors(cudaEventRecord(start, 0));
 
         build_kd_tree(points, n, points_out);
@@ -113,12 +109,9 @@ int main(int argc, char const *argv[])
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&elapsed_time_build, start, stop);
 
-
-        cudaDeviceReset();
+        float elapsed_time_search = 0;
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
-        float elapsed_time_search = 0;
-
         checkCudaErrors(cudaEventRecord(start, 0));
 
         queryAll(points_out, points_out, n, n, k, result);
@@ -134,6 +127,7 @@ int main(int argc, char const *argv[])
         free(points);
         free(result);
         free(points_out);
+        cudaDeviceReset();
     }
     return 0;
 

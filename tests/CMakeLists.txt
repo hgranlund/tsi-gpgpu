@@ -78,9 +78,12 @@ if (BUILD_TESTS)
   # Include the gtest library. gtest_SOURCE_DIR is available due to
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
-  set(test_files
+  set(common_files
     common/test-common.cuh
     common/test-common.cu
+  )
+
+  set(test_files
     kNN/kernels/test_redution.cu
     kNN/kernels/test-multiple-radix-select.cu
     kNN/kernels/test-radix-select.cu
@@ -93,6 +96,7 @@ if (BUILD_TESTS)
   )
 
   cuda_add_executable(runUnitTests
+    ${common_files}
     ${test_files}
   )
 
@@ -119,21 +123,6 @@ if (BUILD_TESTS)
     # kNN/kernels/test-quick-select.cu
 
   )
-
-
-
-  cuda_add_executable(nvproc_test
-    ${profile_files}
-    OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
-  )
-
-  target_link_libraries(nvproc_test gtest gtest_main )
-  # target_link_libraries(runUnitTests common_debug )
-
-  target_link_libraries(nvproc_test knn_gpgpu)
-
-  add_custom_target(profile_test nvproc_test)
-
 
   cuda_add_executable(time_kd_tree_build
     kNN/kd-tree/time-kd-tree-build.cu

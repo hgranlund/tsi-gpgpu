@@ -1,4 +1,3 @@
-#include <kd-tree-build.cuh>
 #include <search-iterative.cuh>
 #include <knn_gpgpu.h>
 #include "test-common.cuh"
