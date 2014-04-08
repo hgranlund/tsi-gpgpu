@@ -1,0 +1,68 @@
+## Executable outputs
+C:\Users\simenhg\Documents\GitHub\tsi-gpgpu\release\bin [master +4 ~1 -0 !]> .\time_kd_tree_build.exe
+Running kd-tree-build with n = 8388608
+build_kd_tree_naive,  Time = 1916.49121 ms, Size = 8388608 Elements, NumDevsUsed = 1
+C:\Users\simenhg\Documents\GitHub\tsi-gpgpu\release\bin [master +4 ~1 -0 !]> .\time_kd_tree_build.exe 5000000 15000000 1000000
+Running kd-tree-build from n = 5000000 to n = 15000000 with step = 1000000
+build_kd_tree_naive,  Time = 1146.56787 ms, Size = 5000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 1368.67993 ms, Size = 6000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 1602.80823 ms, Size = 7000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 1835.42078 ms, Size = 8000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 2092.38062 ms, Size = 9000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 2333.47363 ms, Size = 10000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 2564.74805 ms, Size = 11000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 2802.48267 ms, Size = 12000000 Elements, NumDevsUsed = 1
+build_kd_tree_naive,  Time = 3071.68555 ms, Size = 13000000 Elements, NumDevsUsed = 1
+              #### Crash!! We think we are out of memory ####
+
+
+
+#######################################################################################################################################################
+#######################################################################################################################################################
+#######################################################################################################################################################
+#######################################################################################################################################################
+
+
+C:\Users\simenhg\Documents\GitHub\tsi-gpgpu\bin [master +4 ~0 -0 !]>     .\deviceQuery.exe
+C:\Users\simenhg\Documents\GitHub\tsi-gpgpu\bin\deviceQuery.exe Starting...
+
+ CUDA Device Query (Runtime API) version (CUDART static linking)
+
+Detected 1 CUDA Capable device(s)
+
+Device 0: "GeForce GTX 560 Ti"
+  CUDA Driver Version / Runtime Version          6.0 / 5.5
+  CUDA Capability Major/Minor version number:    2.1
+  Total amount of global memory:                 1024 MBytes (1073741824 bytes)
+  ( 8) Multiprocessors, ( 48) CUDA Cores/MP:     384 CUDA Cores
+  GPU Clock rate:                                1592 MHz (1.59 GHz)
+  Memory Clock rate:                             2004 Mhz
+  Memory Bus Width:                              256-bit
+  L2 Cache Size:                                 524288 bytes
+  Maximum Texture Dimension Size (x,y,z)         1D=(65536), 2D=(65536, 65535), 3D=(2048, 2048, 2048)
+  Maximum Layered 1D Texture Size, (num) layers  1D=(16384), 2048 layers
+  Maximum Layered 2D Texture Size, (num) layers  2D=(16384, 16384), 2048 layers
+  Total amount of constant memory:               65536 bytes
+  Total amount of shared memory per block:       49152 bytes
+  Total number of registers available per block: 32768
+  Warp size:                                     32
+  Maximum number of threads per multiprocessor:  1536
+  Maximum number of threads per block:           1024
+  Max dimension size of a thread block (x,y,z): (1024, 1024, 64)
+  Max dimension size of a grid size    (x,y,z): (65535, 65535, 65535)
+  Maximum memory pitch:                          2147483647 bytes
+  Texture alignment:                             512 bytes
+  Concurrent copy and kernel execution:          Yes with 1 copy engine(s)
+  Run time limit on kernels:                     Yes
+  Integrated GPU sharing Host Memory:            No
+  Support host page-locked memory mapping:       Yes
+  Alignment requirement for Surfaces:            Yes
+  Device has ECC support:                        Disabled
+  CUDA Device Driver Mode (TCC or WDDM):         WDDM (Windows Display Driver Model)
+  Device supports Unified Addressing (UVA):      Yes
+  Device PCI Bus ID / PCI location ID:           1 / 0
+  Compute Mode:
+     < Default (multiple host threads can use ::cudaSetDevice() with device simultaneously) >
+
+deviceQuery, CUDA Driver = CUDART, CUDA Driver Version = 6.0, CUDA Runtime Version = 5.5, NumDevs = 1, Device0 = GeForce GTX 560 Ti
+Result = PASS

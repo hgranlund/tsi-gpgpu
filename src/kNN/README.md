@@ -1,7 +1,7 @@
 The quest for a fast KNN search
 ===============================
 
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm.
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the [release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v13-release-notes) for the most recent version of this project.
 
 Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
 
@@ -201,7 +201,7 @@ _The serial kd-tree build times was similar or better than the base algorithm, s
 
 The graph shows that our serial implementation of search in this data structure, given a pre-calculated index cache, is as fast, or slightly faster than the base algorithm. The possibility of improving the search even more, by storing all calculated distances in a distance cache was also explored, but we can see from the graph that the overhead associated with this operation did outweigh the benefits.
 
-Some unstability is apparent in the graph, but this is probably due to the author running other programs in the background when performing the test.
+Some instability is apparent in the graph, but this is probably due to the author running other programs in the background when performing the test.
 
 ![n-query-time-old-vs-new](./images/n-query-time-old-vs-new.png)
 
@@ -247,19 +247,36 @@ We also see a couple of large "jumps" in the graph. This happens when the number
 
 Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
 
-
-
-
-
-
-
 #### Further work
 
 * Look at memory optimization.
 * Improve utiliti methods like: accumulateindex, minReduce.
 * Forloop Unrolling.
 
+
+V1.3 Release notes
+------------------
+
+Version 1.3 introduces a couple of new features. Firstly the tree-building algorithm has been updated to also cache the location of the different children of each node in the tree. A small bug related to partition of the point-cloud list was also ironed out. This gives a tree building algorithm whit the following runtime results, comparable with the previous versions of this implementation:
+
+![construction_v13_gtx_560](./images/construction_v13_gtx_560.png)
+
+After a surprising amount of fiddling, querying for a large number of query-points was finally parallelized in version 1.3. This gave improved performance when querying many times in the same point cloud. 14 million queries in a point cloud of 14 million points can now be done on average in ~8 seconds. Compared to the estimated ~17 seconds needed by the serial implementation.
+
+![n_queries_v13_gtx_560](./images/n_queries_v13_gtx_560.png)
+
+Unfortunately, this early parallelization gave us quite unstable results. The data in the graph is based on ten timing runs, where the average, minimum and maximum values are collected in three series. As we can see, there is quite a big spread between the best and worst results. Looking at the raw data points for the ten series confirms that this is not a problem caused by a small number of outliers:
+
+![scatter_n_queries_v13_gtx_560](./images/scatter_n_queries_v13_gtx_560.png)
+
+Some instability would be expected, as the amount of pruning that can be achieved when searching for points in the kd-tree is dependent on the value you search for, but this amount of spread was unexpected. This behavior should be investigated further, as it seems to be indicating some kind of implementation error.
+
+Combining the results from the search and the tree-building, gives the following runtime for a sequence of building and N queries:
+
+![constructionand_n_queries_v13_gtx_560](./images/constructionand_n_queries_v13_gtx_560.png)
+
+
 Work-plan for next week
 -----------------------
 
-The three-building algorithm is improving, but still more optimization can be done. Given the optimized serial implementation of the search algorithm, it is ready for parallelization when searching for a large number of query-points. These two tasks will run as parallel tracks the next week.
+Major improvements of the tree-building implementation is not to bee expected, so further work will focus on improving existing code through refactoring. The unstable behavior of the parallel search should be studied in more detail, in conjunction with expanding it to work with larger values of k, and improving the memory usage of this algorithm. Finally it might be beneficial to spend some time on getting the project to build at TSI HQ, so version 1.3 can be studied in more detail by Alok.
