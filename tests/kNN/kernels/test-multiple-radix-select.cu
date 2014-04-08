@@ -108,7 +108,7 @@ unsigned int prevPowerOf21(unsigned int n)
 
 
 
-TEST(kernels, multi_radix_selection)
+TEST(multiple_radix_select, correctness)
 {
     PointS *h_points;
     float temp;
@@ -189,7 +189,7 @@ TEST(kernels, multi_radix_selection)
     }
 }
 
-TEST(kernels, multi_radix_selection_time)
+TEST(multiple_radix_select, timing)
 {
     PointS *h_points;
     float temp;

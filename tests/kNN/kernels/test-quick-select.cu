@@ -36,7 +36,7 @@ __host__  void h_printPointsArray_(PointS *l, int n, char *s, int l_debug = 0)
     }
 }
 
-TEST(kernels, quick_selection)
+TEST(quick_selection, correctness)
 {
     PointS *h_points, *d_points;
     int  *d_steps, *h_steps;
@@ -108,7 +108,7 @@ TEST(kernels, quick_selection)
         cudaDeviceReset();
     }
 }
-TEST(kernels, quick_selection_time)
+TEST(quick_selection, timing)
 {
     PointS *h_points, *d_points;
     int  *d_steps, *h_steps;

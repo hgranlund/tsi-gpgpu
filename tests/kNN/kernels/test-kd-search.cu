@@ -34,7 +34,7 @@
 //     ASSERT_EQ(actual, expected);
 // }
 
-TEST(kd_search, kd_search_wiki_correctness)
+TEST(kd_search, wikipedia_example)
 {
     int wn = 6, k = 1;
     struct PointS *wiki = (PointS *) malloc(wn  * sizeof(PointS));
@@ -77,7 +77,7 @@ TEST(kd_search, kd_search_wiki_correctness)
     // ASSERT_QUERY_EQ(wiki_out, wn, 0, 10, 0, 4, 7, 0);
 }
 
-TEST(kd_search, kd_search_timing)
+TEST(kd_search, timing)
 {
     int i, n, k = 1;
 
@@ -138,7 +138,7 @@ TEST(kd_search, kd_search_timing)
     };
 };
 
-// TEST(kd_search, kd_search_all_points)
+// TEST(kd_search, all_points)
 // {
 //     int i,
 //         n = 100000,

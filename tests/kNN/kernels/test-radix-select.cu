@@ -119,7 +119,7 @@ unsigned int prevPowerOf22(unsigned int n)
 
 }
 
-TEST(kernels, radix_selection)
+TEST(radix_selection, correctness)
 {
     PointS *h_points;
     float temp;
@@ -187,7 +187,7 @@ TEST(kernels, radix_selection)
 }
 
 
-TEST(kernels, radix_selection_time)
+TEST(radix_selection, timing)
 {
     PointS *h_points;
     float temp;

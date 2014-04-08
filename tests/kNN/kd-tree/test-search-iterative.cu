@@ -24,7 +24,7 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
     return false;
 }
 
-TEST(search_iterative, search_iterative_wiki_correctness)
+TEST(search_iterative, wikipedia_example)
 {
     int n = 6;
 
@@ -56,7 +56,7 @@ TEST(search_iterative, search_iterative_wiki_correctness)
     ASSERT_EQ(true, isExpectedPoint(points_out, n, 0, 10, 0, 4, 7, 0));
 }
 
-TEST(search_iterative, search_iterative_push)
+TEST(search_iterative, push)
 {
     int eos = -1,
         *stack = (int *) malloc(5 * sizeof stack);
@@ -78,7 +78,7 @@ TEST(search_iterative, search_iterative_push)
     free(stack);
 }
 
-TEST(search_iterative, search_iterative_pop)
+TEST(search_iterative, pop)
 {
     int eos = -1,
         *stack = (int *) malloc(5 * sizeof stack);
@@ -101,7 +101,7 @@ TEST(search_iterative, search_iterative_pop)
     free(stack);
 }
 
-TEST(search_iterative, search_iterative_peek)
+TEST(search_iterative, peek)
 {
     int eos = -1,
         *stack = (int *) malloc(5 * sizeof stack);
@@ -117,7 +117,7 @@ TEST(search_iterative, search_iterative_peek)
     free(stack);
 }
 
-TEST(search_iterative, search_iterative_find)
+TEST(search_iterative, find)
 {
     int eos = -1,
         *stack = (int *) malloc(5 * sizeof stack);
@@ -138,7 +138,7 @@ TEST(search_iterative, search_iterative_find)
     free(stack);
 }
 
-TEST(search_iterative, search_iterative_upDim)
+TEST(search_iterative, upDim)
 {
     int dim = 0;
 
@@ -155,7 +155,7 @@ TEST(search_iterative, search_iterative_upDim)
     ASSERT_EQ(1, dim);
 }
 
-TEST(search_iterative, search_iterative_downDim)
+TEST(search_iterative, downDim)
 {
     int dim = 0;
 

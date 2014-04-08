@@ -74,7 +74,7 @@ void ASSERT_TREE_EQ(Point *expected_tree, Point *actual_tree, int n)
     }
 }
 
-TEST(kd_tree_build, coringectness)
+TEST(kd_tree_build, correctness)
 {
     int i, n = 8;
     float temp;

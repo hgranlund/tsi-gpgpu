@@ -15,7 +15,7 @@
 
 
 
-TEST(knn_brute_force, test_knn_bitonic_correctness)
+TEST(knn_brute_force, correctness)
 {
 
     float *ref;                 // Pointer to reference point array

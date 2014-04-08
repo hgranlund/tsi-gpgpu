@@ -54,7 +54,7 @@ void printIntArray(int *l, int n)
 }
 
 
-// TEST(kernels, min_reduce){
+// TEST(min_reduce, min_reduce){
 
 //   Distance *h_dist;
 //   int i,n;
@@ -91,7 +91,7 @@ void printIntArray(int *l, int n)
 //   }
 // }
 
-TEST(kernels, min_reduce_mod)
+TEST(min_reduce, correcness)
 {
     cudaDeviceReset();
 
@@ -133,7 +133,7 @@ TEST(kernels, min_reduce_mod)
     }
 }
 
-TEST(kernels, min_reduce_mod_time)
+TEST(min_reduce, timing)
 {
     cudaDeviceSynchronize();
     cudaDeviceReset();
