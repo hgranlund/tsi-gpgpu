@@ -1,6 +1,3 @@
-
-
-// Includes
 #include <kNN-brute-force-reduce.cuh>
 #include <knn_gpgpu.h>
 #include "gtest/gtest.h"
@@ -12,7 +9,7 @@
 #define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 
-TEST(knn_brute_force, correctness)
+TEST(knn_brute_force_reduce, correctness)
 {
 
     float *ref, *dist;
@@ -57,7 +54,7 @@ TEST(knn_brute_force, correctness)
     cudaDeviceReset();
 }
 
-TEST(knn_brute_force, timing)
+TEST(knn_brute_force_reduce, timing)
 {
 
     float *ref, *dist;
