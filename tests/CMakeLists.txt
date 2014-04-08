@@ -5,12 +5,12 @@ project(tests)
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/common
  ${CMAKE_SOURCE_DIR}/tests/common/inc
+ ${CMAKE_SOURCE_DIR}/tests/common
  ${CMAKE_SOURCE_DIR}/include
  ${CMAKE_SOURCE_DIR}/src/kNN
  ${CMAKE_SOURCE_DIR}/src/kNN/kernels
  ${CMAKE_SOURCE_DIR}/src/kNN/kd-tree
  ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
- # ${CMAKE_CURRENT_SOURCE_DIR}/common
 )
 
 link_directories(
@@ -79,6 +79,8 @@ if (BUILD_TESTS)
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
   set(test_files
+    common/test-common.cuh
+    common/test-common.cu
     kNN/kernels/test_redution.cu
     kNN/kernels/test-multiple-radix-select.cu
     kNN/kernels/test-radix-select.cu
