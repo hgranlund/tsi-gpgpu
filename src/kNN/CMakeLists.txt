@@ -25,7 +25,7 @@ brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 kernels/reduction-mod.cuh
 kernels/sum-reduction.cuh
-kd-tree/kd-tree-naive.cuh
+kd-tree/kd-tree-build.cuh
 kernels/kd-search.cuh
 kd-tree/search-iterative.cuh
 )
@@ -40,7 +40,7 @@ kernels/reduction-mod.cu
 kernels/multiple-radix-select.cu
 kernels/radix-select.cu
 kernels/quick-select.cu
-kd-tree/kd-tree-naive.cu
+kd-tree/kd-tree-build.cu
 kernels/kd-search.cu
 kd-tree/search-iterative.cu
 )

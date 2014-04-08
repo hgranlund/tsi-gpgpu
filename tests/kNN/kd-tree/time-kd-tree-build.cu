@@ -1,4 +1,4 @@
-#include "kd-tree-naive.cuh"
+#include "kd-tree-build.cuh"
 #include "knn_gpgpu.h"
 #include "point.h"
 #include "stdio.h"

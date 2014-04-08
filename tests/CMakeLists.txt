@@ -87,7 +87,7 @@ if (BUILD_TESTS)
     kNN/kernels/test-kd-search.cu
     # kNN/brute_force/test-knn-brute-force-reduce.cu
     # kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kd-tree/test-kd-tree-naive.cu
+    kNN/kd-tree/test-kd-tree-build.cu
     kNN/kd-tree/test-search-iterative.cu
   )
 
@@ -114,7 +114,7 @@ if (BUILD_TESTS)
     # kNN/kernels/test-multiple-radix-select.cu
     # kNN/brute_force/test-knn-brute-force-reduce.cu
     # kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kd-tree/test-kd-tree-naive.cu
+    kNN/kd-tree/test-kd-tree-build.cu
     # kNN/kernels/test-quick-select.cu
 
   )
@@ -135,7 +135,7 @@ if (BUILD_TESTS)
 
 
   cuda_add_executable(time_kd_tree_build
-    kNN/kd-tree/time-kd-tree-naive.cu
+    kNN/kd-tree/time-kd-tree-build.cu
     OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
   )
 

@@ -1,6 +1,6 @@
 // Includes
 #include <quick-select.cuh>
-#include <kd-tree-naive.cuh>
+#include <kd-tree-build.cuh>
 #include <knn_gpgpu.h>
 #include <stdio.h>
 #include <gtest/gtest.h>

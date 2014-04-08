@@ -1,4 +1,4 @@
-#include "kd-tree-naive.cuh"
+#include "kd-tree-build.cuh"
 #include "multiple-radix-select.cuh"
 #include "quick-select.cuh"
 #include "radix-select.cuh"
