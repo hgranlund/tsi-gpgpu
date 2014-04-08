@@ -86,7 +86,7 @@ inline int stringRemoveDelimiter(char delimiter, const char *string)
         string_start++;
     }
 
-    if (string_start >= (int)strlen(string)-1)
+    if (string_start >= (int)strlen(string) - 1)
     {
         return 0;
     }
@@ -121,7 +121,7 @@ inline bool checkCmdLineFlag(const int argc, const char **argv, const char *stri
 
     if (argc >= 1)
     {
-        for (int i=1; i < argc; i++)
+        for (int i = 1; i < argc; i++)
         {
             int string_start = stringRemoveDelimiter('-', argv[i]);
             const char *string_argv = &argv[i][string_start];
@@ -150,7 +150,7 @@ inline bool getCmdLineArgumentValue(const int argc, const char **argv, const cha
 
     if (argc >= 1)
     {
-        for (int i=1; i < argc; i++)
+        for (int i = 1; i < argc; i++)
         {
             int string_start = stringRemoveDelimiter('-', argv[i]);
             const char *string_argv = &argv[i][string_start];
@@ -158,14 +158,14 @@ inline bool getCmdLineArgumentValue(const int argc, const char **argv, const cha
 
             if (!STRNCASECMP(string_argv, string_ref, length))
             {
-                if (length+1 <= (int)strlen(string_argv))
+                if (length + 1 <= (int)strlen(string_argv))
                 {
                     int auto_inc = (string_argv[length] == '=') ? 1 : 0;
                     *value = (T)atoi(&string_argv[length + auto_inc]);
                 }
 
                 bFound = true;
-                i=argc;
+                i = argc;
             }
         }
     }
@@ -180,7 +180,7 @@ inline int getCmdLineArgumentInt(const int argc, const char **argv, const char *
 
     if (argc >= 1)
     {
-        for (int i=1; i < argc; i++)
+        for (int i = 1; i < argc; i++)
         {
             int string_start = stringRemoveDelimiter('-', argv[i]);
             const char *string_argv = &argv[i][string_start];
@@ -188,7 +188,7 @@ inline int getCmdLineArgumentInt(const int argc, const char **argv, const char *
 
             if (!STRNCASECMP(string_argv, string_ref, length))
             {
-                if (length+1 <= (int)strlen(string_argv))
+                if (length + 1 <= (int)strlen(string_argv))
                 {
                     int auto_inc = (string_argv[length] == '=') ? 1 : 0;
                     value = atoi(&string_argv[length + auto_inc]);
@@ -221,7 +221,7 @@ inline float getCmdLineArgumentFloat(const int argc, const char **argv, const ch
 
     if (argc >= 1)
     {
-        for (int i=1; i < argc; i++)
+        for (int i = 1; i < argc; i++)
         {
             int string_start = stringRemoveDelimiter('-', argv[i]);
             const char *string_argv = &argv[i][string_start];
@@ -229,7 +229,7 @@ inline float getCmdLineArgumentFloat(const int argc, const char **argv, const ch
 
             if (!STRNCASECMP(string_argv, string_ref, length))
             {
-                if (length+1 <= (int)strlen(string_argv))
+                if (length + 1 <= (int)strlen(string_argv))
                 {
                     int auto_inc = (string_argv[length] == '=') ? 1 : 0;
                     value = (float)atof(&string_argv[length + auto_inc]);
@@ -262,7 +262,7 @@ inline bool getCmdLineArgumentString(const int argc, const char **argv,
 
     if (argc >= 1)
     {
-        for (int i=1; i < argc; i++)
+        for (int i = 1; i < argc; i++)
         {
             int string_start = stringRemoveDelimiter('-', argv[i]);
             char *string_argv = (char *)&argv[i][string_start];
@@ -270,7 +270,7 @@ inline bool getCmdLineArgumentString(const int argc, const char **argv,
 
             if (!STRNCASECMP(string_argv, string_ref, length))
             {
-                *string_retval = &string_argv[length+1];
+                *string_retval = &string_argv[length + 1];
                 bFound = true;
                 continue;
             }
@@ -415,12 +415,12 @@ inline char *sdkFindFilePath(const char *filename, const char *executable_path)
 #else
         // Linux & OSX path delimiter
         size_t delimiter_pos = executable_name.find_last_of('/');
-        executable_name.erase(0,delimiter_pos+1);
+        executable_name.erase(0, delimiter_pos + 1);
 #endif
     }
 
     // Loop over all search paths and return the first hit
-    for (unsigned int i = 0; i < sizeof(searchPath)/sizeof(char *); ++i)
+    for (unsigned int i = 0; i < sizeof(searchPath) / sizeof(char *); ++i)
     {
         std::string path(searchPath[i]);
         size_t executable_name_pos = path.find("<executable_name>");
