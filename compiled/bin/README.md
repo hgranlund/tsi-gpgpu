@@ -23,7 +23,7 @@ Time_kd_search generates a kd-tree, query the tree with all given points, and an
 
 #### File format
 
-The executables accepts binary files. The points should be written sequentially with x, y and z values. The methods for reading and writing points can be found at: [Github](https://github.com/hgranlund/tsi-gpGPU/blob/master/tests/kNN/kd-tree/time-kd-tree-naive.cu)
+The executables accepts binary files. The points should be written sequentially with x, y and z values. The methods for reading and writing points can be found at: [Github](https://github.com/hgranlund/tsi-gpgpu/blob/master/tests/kNN/kd-tree/time-kd-search.cu)
 
 
 
