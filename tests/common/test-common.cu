@@ -69,3 +69,24 @@ void ASSERT_TREE_EQ(struct Point *expected_tree, struct Point *actual_tree, int 
         }
     }
 }
+
+void ASSERT_TREE_LEVEL_OK(PointS *points, int *steps, int n, int p)
+{
+    struct PointS *t_points;
+
+    for (int i = 0; i < p; ++i)
+    {
+        t_points = points + steps[i * 2];
+        n =  steps[i * 2 + 1] - steps[i * 2];
+
+        for (int i = 0; i < n / 2; ++i)
+        {
+            ASSERT_LE(t_points[i].p[0], t_points[n / 2].p[0]) << "Faild with n = " << n << " and p " << p;
+        }
+
+        for (int i = n / 2; i < n; ++i)
+        {
+            ASSERT_GE(t_points[i].p[0], t_points[n / 2].p[0]) << "Faild with n = " << n << " and p " << p;
+        }
+    }
+}

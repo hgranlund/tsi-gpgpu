@@ -16,5 +16,5 @@ void cudaStopTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
 void printCudaTiming(float elapsed_time, float bytes, int n);
 
 void ASSERT_TREE_EQ(struct Point *expected_tree, struct Point *actual_tree, int n);
-
+void ASSERT_TREE_LEVEL_OK(PointS *points, int *steps, int n, int p);
 #endif
