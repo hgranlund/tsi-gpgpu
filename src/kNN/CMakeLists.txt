@@ -46,13 +46,10 @@ kd-tree/search-iterative.cu
 )
 
 set(CFILES
-bitonic-sort-serial.c
 )
 
 set(HFILES
-bitonic-sort-serial.h
 )
-
 
 set(HFILES_PUBLIC
   ../../include/knn_gpgpu.h
