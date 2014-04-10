@@ -15,18 +15,18 @@ include_directories(
 set(CUHFILES
 # brute-force/kNN-brute-force-garcia.cuh
 # brute-force/kNN-brute-force.cuh
-# kernels/reduction.cuh
-# kernels/multiple-multiple-radix-select.cuh
-kernels/common.cuh
-kernels/multiple-radix-select.cuh
-kernels/radix-select.cuh
-kernels/quick-select.cuh
+# kd-tree/reduction.cuh
+# kd-tree/multiple-multiple-radix-select.cuh
+kd-tree/common.cuh
+kd-tree/multiple-radix-select.cuh
+kd-tree/radix-select.cuh
+kd-tree/quick-select.cuh
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
-kernels/reduction-mod.cuh
-kernels/sum-reduction.cuh
+brute-force/reduction-mod.cuh
+kd-tree/sum-reduction.cuh
 kd-tree/kd-tree-build.cuh
-kernels/kd-search.cuh
+kd-tree/kd-search.cuh
 kd-tree/search-iterative.cuh
 )
 
@@ -35,13 +35,13 @@ set(CUFILES
 # brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
-kernels/sum-reduction.cu
-kernels/reduction-mod.cu
-kernels/multiple-radix-select.cu
-kernels/radix-select.cu
-kernels/quick-select.cu
+kd-tree/sum-reduction.cu
+brute-force/reduction-mod.cu
+kd-tree/multiple-radix-select.cu
+kd-tree/radix-select.cu
+kd-tree/quick-select.cu
 kd-tree/kd-tree-build.cu
-kernels/kd-search.cu
+kd-tree/kd-search.cu
 kd-tree/search-iterative.cu
 )
 
@@ -114,18 +114,6 @@ endif(CUDPP_GENCODE_SM35)
 if (CUDA_VERBOSE_PTXAS)
   set(VERBOSE_PTXAS --ptxas-options=-v)
 endif (CUDA_VERBOSE_PTXAS)
-
-
-
-
-cuda_add_library(knn_reduce ${LIB_TYPE}
-  brute-force/kNN-brute-force-reduce.cu
-  brute-force/kNN-brute-force-reduce.cuh
-  kernels/reduction.cuh
-  # kernels/reduction.cu
-  OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
-  )
-
 
 cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${CUHFILES}

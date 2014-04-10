@@ -2,7 +2,7 @@
 
 #include "kNN-brute-force-bitonic.cuh"
 // #include "../kernels/reduction.cuh"
-#include "../kernels/reduction-mod.cuh"
+#include "reduction-mod.cuh"
 
 #include <stdio.h>
 #include <math.h>
