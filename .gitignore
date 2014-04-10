@@ -39,3 +39,4 @@ src/kNN/kd-tree/kd-tree-iterative
 src/kNN/kd-tree/kd-tree-naive
 src/kNN/kd-tree/knn-serial
 release/
+tests/data/100_mill_points.data
