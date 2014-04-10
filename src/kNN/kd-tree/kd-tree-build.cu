@@ -153,6 +153,9 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
 
     checkCudaErrors(cudaFree(d_swap));
     checkCudaErrors(cudaFree(d_partition));
+    checkCudaErrors(cudaFree(d_steps));
+    free(h_steps_new);
+    free(h_steps_old);
 
     checkCudaErrors(cudaMalloc(&d_points_out, n * sizeof(Point)));
 
@@ -162,7 +165,6 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
     store_locations(h_points_out, 0, n, n);
 
     checkCudaErrors(cudaFree(d_points));
-    checkCudaErrors(cudaFree(d_steps));
 }
 
 
