@@ -109,6 +109,8 @@ int main(int argc, char const *argv[])
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&elapsed_time_build, start, stop);
 
+        cudaDeviceReset();
+
         float elapsed_time_search = 0;
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
