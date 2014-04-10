@@ -31,9 +31,7 @@ __Build one tree from points specified in a binary file:__
 
 Number-of-points specifies how many points the executable will read from the data-file. This number should be lower than the actual number of points contained in the data-file. Path to file is the path to the data-file containing the points.
 
-So the command ```.\time_kd_tree_build.exe 10000 ..\..\..\tests\data\100_mill_points.data``` would build a kd-tree from the first 10 000 points specified in the data-file.
-
-Test data-files are located in ```/tsi-gpgpu/tests/data```.
+So the command ```.\time_kd_tree_build.exe 10000 \path-to-file\100_mill_points.data``` would build a kd-tree from the first 10 000 points specified in the data-file.
 
 
 #### Time_kd_search_vx.x.exe:
