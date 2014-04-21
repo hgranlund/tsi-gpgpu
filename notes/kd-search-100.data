@@ -1,0 +1,19 @@
+ubuntu@ip-172-31-4-85:~/tsi-gpgpu/build/bin$ ./time_kd_search 20000000 1500000000 10000000
+Running kd-search-all from n = 20000000 to n = 1500000000 with step = 10000000
+GPU memory usage: used = 738.609375, free = 3357.203125 MB, total = 4095.812500 MB
+GPU memory usage: used = 890.992188, free = 3204.820312 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 5703.35938 ms, Query Time = 4494.82715 ms, Total time = 10198.18652 ms, Size = 20000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 1081.882812, free = 3013.929688 MB, total = 4095.812500 MB
+GPU memory usage: used = 1310.640625, free = 2785.171875 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 8359.86523 ms, Query Time = 4796.69092 ms, Total time = 13156.55664 ms, Size = 30000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 1425.273438, free = 2670.539062 MB, total = 4095.812500 MB
+GPU memory usage: used = 1730.296875, free = 2365.515625 MB, total = 4095.812500 MB
+17
+
+kd-search-all,  Build Time = 11469.05664 ms, Query Time = 1930826.00000 ms, Total time = 1942295.00000 ms, Size = 40000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 1768.421875, free = 2327.390625 MB, total = 4095.812500 MB
+GPU memory usage: used = 2149.945312, free = 1945.867188 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 14535.55957 ms, Query Time = 8266059.00000 ms, Total time = 8280594.50000 ms, Size = 50000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 2112.070312, free = 1983.742188 MB, total = 4095.812500 MB
+GPU memory usage: used = 2569.718750, free = 1526.093750 MB, total = 4095.812500 MB
+
