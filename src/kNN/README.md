@@ -207,6 +207,7 @@ Some instability is apparent in the graph, but this is probably due to the autho
 
 The trend is exaggerated when considering N searches. Searching with an index cache is overall fastest, and gives a total search time of ~17 s for 14 million searches in a point cloud of 14 million.
 
+
 #### Possible improvements
 
 * Run several queries in parallel. Easy to implement, as parallelization is trivial due to independent queries, but is dependent on efficient transfer and storage of the kd-tree on the GPU.
@@ -246,6 +247,33 @@ We see that the parallel implementation performs better than the base serial imp
 We also see a couple of large "jumps" in the graph. This happens when the number of elements passes a power of two and the height of the resulting kd-tree increase. The height increase hits the implementation at its weakest.
 
 Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
+
+
+
+#### Memory usage
+
+
+To analyses memory consumption we have created a theoretical estimation, as well as tested consumption on a GeForce 560ti and a Nvidia grid K520. The theoretical estimations is based on the GPU's memory consumption as we see this as the critical factor.
+<!-- The memory consumption is also the only limitation on the problem size. -->
+
+
+
+**Kd-tree-build**
+
+The memory consumption for the kd-tree build is only depended on the number of points (n) and the theoretical consumption rate grows linearly as O(36n) ⊂ O(n).
+
+![Memory usage of kd-tree-build](./images/memory-usage-build.png)
+
+We see that the estimation fit the real consumption almost perfectly.
+
+**Kd-search**
+
+The kd-search is used to query every point against each other. It has a theoretical memory consumption rate at O((40+4k)n) ⊂ O(kn). The consumption is therefore depended on the number of points (n) and the number of neighbors (k).
+
+![Memory usage of kd-search](./images/memory-usage-kd-search.png)
+
+We see that, also here, our estimation fit the real consumption almost perfectly.
+
 
 #### Further work
 
