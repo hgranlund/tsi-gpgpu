@@ -1,0 +1,21 @@
+Running kd-tree-build from n = 20000000 to n = 1500000000 with step = 10000000
+GPU memory usage: used = 738.609375, free = 3357.203125 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 5469.76416 ms, Size = 20000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 1081.882812, free = 3013.929688 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 8302.78906 ms, Size = 30000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 1425.273438, free = 2670.539062 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 11244.84570 ms, Size = 40000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 1768.421875, free = 2327.390625 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 14342.83594 ms, Size = 50000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 2112.070312, free = 1983.742188 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 17437.00000 ms, Size = 60000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 2455.218750, free = 1640.593750 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 21111.63477 ms, Size = 70000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 2798.617188, free = 1297.195312 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 24707.40234 ms, Size = 80000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 3141.898438, free = 953.914062 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 28083.11133 ms, Size = 90000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 3485.296875, free = 610.515625 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 31171.70508 ms, Size = 100000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 3828.445312, free = 267.367188 MB, total = 4095.812500 MB
+build_kd_tree_naive,  Time = 34201.03125 ms, Size = 110000000 Elements, NumDevsUsed = 1
