@@ -161,7 +161,7 @@ As expected, almost all the time is spent building the tree. Querying for the cl
 
 The paper _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._ offers interesting, although slightly complex, ideas to an efficient parallelization of k-d tree construction. I order to save time, a good amount of time was spent searching for, and trying out, different open source implementations based on this paper. This search was unsuccessful. All the implementations we managed to find was problematic due to lack of updates, often not updated since 2011, and still running on CUDA 4.1, lack of documentation, lack of generalization or dubious source code.
 
-A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by NVIDIA, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
+A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by Nvidia, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
 
 
 Our reimplementation
@@ -249,14 +249,11 @@ We also see a couple of large "jumps" in the graph. This happens when the number
 Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
 
 
-
 #### Memory usage
 
+To analyses the space complexity of the kd-tree build and search algorithm, we have made an theoretical calculation of both algorithms GPU memory consumption, and tested it against results from a GeForce 560ti and a Nvidia grid K520 (amazon web service delved).
 
-To analyses memory consumption we have created a theoretical estimation, as well as tested consumption on a GeForce 560ti and a Nvidia grid K520. The theoretical estimations is based on the GPU's memory consumption as we see this as the critical factor.
-<!-- The memory consumption is also the only limitation on the problem size. -->
-
-
+It is important to note that the only hard memory limitation is related to building the tree, as a search for N query-points can be performed in several operations. If you e.g. run into memory limitations when searching for 10^8 query-points, you can simply perform two searches on 5^8 query-points to get around the limitation. Loading the pre-built kd-tree on the GPU for searching, and performing one query for a low value of k, will always consume less memory than building the actual kd-tree.
 
 **Kd-tree-build**
 
@@ -264,7 +261,22 @@ The memory consumption for the kd-tree build is only depended on the number of p
 
 ![Memory usage of kd-tree-build](./images/memory-usage-build.png)
 
-We see that the estimation fit the real consumption almost perfectly.
+We see that the estimation fit the real consumption almost perfectly, and with this memory model, we can easily estimate the GPU memory requirements for different problem sizes.
+
+Given that a customer wants to perform a knn-search on a point cloud of 100 million, he or she would need a GPU with at least 3.6 Gb of spare memory. Under we have tabulated what maximum problem sizes you would expect to be able to run on a selection of Nvidia graphics cards:
+
+| Nvidia GPU   | Available memory | Maximum problem size |
+| ------------ |:----------------:| --------------------:|
+| GTX TITAN    | 6144 MB          | 1.79E+08             |
+| GTX 780      | 3072 MB          | 8.95E+07             |
+| GTX 770      | 2048 MB          | 5.97E+07             |
+| Quadro K6000 | 12288 MB         | 3.58E+08             |
+| Quadro K5000 | 4096 MB          | 1.19E+08             |
+| Quadro K4000 | 3072 MB          | 8.95E+07             |
+| Tesla K40    | 12288 MB         | 3.58E+08             |
+| Tesla K20    | 5120 MB          | 1.49E+08             |
+
+These numbers should be read as rough estimates, as each card is expected to have internal processes requiring an unspecified constant amount of the available memory, therefor lovering the maximum problem size possible to run on these cards in practice. It is also worth to mention that when buying a GPU for GPGPU tasks, other performance characteristics is equally, or more, important. 
 
 **Kd-search**
 
@@ -272,7 +284,7 @@ The kd-search is used to query every point against each other. It has a theoreti
 
 ![Memory usage of kd-search](./images/memory-usage-kd-search.png)
 
-We see that, also here, our estimation fit the real consumption almost perfectly.
+Also in this case our estimation fit the real consumption with a high degree of accuracy.
 
 
 #### Further work
