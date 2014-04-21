@@ -4,13 +4,13 @@ project(tests)
 
 include_directories(
  ${CMAKE_SOURCE_DIR}/src/common
- ${CMAKE_SOURCE_DIR}/tests/common/inc
  ${CMAKE_SOURCE_DIR}/include
  ${CMAKE_SOURCE_DIR}/src/kNN
  ${CMAKE_SOURCE_DIR}/src/kNN/kernels
  ${CMAKE_SOURCE_DIR}/src/kNN/kd-tree
  ${CMAKE_SOURCE_DIR}/src/kNN/brute-force
- # ${CMAKE_CURRENT_SOURCE_DIR}/common
+ ${CMAKE_SOURCE_DIR}/tests/common
+ ${CMAKE_SOURCE_DIR}/tests/common/inc
 )
 
 link_directories(
@@ -78,20 +78,25 @@ if (BUILD_TESTS)
   # Include the gtest library. gtest_SOURCE_DIR is available due to
   include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
+  set(common_files
+    common/test-common.cuh
+    common/test-common.cu
+  )
+
   set(test_files
-    #kNN/test-kNN-brute-force.cpp
     kNN/kernels/test_redution.cu
     kNN/kernels/test-multiple-radix-select.cu
     kNN/kernels/test-radix-select.cu
     kNN/kernels/test-quick-select.cu
     kNN/kernels/test-kd-search.cu
-    # kNN/brute_force/test-knn-brute-force-reduce.cu
-    # kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kd-tree/test-kd-tree-naive.cu
+    kNN/brute_force/test-knn-brute-force-reduce.cu
+    kNN/brute_force/test-knn-brute-force-bitonic.cu
+    kNN/kd-tree/test-kd-tree-build.cu
     kNN/kd-tree/test-search-iterative.cu
   )
 
   cuda_add_executable(runUnitTests
+    ${common_files}
     ${test_files}
   )
 
@@ -114,28 +119,13 @@ if (BUILD_TESTS)
     # kNN/kernels/test-multiple-radix-select.cu
     # kNN/brute_force/test-knn-brute-force-reduce.cu
     # kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kd-tree/test-kd-tree-naive.cu
+    kNN/kd-tree/test-kd-tree-build.cu
     # kNN/kernels/test-quick-select.cu
 
   )
 
-
-
-  cuda_add_executable(nvproc_test
-    ${profile_files}
-    OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
-  )
-
-  target_link_libraries(nvproc_test gtest gtest_main )
-  # target_link_libraries(runUnitTests common_debug )
-
-  target_link_libraries(nvproc_test knn_gpgpu)
-
-  add_custom_target(profile_test nvproc_test)
-
-
   cuda_add_executable(time_kd_tree_build
-    kNN/kd-tree/time-kd-tree-naive.cu
+    kNN/kd-tree/time-kd-tree-build.cu
     OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
   )
 

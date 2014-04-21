@@ -123,7 +123,7 @@ __global__ void cuInsertionSort(float *dist, int dist_pitch, int *ind, int ind_p
     if (xIndex < width)
     {
 
-        // Pointer shift, initialization, and max value
+        // struct Pointer shift, initialization, and max value
         p_dist   = dist + xIndex;
         p_ind    = ind  + xIndex;
         max_dist = p_dist[0];
@@ -282,7 +282,7 @@ void knn_brute_force_garcia(float *ref_host, int ref_width, float *query_host, i
 
         texA.addressMode[0] = cudaAddressModeClamp;
         texA.addressMode[1] = cudaAddressModeClamp;
-        texA.filterMode     = cudaFilterModePoint;
+        texA.filterMode     = cudaFilterModestruct Point;
         texA.normalized     = 0;
         cudaBindTextureToArray(texA, ref_array);
 

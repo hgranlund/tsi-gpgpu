@@ -1,18 +1,9 @@
-
-
-// Includes
-#include <kNN-brute-force-reduce.cuh>
+#include "kNN-brute-force-reduce.cuh"
 #include <knn_gpgpu.h>
-#include "gtest/gtest.h"
-
-#include <stdio.h>
-#include <cuda.h>
-#include <helper_functions.h>
-#include <helper_cuda.h>
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
+#include "test-common.cuh"
 
 
-TEST(knn_brute_force, test_knn_reduce_correctness)
+TEST(knn_brute_force_reduce, correctness)
 {
 
     float *ref, *dist;
@@ -57,7 +48,7 @@ TEST(knn_brute_force, test_knn_reduce_correctness)
     cudaDeviceReset();
 }
 
-TEST(knn_brute_force, test_knn_reduce_time)
+TEST(knn_brute_force_reduce, timing)
 {
 
     float *ref, *dist;
@@ -101,11 +92,6 @@ TEST(knn_brute_force, test_knn_reduce_time)
     printf("kNN-brute-force-reduce, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, k = %u NumDevsUsed = %d\n",
            throughput, elapsed_time, ref_nb, k, 1);
 
-
-    for (unsigned int i = 0; i < k; ++i)
-    {
-        ASSERT_EQ(ind[i], ref_nb - 1 - i) << "Faild with i = " << i << " and n = " << ref_nb;;
-    }
 
     free(dist);
     free(ind);

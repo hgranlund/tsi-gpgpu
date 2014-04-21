@@ -10,7 +10,6 @@
 #include <cuda.h>
 #include <time.h>
 #include <assert.h>
-#include "../../../common/common-debug.h"
 #include "helper_cuda.h"
 
 
