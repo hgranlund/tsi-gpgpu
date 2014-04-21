@@ -1,0 +1,61 @@
+Running kd-search-all from n = 1000000 to n = 20000000 with step = 1000000
+GPU memory usage: used = 86.195312, free = 4009.617188 MB, total = 4095.812500 MB
+GPU memory usage: used = 93.695312, free = 4002.117188 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 419.01199 ms, Query Time = 1290.49023 ms, Total time = 1709.50220 ms, Size = 1000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 120.695312, free = 3975.117188 MB, total = 4095.812500 MB
+GPU memory usage: used = 135.820312, free = 3959.992188 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 632.79529 ms, Query Time = 2218.70410 ms, Total time = 2851.49951 ms, Size = 2000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 154.820312, free = 3940.992188 MB, total = 4095.812500 MB
+GPU memory usage: used = 177.578125, free = 3918.234375 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 949.37567 ms, Query Time = 2423.81006 ms, Total time = 3373.18579 ms, Size = 3000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 189.328125, free = 3906.484375 MB, total = 4095.812500 MB
+GPU memory usage: used = 219.703125, free = 3876.109375 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 1179.98486 ms, Query Time = 3412.93872 ms, Total time = 4592.92383 ms, Size = 4000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 223.453125, free = 3872.359375 MB, total = 4095.812500 MB
+GPU memory usage: used = 261.453125, free = 3834.359375 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 1391.67932 ms, Query Time = 3186.07446 ms, Total time = 4577.75391 ms, Size = 5000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 257.953125, free = 3837.859375 MB, total = 4095.812500 MB
+GPU memory usage: used = 303.578125, free = 3792.234375 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 1692.46399 ms, Query Time = 6436.22754 ms, Total time = 8128.69141 ms, Size = 6000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 292.078125, free = 3803.734375 MB, total = 4095.812500 MB
+GPU memory usage: used = 345.585938, free = 3750.226562 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 2024.69788 ms, Query Time = 6973.93652 ms, Total time = 8998.63477 ms, Size = 7000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 326.585938, free = 3769.226562 MB, total = 4095.812500 MB
+GPU memory usage: used = 387.460938, free = 3708.351562 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 2239.60181 ms, Query Time = 7796.84424 ms, Total time = 10036.44629 ms, Size = 8000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 360.710938, free = 3735.101562 MB, total = 4095.812500 MB
+GPU memory usage: used = 429.460938, free = 3666.351562 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 2600.24634 ms, Query Time = 2354.26807 ms, Total time = 4954.51465 ms, Size = 9000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 395.210938, free = 3700.601562 MB, total = 4095.812500 MB
+GPU memory usage: used = 471.343750, free = 3624.468750 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 2859.63208 ms, Query Time = 11701.41602 ms, Total time = 14561.04785 ms, Size = 10000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 429.593750, free = 3666.218750 MB, total = 4095.812500 MB
+GPU memory usage: used = 513.343750, free = 3582.468750 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 3146.57104 ms, Query Time = 9190.89844 ms, Total time = 12337.46973 ms, Size = 11000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 463.843750, free = 3631.968750 MB, total = 4095.812500 MB
+GPU memory usage: used = 555.468750, free = 3540.343750 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 3410.39014 ms, Query Time = 7441.70117 ms, Total time = 10852.09180 ms, Size = 12000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 498.218750, free = 3597.593750 MB, total = 4095.812500 MB
+GPU memory usage: used = 597.226562, free = 3498.585938 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 3705.88623 ms, Query Time = 14567.77734 ms, Total time = 18273.66406 ms, Size = 13000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 532.476562, free = 3563.335938 MB, total = 4095.812500 MB
+GPU memory usage: used = 639.351562, free = 3456.460938 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 4073.32764 ms, Query Time = 10900.87598 ms, Total time = 14974.20312 ms, Size = 14000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 566.851562, free = 3528.960938 MB, total = 4095.812500 MB
+GPU memory usage: used = 681.101562, free = 3414.710938 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 4357.52393 ms, Query Time = 18009.60156 ms, Total time = 22367.12500 ms, Size = 15000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 601.101562, free = 3494.710938 MB, total = 4095.812500 MB
+GPU memory usage: used = 723.234375, free = 3372.578125 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 4637.74121 ms, Query Time = 23424.14844 ms, Total time = 28061.89062 ms, Size = 16000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 635.484375, free = 3460.328125 MB, total = 4095.812500 MB
+GPU memory usage: used = 764.984375, free = 3330.828125 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 4643.60889 ms, Query Time = 22940.99414 ms, Total time = 27584.60352 ms, Size = 17000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 669.734375, free = 3426.078125 MB, total = 4095.812500 MB
+GPU memory usage: used = 807.109375, free = 3288.703125 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 4876.58936 ms, Query Time = 9090.91992 ms, Total time = 13967.50977 ms, Size = 18000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 704.109375, free = 3391.703125 MB, total = 4095.812500 MB
+GPU memory usage: used = 849.117188, free = 3246.695312 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 5184.56152 ms, Query Time = 23593.58594 ms, Total time = 28778.14844 ms, Size = 19000000 Elements, NumDevsUsed = 1
+GPU memory usage: used = 738.617188, free = 3357.195312 MB, total = 4095.812500 MB
+GPU memory usage: used = 890.992188, free = 3204.820312 MB, total = 4095.812500 MB
+kd-search-all,  Build Time = 5522.71729 ms, Query Time = 11459.44629 ms, Total time = 16982.16406 ms, Size = 20000000 Elements, NumDevsUsed = 1
