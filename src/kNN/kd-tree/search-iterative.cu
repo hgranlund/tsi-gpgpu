@@ -100,11 +100,11 @@ int query_a(struct Point qp, struct Point *tree, int n)
         {
             current = pop(&stackPtr);
             dim = pop(&dimsPtr);
-            // printf("(%3.1f, %3.1f, %3.1f) "
-            //        "current = %d ",
-            //        tree[current].p[0], tree[current].p[1], tree[current].p[2],
-            //        current);
-            // printf("dim = %d\n", dim );
+            printf("(%3.1f, %3.1f, %3.1f) "
+                   "current = %d ",
+                   tree[current].p[0], tree[current].p[1], tree[current].p[2],
+                   current);
+            printf("dim = %d\n", dim );
 
             current_dist = dist(qp, tree[current]);
             if (best_dist > current_dist)
@@ -112,7 +112,14 @@ int query_a(struct Point qp, struct Point *tree, int n)
                 best_dist = current_dist;
                 best = current;
             }
-            current = other(qp, tree[current], dim);
+            if ((tree[current].p[dim] - qp.p[dim]) * (tree[current].p[dim] - qp.p[dim]) < best_dist)
+            {
+                current = other(qp, tree[current], dim);
+            }
+            else
+            {
+                current = -1;
+            }
         }
         else
         {
@@ -122,6 +129,7 @@ int query_a(struct Point qp, struct Point *tree, int n)
             current = target(qp, tree[current], dim);
         }
     }
+    printf("\n");
     return best;
 }
 // int query_a(float *qp, struct Point *tree, int n)
