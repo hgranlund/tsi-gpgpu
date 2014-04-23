@@ -26,13 +26,14 @@ TEST(kd_search, wikipedia_example)
 
     free(points);
     free(points_out);
+    free(result);
 }
 
 TEST(kd_search, timing)
 {
     int n, k = 1;
 
-    for (n = 10000; n <= 10000; n += 250000)
+    for (n = 32; n <= 32; n += 250000)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
