@@ -12,7 +12,7 @@ void push(int **stack, int value);
 int pop(int **stack);
 int peek(int *stack);
 bool isEmpty(int *stack);
-void initStack(int *stack_init, int **stack);
+void initStack(int **stack);
 
 void upDim(int *dim);
 

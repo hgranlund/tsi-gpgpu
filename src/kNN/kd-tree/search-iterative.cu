@@ -14,15 +14,14 @@ float dist(struct Point qp, struct Point point)
     return dx * dx + dy * dy + dz * dz;
 }
 
-void initStack(int *stack_init, int **stack)
-{
-    *stack = stack_init;
-    push(stack, -1);
-}
-
 void push(int **stack, int value)
 {
     *((*stack)++) = value;
+}
+
+void initStack(int **stack)
+{
+    push(stack, -1);
 }
 
 int pop(int **stack)
@@ -95,29 +94,29 @@ void upDim(int *dim)
 
 void kNN(struct Point qp, struct Point *tree, int n, int k, int *result)
 {
-    int stack_init[50],
-        *stack,
-        d_stack_init[50],
-        *d_stack,
-        dim = 2,
-        current = n / 2;
+    int *stack_ptr = (int *)malloc(51 * sizeof(int)),
+         *stack = stack_ptr,
+          *d_stack_ptr = (int *)malloc(51 * sizeof(int)),
+           *d_stack = d_stack_ptr,
+            dim = 2,
+            current = n / 2;
 
     float current_dist;
 
     struct Point current_point;
 
-    struct KPoint k_stack_init[k + 1],
-            *k_stack = k_stack_init,
-             worst_best;
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint)),
+                   *k_stack = k_stack_ptr,
+                    worst_best;
 
     worst_best.dist = FLT_MAX;
 
-    initStack(stack_init, &stack);
-    initStack(d_stack_init, &d_stack);
+    initStack(&stack);
+    initStack(&d_stack);
     initKStack(&k_stack, k);
 
     while (!isEmpty(stack) || current != -1)
-{
+    {
         if (current == -1 && !isEmpty(stack))
         {
             current = pop(&stack);
@@ -150,6 +149,10 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result)
             current = target(qp, tree[current], dim);
         }
     }
+
+    free(stack_ptr);
+    free(d_stack_ptr);
+    free(k_stack_ptr);
 
     for (int i = 0; i < k; ++i)
     {

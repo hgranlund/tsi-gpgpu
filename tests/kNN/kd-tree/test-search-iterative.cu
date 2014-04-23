@@ -54,6 +54,8 @@ TEST(search_iterative, wikipedia_example)
     ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 10, 0, 0, 8, 1, 0));
     ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 0, 10, 0, 4, 7, 0));
 
+    free(points);
+    free(points_out);
 }
 
 TEST(search_iterative, correctness_with_k)
@@ -61,7 +63,6 @@ TEST(search_iterative, correctness_with_k)
     int n = 6,
         k = 3,
         result[k];
-
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
     struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
@@ -81,68 +82,77 @@ TEST(search_iterative, correctness_with_k)
     ASSERT_EQ(3, result[1]);
     ASSERT_EQ(1, result[2]);
 
+    free(points);
+    free(points_out);
 }
 
 TEST(search_iterative, push)
 {
-    int stack_init[50],
-        *stack;
 
-    initStack(stack_init, &stack);
+    int *stack_ptr = (int *) malloc(3 * sizeof(int)),
+         *stack = stack_ptr;
+
+    initStack(&stack);
 
     push(&stack, 1);
     push(&stack, 3);
-    ASSERT_EQ(1, stack_init[1]);
-    ASSERT_EQ(3, stack_init[2]);
+    ASSERT_EQ(1, stack_ptr[1]);
+    ASSERT_EQ(3, stack_ptr[2]);
+
+    free(stack_ptr);
 }
 
 TEST(search_iterative, pop)
 {
-    int stack_init[50],
-        *stack;
+    int *stack_ptr = (int *) malloc(4 * sizeof(int)),
+         *stack = stack_ptr;
 
-    initStack(stack_init, &stack);
+    initStack(&stack);
 
-    stack_init[1] = 1;
-    stack_init[2] = 2;
-    stack_init[3] = 3;
+    stack[0] = 1;
+    stack[1] = 2;
+    stack[2] = 3;
     stack += 3;
 
     ASSERT_EQ(3, pop(&stack));
     ASSERT_EQ(2, pop(&stack));
     ASSERT_EQ(1, pop(&stack));
+
+    free(stack_ptr);
 }
 
 TEST(search_iterative, isEmpty)
 {
-    int stack_init[50],
-        *stack;
+    int *stack_ptr = (int *) malloc(4 * sizeof(int)),
+         *stack = stack_ptr;
 
-    initStack(stack_init, &stack);
+    initStack(&stack);
+
     ASSERT_TRUE(isEmpty(stack));
 
-    stack_init[1] = 10;
+    stack[0] = 10;
     stack++;
     ASSERT_FALSE(isEmpty(stack));
+
+    free(stack_ptr);
 }
 
 TEST(search_iterative, peek)
 {
-    int stack_init[50],
-        *stack;
+    int *stack_ptr = (int *) malloc(4 * sizeof(int)),
+         *stack = stack_ptr;
 
-    initStack(stack_init, &stack);
+    initStack(&stack);
 
     ASSERT_EQ(-1, peek(stack));
     ASSERT_EQ(-1, peek(stack));
 
-    stack_init[1] = -1;
-    stack++;
-    stack_init[2] = 10;
-    stack++;
+    push(&stack, 10);
 
     ASSERT_EQ(10, peek(stack));
     ASSERT_EQ(10, peek(stack));
+
+    free(stack_ptr);
 }
 
 TEST(search_iterative, upDim)
@@ -165,21 +175,23 @@ TEST(search_iterative, upDim)
 
 TEST(search_iterative, initKStack)
 {
-    struct KPoint k_stack_init[51],
-            *k_stack = k_stack_init;
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
+                   *k_stack = k_stack_ptr;
 
     initKStack(&k_stack, 50);
 
     ASSERT_EQ(-1, k_stack[-1].dist);
     ASSERT_EQ(FLT_MAX, k_stack[0].dist);
     ASSERT_EQ(FLT_MAX, k_stack[49].dist);
+
+    free(k_stack_ptr);
 }
 
 TEST(search_iterative, insert)
 {
     int n = 3;
-    struct KPoint k_stack_init[n + 1],
-            *k_stack = k_stack_init;
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
+                   *k_stack = k_stack_ptr;
 
     initKStack(&k_stack, n);
     struct KPoint a, b, c, d;
@@ -204,4 +216,6 @@ TEST(search_iterative, insert)
     insert(k_stack, d, n);
     ASSERT_EQ(b.dist, look(k_stack, n).dist);
     ASSERT_EQ(d.dist, k_stack[0].dist);
+
+    free(k_stack_ptr);
 }
