@@ -81,23 +81,33 @@ int inorder(struct Point *tree, int n)
 {
     int stack[50],
         *stackPtr,
+        dims[50],
+        *dimsPtr,
+        dim = 2,
         current = n / 2;
 
+    // float best_dist = FLT_MAX;
+
     initStack(stack, &stackPtr);
+    initStack(dims, &dimsPtr);
 
     while (!isEmpty(stackPtr) || current != -1)
     {
         if (current == -1 && !isEmpty(stackPtr))
         {
             current = pop(&stackPtr);
-            printf("(%3.1f, %3.1f, %3.1f)\n"
-                   "current = %d\n",
+            dim = pop(&dimsPtr);
+            printf("(%3.1f, %3.1f, %3.1f) "
+                   "current = %d ",
                    tree[current].p[0], tree[current].p[1], tree[current].p[2],
                    current);
+            printf("dim = %d\n", dim );
             current = tree[current].right;
         }
         else
         {
+            upDim(&dim);
+            push(&dimsPtr, dim);
             push(&stackPtr, current);
             current = tree[current].left;
         }
