@@ -79,13 +79,11 @@ void downDim(int *dim)
 
 int inorder(struct Point *tree, int n)
 {
-    int eos = -1,
-        stack[50],
-        *stackPtr = stack,
-         current = n / 2;
+    int stack[50],
+        *stackPtr,
+        current = n / 2;
 
-    push(&stackPtr, -1);
-
+    initStack(stack, &stackPtr);
 
     while (!isEmpty(stackPtr) || current != -1)
     {
@@ -103,9 +101,7 @@ int inorder(struct Point *tree, int n)
             push(&stackPtr, current);
             current = tree[current].left;
         }
-
     }
-
 
     return 1405;
 }
