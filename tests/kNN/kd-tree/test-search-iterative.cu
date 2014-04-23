@@ -1,5 +1,7 @@
 #include <search-iterative.cuh>
 #include <knn_gpgpu.h>
+#include <float.h>
+
 #include "test-common.cuh"
 
 bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
@@ -148,5 +150,48 @@ TEST(search_iterative, upDim)
 
     upDim(&dim);
     ASSERT_EQ(1, dim);
+}
+
+
+TEST(search_iterative, initKStack)
+{
+    struct KPoint kStack[51],
+            *kStackPtr = kStack;
+
+    initKStack(&kStackPtr, 50);
+
+    ASSERT_EQ(-1, kStackPtr[-1].dist);
+    ASSERT_EQ(FLT_MAX, kStackPtr[0].dist);
+    ASSERT_EQ(FLT_MAX, kStackPtr[49].dist);
+}
+
+TEST(search_iterative, insert)
+{
+    int n = 3;
+    struct KPoint kStack[n + 1],
+            *kStackPtr = kStack;
+
+    initKStack(&kStackPtr, n);
+    struct KPoint a, b, c, d;
+    a.dist = 1;
+    b.dist = 2;
+    c.dist = 3;
+    d.dist = 0;
+
+    insert(kStackPtr, a, n);
+    ASSERT_EQ(FLT_MAX, look(kStackPtr, n).dist);
+    ASSERT_EQ(a.dist, kStackPtr[0].dist);
+
+    insert(kStackPtr, b, n);
+    ASSERT_EQ(FLT_MAX, look(kStackPtr, n).dist);
+    ASSERT_EQ(b.dist, kStackPtr[1].dist);
+
+    insert(kStackPtr, c, n);
+    ASSERT_EQ(c.dist, look(kStackPtr, n).dist);
+    ASSERT_EQ(c.dist, kStackPtr[2].dist);
+
+    insert(kStackPtr, d, n);
+    ASSERT_EQ(b.dist, look(kStackPtr, n).dist);
+    ASSERT_EQ(d.dist, kStackPtr[0].dist);
 }
 
