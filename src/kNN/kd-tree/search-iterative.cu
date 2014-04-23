@@ -55,27 +55,10 @@ int find(int *stack, int eos, int value)
 
 void upDim(int *dim)
 {
-    if (*dim >= 2)
-    {
-        (*dim) = 0;
-    }
-    else
-    {
-        (*dim)++;
-    }
+    *dim = (*dim + 1) % 3;
 }
 
-void downDim(int *dim)
-{
-    if (*dim <= 0)
-    {
-        (*dim) = 2;
-    }
-    else
-    {
-        (*dim)--;
-    }
-}
+
 
 int inorder(struct Point *tree, int n)
 {

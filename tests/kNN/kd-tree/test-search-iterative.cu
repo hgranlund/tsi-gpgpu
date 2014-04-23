@@ -133,21 +133,7 @@ TEST(search_iterative, peek)
     ASSERT_EQ(10, peek(stackPtr));
 }
 
-// TEST(search_iterative, peek)
-// {
-//     int eos = -1,
-//         *stack = (int *) malloc(5 * sizeof stack);
 
-//     ASSERT_EQ(-1, peek(stack, eos));
-
-//     push(stack, &eos, 1337);
-
-//     ASSERT_EQ(1337, peek(stack, eos));
-//     ASSERT_EQ(1337, peek(stack, eos));
-//     ASSERT_EQ(1337, peek(stack, eos));
-
-//     free(stack);
-// }
 
 // TEST(search_iterative, find)
 // {
@@ -170,36 +156,20 @@ TEST(search_iterative, peek)
 //     free(stack);
 // }
 
-// TEST(search_iterative, upDim)
-// {
-//     int dim = 0;
+TEST(search_iterative, upDim)
+{
+    int dim = 0;
 
-//     upDim(&dim);
-//     ASSERT_EQ(1, dim);
+    upDim(&dim);
+    ASSERT_EQ(1, dim);
 
-//     upDim(&dim);
-//     ASSERT_EQ(2, dim);
+    upDim(&dim);
+    ASSERT_EQ(2, dim);
 
-//     upDim(&dim);
-//     ASSERT_EQ(0, dim);
+    upDim(&dim);
+    ASSERT_EQ(0, dim);
 
-//     upDim(&dim);
-//     ASSERT_EQ(1, dim);
-// }
+    upDim(&dim);
+    ASSERT_EQ(1, dim);
+}
 
-// TEST(search_iterative, downDim)
-// {
-//     int dim = 0;
-
-//     downDim(&dim);
-//     ASSERT_EQ(2, dim);
-
-//     downDim(&dim);
-//     ASSERT_EQ(1, dim);
-
-//     downDim(&dim);
-//     ASSERT_EQ(0, dim);
-
-//     downDim(&dim);
-//     ASSERT_EQ(2, dim);
-// }
