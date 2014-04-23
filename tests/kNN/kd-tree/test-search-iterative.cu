@@ -4,14 +4,14 @@
 
 #include "test-common.cuh"
 
-bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, float ex, float ey, float ez)
+bool isExpectedPoint(struct Point *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
 {
     struct Point query_point;
+    int result[k];
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
-    int best_fit = query_a(query_point, tree, n);
-
-    float actual = tree[best_fit].p[0] + tree[best_fit].p[1] + tree[best_fit].p[2];
+    query_a(query_point, tree, n, k, result);
+    float actual = tree[result[0]].p[0] + tree[result[0]].p[1] + tree[result[0]].p[2];
     float expected = ex + ey + ez;
 
     if (actual == expected)
@@ -23,7 +23,8 @@ bool isExpectedPoint(struct Point *tree, int n, float qx, float qy, float qz, fl
 
 TEST(search_iterative, wikipedia_example)
 {
-    int n = 6;
+    int n = 6,
+        k = 1;
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
     struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
@@ -38,24 +39,29 @@ TEST(search_iterative, wikipedia_example)
     cudaDeviceReset();
     build_kd_tree(points, n, points_out);
 
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 2, 3, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 5, 4, 0, 5, 4, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 9, 6, 0, 9, 6, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 4, 7, 0, 4, 7, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 8, 1, 0, 8, 1, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 7, 2, 0, 7, 2, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 10, 10, 0, 9, 6, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 0, 0, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 4, 4, 0, 5, 4, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 3, 2, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 2, 6, 0, 4, 7, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 10, 0, 0, 8, 1, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, 0, 10, 0, 4, 7, 0));
+
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 2, 3, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 5, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 9, 6, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 4, 7, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 8, 1, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 7, 2, 0, 7, 2, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 10, 10, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 0, 0, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 4, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 3, 2, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 2, 6, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 10, 0, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 0, 10, 0, 4, 7, 0));
+
 }
 
-TEST(search_iterative, inorder_print)
+TEST(search_iterative, correctness_with_k)
 {
-    int n = 6;
+    int n = 6,
+        k = 3,
+        result[k];
+
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
     struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
@@ -67,11 +73,14 @@ TEST(search_iterative, inorder_print)
     points[4].p[0] = 8, points[4].p[1] = 1, points[4].p[2] = 0;
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
-
     cudaDeviceReset();
     build_kd_tree(points, n, points_out);
+    query_a(points_out[4], points_out, n, k, result);
 
-    query_a(points_out[0], points_out, n);
+    ASSERT_EQ(4, result[0]);
+    ASSERT_EQ(3, result[1]);
+    ASSERT_EQ(1, result[2]);
+
 }
 
 TEST(search_iterative, push)

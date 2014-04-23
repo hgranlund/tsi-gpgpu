@@ -15,7 +15,7 @@ bool isEmpty(int *stackPtr);
 void initStack(int *stack, int **stackPtr);
 void upDim(int *dim);
 void downDim(int *dim);
-int query_a(struct Point qp, struct Point *tree, int n);
+void query_a(struct Point qp, struct Point *tree, int n, int k, int *result);
 void initKStack(struct KPoint **stack, int n);
 void insert(struct KPoint *stack, struct KPoint value, int n);
 struct KPoint look(struct KPoint *kStack, int n);
