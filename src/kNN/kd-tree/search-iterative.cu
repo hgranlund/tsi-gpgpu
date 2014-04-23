@@ -14,66 +14,61 @@ float dist(struct Point qp, struct Point point)
     return dx * dx + dy * dy + dz * dz;
 }
 
-void push(int **stackPtr, int value)
+void initStack(int *stack_init, int **stack)
 {
-    *((*stackPtr)++) = value;
+    *stack = stack_init;
+    push(stack, -1);
 }
 
-int pop(int **stackPtr)
+void push(int **stack, int value)
 {
-    return *(--(*stackPtr));
+    *((*stack)++) = value;
 }
 
-int peek(int *stackPtr)
+int pop(int **stack)
 {
-    return *(stackPtr - 1);
+    return *(--(*stack));
 }
 
-
-bool isEmpty(int *stackPtr)
+int peek(int *stack)
 {
-    return peek(stackPtr) == -1;
-}
-
-
-void initStack(int *stack, int **stackPtr)
-{
-    *stackPtr = stack;
-    push(stackPtr, -1);
+    return *(stack - 1);
 }
 
 
-void initKStack(KPoint **stack, int n)
+bool isEmpty(int *stack)
 {
-    (*stack)[0].dist = -1;
-    (*stack)++;
+    return peek(stack) == -1;
+}
+
+void initKStack(KPoint **k_stack, int n)
+{
+    (*k_stack)[0].dist = -1;
+    (*k_stack)++;
     for (int i = 0; i < n; ++i)
     {
-        (*stack)[i].dist = FLT_MAX;
+        (*k_stack)[i].dist = FLT_MAX;
     }
 }
 
-void insert(struct KPoint *stack, struct KPoint kPoint, int n)
+void insert(struct KPoint *k_stack, struct KPoint k_point, int n)
 {
     int i = n - 1;
     KPoint swap;
-    stack[n - 1].index = kPoint.index;
-    stack[n - 1].dist = kPoint.dist;
+    k_stack[n - 1].index = k_point.index;
+    k_stack[n - 1].dist = k_point.dist;
 
-    while (stack[i].dist < stack[i - 1].dist)
+    while (k_stack[i].dist < k_stack[i - 1].dist)
     {
-        // printf("dist = %f, old = %f\n", stack[i].dist, stack[i - 1].dist );
-        swap = stack[i], stack[i] = stack[i - 1], stack[i - 1] = swap;
+        swap = k_stack[i], k_stack[i] = k_stack[i - 1], k_stack[i - 1] = swap;
         i--;
     }
 }
 
-
-struct KPoint look(struct KPoint *kStack, int n)
+struct KPoint look(struct KPoint *k_stack, int n)
 {
-    return kStack[n - 1];
+    return k_stack[n - 1];
 }
-
 
 int target(Point qp, Point current, int dim)
 {
@@ -98,53 +93,51 @@ void upDim(int *dim)
     *dim = (*dim + 1) % 3;
 }
 
-
-
-void query_a(struct Point qp, struct Point *tree, int n, int k, int *result)
+void kNN(struct Point qp, struct Point *tree, int n, int k, int *result)
 {
-    int stack[50],
-        *stackPtr,
-        dims[50],
-        *dimsPtr,
+    int stack_init[50],
+        *stack,
+        d_stack_init[50],
+        *d_stack,
         dim = 2,
         current = n / 2;
-
-    struct KPoint kStack[k + 1],
-            *kStackPtr = kStack;
-
-    initKStack(&kStackPtr, k);
-
-    KPoint best;
-    best.dist = FLT_MAX;
 
     float current_dist;
 
     struct Point current_point;
 
-    initStack(stack, &stackPtr);
-    initStack(dims, &dimsPtr);
+    struct KPoint k_stack_init[k + 1],
+            *k_stack = k_stack_init,
+             worst_best;
 
-    while (!isEmpty(stackPtr) || current != -1)
+    worst_best.dist = FLT_MAX;
+
+    initStack(stack_init, &stack);
+    initStack(d_stack_init, &d_stack);
+    initKStack(&k_stack, k);
+
+    while (!isEmpty(stack) || current != -1)
 {
-        if (current == -1 && !isEmpty(stackPtr))
+        if (current == -1 && !isEmpty(stack))
         {
-            current = pop(&stackPtr);
+            current = pop(&stack);
             current_point = tree[current];
-            dim = pop(&dimsPtr);
+            dim = pop(&d_stack);
+
             // printf("(%3.1f, %3.1f, %3.1f) current = %d dim = %d\n",
             // current_point.p[0], current_point.p[1], current_point.p[2], current, dim);
 
             current_dist = dist(qp, current_point);
-            if (best.dist > current_dist)
+            if (worst_best.dist > current_dist)
             {
-                best.dist = current_dist;
-                best.index = current;
-                insert(kStackPtr, best, k);
-                best = look(kStackPtr, k);
+                worst_best.dist = current_dist;
+                worst_best.index = current;
+                insert(k_stack, worst_best, k);
+                worst_best = look(k_stack, k);
             }
 
             current = -1;
-            if ((current_point.p[dim] - qp.p[dim]) * (current_point.p[dim] - qp.p[dim]) < best.dist)
+            if ((current_point.p[dim] - qp.p[dim]) * (current_point.p[dim] - qp.p[dim]) < worst_best.dist)
             {
                 current = other(qp, current_point, dim);
             }
@@ -152,14 +145,14 @@ void query_a(struct Point qp, struct Point *tree, int n, int k, int *result)
         else
         {
             upDim(&dim);
-            push(&dimsPtr, dim);
-            push(&stackPtr, current);
+            push(&d_stack, dim);
+            push(&stack, current);
             current = target(qp, tree[current], dim);
         }
     }
-    // printf("\n");
+
     for (int i = 0; i < k; ++i)
     {
-        result[i] = kStackPtr[i].index;
+        result[i] = k_stack[i].index;
     }
 }

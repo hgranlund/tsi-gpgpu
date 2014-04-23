@@ -8,15 +8,17 @@ struct KPoint
     float dist;
 };
 
-void push(int **stackPtr, int value);
-int pop(int **stackPtr);
-int peek(int *stackPtr);
-bool isEmpty(int *stackPtr);
-void initStack(int *stack, int **stackPtr);
+void push(int **stack, int value);
+int pop(int **stack);
+int peek(int *stack);
+bool isEmpty(int *stack);
+void initStack(int *stack_init, int **stack);
+
 void upDim(int *dim);
-void downDim(int *dim);
-void query_a(struct Point qp, struct Point *tree, int n, int k, int *result);
-void initKStack(struct KPoint **stack, int n);
-void insert(struct KPoint *stack, struct KPoint value, int n);
-struct KPoint look(struct KPoint *kStack, int n);
+
+void initKStack(struct KPoint **k_stack, int n);
+void insert(struct KPoint *k_stack, struct KPoint value, int n);
+struct KPoint look(struct KPoint *k_stack, int n);
+
+void kNN(struct Point qp, struct Point *tree, int n, int k, int *result);
 #endif

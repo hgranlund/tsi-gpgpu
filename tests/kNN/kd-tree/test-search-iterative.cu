@@ -10,7 +10,7 @@ bool isExpectedPoint(struct Point *tree, int n, int k,  float qx, float qy, floa
     int result[k];
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
-    query_a(query_point, tree, n, k, result);
+    kNN(query_point, tree, n, k, result);
     float actual = tree[result[0]].p[0] + tree[result[0]].p[1] + tree[result[0]].p[2];
     float expected = ex + ey + ez;
 
@@ -75,7 +75,7 @@ TEST(search_iterative, correctness_with_k)
 
     cudaDeviceReset();
     build_kd_tree(points, n, points_out);
-    query_a(points_out[4], points_out, n, k, result);
+    kNN(points_out[4], points_out, n, k, result);
 
     ASSERT_EQ(4, result[0]);
     ASSERT_EQ(3, result[1]);
@@ -85,63 +85,64 @@ TEST(search_iterative, correctness_with_k)
 
 TEST(search_iterative, push)
 {
-    int stack[50],
-        *stackPtr;
+    int stack_init[50],
+        *stack;
 
-    initStack(stack, &stackPtr);
+    initStack(stack_init, &stack);
 
-    push(&stackPtr, 1);
-    push(&stackPtr, 3);
-    ASSERT_EQ(1, stack[1]);
-    ASSERT_EQ(3, stack[2]);
+    push(&stack, 1);
+    push(&stack, 3);
+    ASSERT_EQ(1, stack_init[1]);
+    ASSERT_EQ(3, stack_init[2]);
 }
 
 TEST(search_iterative, pop)
 {
-    int stack[50],
-        *stackPtr;
+    int stack_init[50],
+        *stack;
 
-    initStack(stack, &stackPtr);
+    initStack(stack_init, &stack);
 
+    stack_init[1] = 1;
+    stack_init[2] = 2;
+    stack_init[3] = 3;
+    stack += 3;
 
-    stack[1] = 1;
-    stack[2] = 2;
-    stack[3] = 3;
-    stackPtr += 3;
-    ASSERT_EQ(3, pop(&stackPtr));
-    ASSERT_EQ(2, pop(&stackPtr));
-    ASSERT_EQ(1, pop(&stackPtr));
+    ASSERT_EQ(3, pop(&stack));
+    ASSERT_EQ(2, pop(&stack));
+    ASSERT_EQ(1, pop(&stack));
 }
 
 TEST(search_iterative, isEmpty)
 {
-    int stack[50],
-        *stackPtr;
+    int stack_init[50],
+        *stack;
 
-    initStack(stack, &stackPtr);
+    initStack(stack_init, &stack);
+    ASSERT_TRUE(isEmpty(stack));
 
-    ASSERT_TRUE(isEmpty(stackPtr));
-
-    stack[1] = 10;
-    stackPtr++;
-    ASSERT_FALSE(isEmpty(stackPtr));
-
+    stack_init[1] = 10;
+    stack++;
+    ASSERT_FALSE(isEmpty(stack));
 }
+
 TEST(search_iterative, peek)
 {
-    int stack[50],
-        *stackPtr;
+    int stack_init[50],
+        *stack;
 
-    initStack(stack, &stackPtr);
+    initStack(stack_init, &stack);
 
-    ASSERT_EQ(-1, peek(stackPtr));
-    ASSERT_EQ(-1, peek(stackPtr));
-    stack[1] = -1;
-    stackPtr++;
-    stack[2] = 10;
-    stackPtr++;
-    ASSERT_EQ(10, peek(stackPtr));
-    ASSERT_EQ(10, peek(stackPtr));
+    ASSERT_EQ(-1, peek(stack));
+    ASSERT_EQ(-1, peek(stack));
+
+    stack_init[1] = -1;
+    stack++;
+    stack_init[2] = 10;
+    stack++;
+
+    ASSERT_EQ(10, peek(stack));
+    ASSERT_EQ(10, peek(stack));
 }
 
 TEST(search_iterative, upDim)
@@ -164,43 +165,43 @@ TEST(search_iterative, upDim)
 
 TEST(search_iterative, initKStack)
 {
-    struct KPoint kStack[51],
-            *kStackPtr = kStack;
+    struct KPoint k_stack_init[51],
+            *k_stack = k_stack_init;
 
-    initKStack(&kStackPtr, 50);
+    initKStack(&k_stack, 50);
 
-    ASSERT_EQ(-1, kStackPtr[-1].dist);
-    ASSERT_EQ(FLT_MAX, kStackPtr[0].dist);
-    ASSERT_EQ(FLT_MAX, kStackPtr[49].dist);
+    ASSERT_EQ(-1, k_stack[-1].dist);
+    ASSERT_EQ(FLT_MAX, k_stack[0].dist);
+    ASSERT_EQ(FLT_MAX, k_stack[49].dist);
 }
 
 TEST(search_iterative, insert)
 {
     int n = 3;
-    struct KPoint kStack[n + 1],
-            *kStackPtr = kStack;
+    struct KPoint k_stack_init[n + 1],
+            *k_stack = k_stack_init;
 
-    initKStack(&kStackPtr, n);
+    initKStack(&k_stack, n);
     struct KPoint a, b, c, d;
+
     a.dist = 1;
     b.dist = 2;
     c.dist = 3;
     d.dist = 0;
 
-    insert(kStackPtr, a, n);
-    ASSERT_EQ(FLT_MAX, look(kStackPtr, n).dist);
-    ASSERT_EQ(a.dist, kStackPtr[0].dist);
+    insert(k_stack, a, n);
+    ASSERT_EQ(FLT_MAX, look(k_stack, n).dist);
+    ASSERT_EQ(a.dist, k_stack[0].dist);
 
-    insert(kStackPtr, b, n);
-    ASSERT_EQ(FLT_MAX, look(kStackPtr, n).dist);
-    ASSERT_EQ(b.dist, kStackPtr[1].dist);
+    insert(k_stack, b, n);
+    ASSERT_EQ(FLT_MAX, look(k_stack, n).dist);
+    ASSERT_EQ(b.dist, k_stack[1].dist);
 
-    insert(kStackPtr, c, n);
-    ASSERT_EQ(c.dist, look(kStackPtr, n).dist);
-    ASSERT_EQ(c.dist, kStackPtr[2].dist);
+    insert(k_stack, c, n);
+    ASSERT_EQ(c.dist, look(k_stack, n).dist);
+    ASSERT_EQ(c.dist, k_stack[2].dist);
 
-    insert(kStackPtr, d, n);
-    ASSERT_EQ(b.dist, look(kStackPtr, n).dist);
-    ASSERT_EQ(d.dist, kStackPtr[0].dist);
+    insert(k_stack, d, n);
+    ASSERT_EQ(b.dist, look(k_stack, n).dist);
+    ASSERT_EQ(d.dist, k_stack[0].dist);
 }
-
