@@ -5,11 +5,11 @@
 
 #include <search-iterative.cuh>
 
-float dist(float *qp, struct Point *points, int x)
+float dist(struct Point qp, struct Point point)
 {
-    float dx = qp[0] - points[x].p[0],
-          dy = qp[1] - points[x].p[1],
-          dz = qp[2] - points[x].p[2];
+    float dx = qp.p[0] - point.p[0],
+          dy = qp.p[1] - point.p[1],
+          dz = qp.p[2] - point.p[2];
 
     return dx * dx + dy * dy + dz * dz;
 }
@@ -48,6 +48,7 @@ int target(Point qp, Point current, int dim)
     }
     return current.right;
 }
+
 int other(Point qp, Point current, int dim)
 {
     if (qp.p[dim] <= current.p[dim])
@@ -77,16 +78,18 @@ void upDim(int *dim)
 
 
 
-int inorder(struct Point qp, struct Point *tree, int n)
+int query_a(struct Point qp, struct Point *tree, int n)
 {
     int stack[50],
         *stackPtr,
         dims[50],
         *dimsPtr,
         dim = 2,
+        best = -1,
         current = n / 2;
 
-    float best_dist = FLT_MAX;
+    float best_dist = FLT_MAX,
+          current_dist;
 
     initStack(stack, &stackPtr);
     initStack(dims, &dimsPtr);
@@ -97,11 +100,18 @@ int inorder(struct Point qp, struct Point *tree, int n)
         {
             current = pop(&stackPtr);
             dim = pop(&dimsPtr);
-            printf("(%3.1f, %3.1f, %3.1f) "
-                   "current = %d ",
-                   tree[current].p[0], tree[current].p[1], tree[current].p[2],
-                   current);
-            printf("dim = %d\n", dim );
+            // printf("(%3.1f, %3.1f, %3.1f) "
+            //        "current = %d ",
+            //        tree[current].p[0], tree[current].p[1], tree[current].p[2],
+            //        current);
+            // printf("dim = %d\n", dim );
+
+            current_dist = dist(qp, tree[current]);
+            if (best_dist > current_dist)
+            {
+                best_dist = current_dist;
+                best = current;
+            }
             current = other(qp, tree[current], dim);
         }
         else
@@ -112,8 +122,7 @@ int inorder(struct Point qp, struct Point *tree, int n)
             current = target(qp, tree[current], dim);
         }
     }
-
-    return 1405;
+    return best;
 }
 // int query_a(float *qp, struct Point *tree, int n)
 // {
