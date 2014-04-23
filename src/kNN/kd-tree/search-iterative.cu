@@ -40,6 +40,23 @@ void initStack(int *stack, int **stackPtr)
     push(stackPtr, -1);
 }
 
+int target(Point qp, Point current, int dim)
+{
+    if (qp.p[dim] <= current.p[dim])
+    {
+        return current.left;
+    }
+    return current.right;
+}
+int other(Point qp, Point current, int dim)
+{
+    if (qp.p[dim] <= current.p[dim])
+    {
+        return current.right;
+    }
+    return current.left;
+}
+
 int find(int *stack, int eos, int value)
 {
     int i;
@@ -60,7 +77,7 @@ void upDim(int *dim)
 
 
 
-int inorder(struct Point *tree, int n)
+int inorder(struct Point qp, struct Point *tree, int n)
 {
     int stack[50],
         *stackPtr,
@@ -69,7 +86,7 @@ int inorder(struct Point *tree, int n)
         dim = 2,
         current = n / 2;
 
-    // float best_dist = FLT_MAX;
+    float best_dist = FLT_MAX;
 
     initStack(stack, &stackPtr);
     initStack(dims, &dimsPtr);
@@ -85,14 +102,14 @@ int inorder(struct Point *tree, int n)
                    tree[current].p[0], tree[current].p[1], tree[current].p[2],
                    current);
             printf("dim = %d\n", dim );
-            current = tree[current].right;
+            current = other(qp, tree[current], dim);
         }
         else
         {
             upDim(&dim);
             push(&dimsPtr, dim);
             push(&stackPtr, current);
-            current = tree[current].left;
+            current = target(qp, tree[current], dim);
         }
     }
 

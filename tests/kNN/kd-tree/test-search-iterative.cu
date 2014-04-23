@@ -69,7 +69,7 @@ TEST(search_iterative, inorder_print)
     cudaDeviceReset();
     build_kd_tree(points, n, points_out);
 
-    inorder(points_out, n);
+    inorder(points_out[0], points_out, n);
 }
 
 TEST(search_iterative, push)

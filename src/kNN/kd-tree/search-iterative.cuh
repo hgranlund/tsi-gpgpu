@@ -10,5 +10,5 @@ void initStack(int *stack, int **stackPtr);
 void upDim(int *dim);
 void downDim(int *dim);
 int query_a(float *qp, struct Point *tree, int n);
-int inorder(struct Point *tree, int n);
+int inorder(struct Point qp, struct Point *tree, int n);
 #endif
