@@ -1,6 +1,7 @@
 #include <search-iterative.cuh>
 #include <knn_gpgpu.h>
 #include <float.h>
+#include <sys/time.h>
 
 #include "test-common.cuh"
 
@@ -89,48 +90,63 @@ TEST(search_iterative, correctness_with_k)
 TEST(search_iterative, push)
 {
 
-    int *stack_ptr = (int *) malloc(3 * sizeof(int)),
-         *stack = stack_ptr;
+    struct SPoint *stack_ptr = (struct SPoint *) malloc(3 * sizeof(struct SPoint)),
+                   *stack = stack_ptr,
+                    value1,
+                    value2;
 
     initStack(&stack);
 
-    push(&stack, 1);
-    push(&stack, 3);
-    ASSERT_EQ(1, stack_ptr[1]);
-    ASSERT_EQ(3, stack_ptr[2]);
+    value1.index = 1;
+    value2.index = 3;
+
+    push(&stack, value1);
+    push(&stack, value2);
+    ASSERT_EQ(value1.index, stack_ptr[1].index);
+    ASSERT_EQ(value2.index, stack_ptr[2].index);
 
     free(stack_ptr);
 }
 
 TEST(search_iterative, pop)
 {
-    int *stack_ptr = (int *) malloc(4 * sizeof(int)),
-         *stack = stack_ptr;
+    struct SPoint *stack_ptr = (struct SPoint *) malloc(4 * sizeof(struct SPoint)),
+                   *stack = stack_ptr,
+                    value1,
+                    value2,
+                    value3;
 
     initStack(&stack);
 
-    stack[0] = 1;
-    stack[1] = 2;
-    stack[2] = 3;
+    value1.index = 1;
+    value2.index = 2;
+    value3.index = 3;
+
+    stack[0] = value1;
+    stack[1] = value2;
+    stack[2] = value3;
     stack += 3;
 
-    ASSERT_EQ(3, pop(&stack));
-    ASSERT_EQ(2, pop(&stack));
-    ASSERT_EQ(1, pop(&stack));
+    ASSERT_EQ(value3.index, pop(&stack).index);
+    ASSERT_EQ(value2.index, pop(&stack).index);
+    ASSERT_EQ(value1.index, pop(&stack).index);
 
     free(stack_ptr);
 }
 
 TEST(search_iterative, isEmpty)
 {
-    int *stack_ptr = (int *) malloc(4 * sizeof(int)),
-         *stack = stack_ptr;
+    struct SPoint *stack_ptr = (struct SPoint *) malloc(4 * sizeof(struct SPoint)),
+                   *stack = stack_ptr,
+                    value1;
 
     initStack(&stack);
 
+    value1.index = 10;
+
     ASSERT_TRUE(isEmpty(stack));
 
-    stack[0] = 10;
+    stack[0] = value1;
     stack++;
     ASSERT_FALSE(isEmpty(stack));
 
@@ -139,18 +155,21 @@ TEST(search_iterative, isEmpty)
 
 TEST(search_iterative, peek)
 {
-    int *stack_ptr = (int *) malloc(4 * sizeof(int)),
-         *stack = stack_ptr;
+    struct SPoint *stack_ptr = (struct SPoint *) malloc(4 * sizeof(struct SPoint)),
+                   *stack = stack_ptr,
+                    value1;
 
     initStack(&stack);
 
-    ASSERT_EQ(-1, peek(stack));
-    ASSERT_EQ(-1, peek(stack));
+    value1.index = 10;
 
-    push(&stack, 10);
+    ASSERT_EQ(-1, peek(stack).index);
+    ASSERT_EQ(-1, peek(stack).index);
 
-    ASSERT_EQ(10, peek(stack));
-    ASSERT_EQ(10, peek(stack));
+    push(&stack, value1);
+
+    ASSERT_EQ(value1.index, peek(stack).index);
+    ASSERT_EQ(value1.index, peek(stack).index);
 
     free(stack_ptr);
 }
@@ -219,3 +238,51 @@ TEST(search_iterative, insert)
 
     free(k_stack_ptr);
 }
+
+
+double WallTime ()
+{
+    struct timeval tmpTime;
+    gettimeofday(&tmpTime, NULL);
+    return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+}
+
+TEST(search_iterative, timing)
+{
+    int n, k = 1;
+
+    for (n = 1000; n <= 10000; n += 1000)
+    {
+        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+        srand(time(NULL));
+
+        populatePointSs(points, n);
+
+        cudaDeviceReset();
+        build_kd_tree(points, n, points_out);
+
+        int test_runs = n;
+        int *result = (int *) malloc(test_runs * k * sizeof(int));
+
+        int i,
+            visited = 0,
+            sum = 0,
+            no_of_runs = n;
+
+        double start_time = WallTime();
+        for (i = 0; i < no_of_runs; ++i)
+        {
+            visited = 0;
+            kNN(points_out[i], points_out, n, k, result, &visited);
+            sum += visited;
+        }
+
+        printf("Time = %lf ms, Size = %d Elements, Awg visited = %3.1f\n", ((WallTime() - start_time) * 1000), n, sum / (double)no_of_runs);
+
+
+        free(points_out);
+        free(result);
+        free(points);
+    };
+};
