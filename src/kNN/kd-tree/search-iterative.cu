@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
+#include "sys/time.h"
 
 #include <search-iterative.cuh>
+
+
 
 float dist(struct Point qp, struct Point point)
 {
@@ -21,10 +24,10 @@ void push(struct SPoint **stack, struct SPoint value)
 
 void initStack(struct SPoint **stack)
 {
-    struct SPoint temop;
-    temop.index = -1;
-    temop.dim = -1;
-    push(stack, temop);
+    struct SPoint temp;
+    temp.index = -1;
+    temp.dim = -1;
+    push(stack, temp);
 }
 
 struct SPoint pop(struct SPoint **stack)
@@ -95,22 +98,17 @@ void upDim(int *dim)
     *dim = (*dim + 1) % 3;
 }
 
-void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *visited)
+void kNN(struct Point qp, struct Point *tree, int n, int k, int *result,
+         int *visited, struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
 {
-
     int  dim = 2;
-
     float current_dist, dx, dx2;
 
     struct Point current_point;
-
-    struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint)),
-                   *stack = stack_ptr,
-                    current;
-
-    struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint)),
-                   *k_stack = k_stack_ptr,
-                    worst_best;
+    struct SPoint *stack = stack_ptr,
+                           current;
+    struct KPoint *k_stack = k_stack_ptr,
+                           worst_best;
 
     current.index = n / 2;
     worst_best.dist = FLT_MAX;
@@ -119,7 +117,7 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *vi
     initKStack(&k_stack, k);
 
     while (!isEmpty(stack) || current.index != -1)
-    {
+{
         if (current.index == -1 && !isEmpty(stack))
         {
             current = pop(&stack);
@@ -144,8 +142,8 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *vi
         else
         {
             current_point = tree[current.index];
-            current_dist = dist(qp, current_point);
 
+            current_dist = dist(qp, current_point);
             if (worst_best.dist > current_dist)
             {
                 worst_best.dist = current_dist;
@@ -162,11 +160,6 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *vi
         }
     }
 
-    free(stack_ptr);
-    free(k_stack_ptr);
-
-    // printf("\n");
-
     for (int i = 0; i < k; ++i)
     {
         result[i] = k_stack[i].index;
@@ -176,5 +169,35 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *vi
 void kNN(struct Point qp, struct Point *tree, int n, int k, int *result)
 {
     int visited;
-    kNN(qp, tree, n, k, result, &visited);
+    struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
+
+    kNN(qp, tree, n, k, result, &visited, stack_ptr, k_stack_ptr);
+
+    free(stack_ptr);
+    free(k_stack_ptr);
 }
+
+// void timingDetails()
+// {
+//     printf("if_time = %f ms, else_time = %f ms, knn_time = %f ms\n\n",
+//            if_time * 1000,
+//            else_time * 1000,
+//            knn_time * 1000);
+
+//     if_time = 0;
+//     else_time = 0;
+//     knn_time = 0;
+//     // double t = t_time();
+//     // else_time += t_time() - t;
+// }
+// double t_time()
+// {
+//     struct timeval tmpTime;
+//     gettimeofday(&tmpTime, NULL);
+//     return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+// }
+
+// double if_time = 0,
+//        else_time = 0,
+//        knn_time = 0;
