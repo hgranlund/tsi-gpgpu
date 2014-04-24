@@ -14,7 +14,7 @@ float dist(struct Point qp, struct Point point)
           dy = qp.p[1] - point.p[1],
           dz = qp.p[2] - point.p[2];
 
-    return dx * dx + dy * dy + dz * dz;
+    return (dx * dx) + (dy * dy) + (dz * dz);
 }
 
 void push(struct SPoint **stack, struct SPoint value)
@@ -75,18 +75,18 @@ struct KPoint look(struct KPoint *k_stack, int n)
     return k_stack[n - 1];
 }
 
-int target(Point qp, Point current, int dim)
+int target(Point qp, Point current, float dx)
 {
-    if (qp.p[dim] <= current.p[dim])
+    if (dx > 0)
     {
         return current.left;
     }
     return current.right;
 }
 
-int other(Point qp, Point current, int dim)
+int other(Point qp, Point current, float dx)
 {
-    if (qp.p[dim] <= current.p[dim])
+    if (dx > 0)
     {
         return current.right;
     }
@@ -124,18 +124,15 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result,
             current_point = tree[current.index];
             dim = current.dim;
 
-            // printf("(%3.1f, %3.1f, %3.1f) current = %d dim = %d\n",
-            //        current_point.p[0], current_point.p[1], current_point.p[2], current, dim);
 
-            current.index = -1; //Lage en cache null current
 
             dx = current_point.p[dim] - qp.p[dim];
             dx2 = dx * dx;
 
-            if (dx2 < worst_best.dist)
-            {
-                current.index = other(qp, current_point, dim);
-            }
+            // printf("Up with (%3.1f, %3.1f, %3.1f): best_dist = %3.1f, dx2 = %3.1f, dim = %d\n",
+            //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, dx2, dim);
+
+            current.index = (dx2 < worst_best.dist) ? other(qp, current_point, dx) : -1;
 
             (*visited)++;
         }
@@ -156,7 +153,11 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result,
             current.dim = dim;
             push(&stack, current);
 
-            current.index = target(qp, current_point, dim);
+            dx = current_point.p[dim] - qp.p[dim];
+            current.index = target(qp, current_point, dx);
+
+            // printf("Down with(%3.1f, %3.1f, %3.1f): best_dist = %3.1f, current_dist = %3.1f, dim = %d\n",
+            //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, current_dist, dim);
         }
     }
 
@@ -166,13 +167,12 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result,
     }
 }
 
-void kNN(struct Point qp, struct Point *tree, int n, int k, int *result)
+void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *visited)
 {
-    int visited;
     struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
-    kNN(qp, tree, n, k, result, &visited, stack_ptr, k_stack_ptr);
+    kNN(qp, tree, n, k, result, visited, stack_ptr, k_stack_ptr);
 
     free(stack_ptr);
     free(k_stack_ptr);

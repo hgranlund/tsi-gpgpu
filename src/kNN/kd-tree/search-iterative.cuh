@@ -26,7 +26,7 @@ void initKStack(struct KPoint **k_stack, int n);
 void insert(struct KPoint *k_stack, struct KPoint value, int n);
 struct KPoint look(struct KPoint *k_stack, int n);
 
-void kNN(struct Point qp, struct Point *tree, int n, int k, int *result);
+void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *visited);
 void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *visited, struct SPoint *stack_ptr, struct KPoint *k_stack_ptr);
 
 void timingDetails();
