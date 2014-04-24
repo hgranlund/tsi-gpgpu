@@ -1,6 +1,7 @@
 #include <search-iterative.cuh>
 #include <knn_gpgpu.h>
 #include <float.h>
+#include "math.h"
 #include <sys/time.h>
 
 #include "test-common.cuh"
@@ -8,12 +9,17 @@
 bool isExpectedPoint(struct Point *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
 {
     struct Point query_point;
-    int result[k];
+    int result[k], visited = 0;
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
-    kNN(query_point, tree, n, k, result);
+    kNN(query_point, tree, n, k, result, &visited);
     float actual = tree[result[0]].p[0] + tree[result[0]].p[1] + tree[result[0]].p[2];
     float expected = ex + ey + ez;
+
+    // printf(">> WP tree\nsearching for (%3.1f, %3.1f, %3.1f)\n"
+    //        "found (%3.1f, %3.1f, %3.1f) seen %d nodes\n\n",
+    //        qx, qy, qz,
+    //        tree[result[0]].p[0], tree[result[0]].p[1], tree[result[0]].p[2], visited);
 
     if (actual == expected)
     {
@@ -22,10 +28,25 @@ bool isExpectedPoint(struct Point *tree, int n, int k,  float qx, float qy, floa
     return false;
 }
 
+void printTree(struct Point *tree, int level, int root)
+{
+    if (root < 0) return;
+
+    int i;
+
+    printf("|");
+    for (i = 0; i < level; ++i)
+    {
+        printf("----");
+    }
+    printf("(%3.1f, %3.1f, %3.1f)\n", tree[root].p[0], tree[root].p[1], tree[root].p[2]);
+
+    printTree(tree, 1 + level, tree[root].left);
+    printTree(tree, 1 + level, tree[root].right);
+}
 
 TEST(search_iterative, push)
 {
-
     struct SPoint *stack_ptr = (struct SPoint *) malloc(3 * sizeof(struct SPoint)),
                    *stack = stack_ptr,
                     value1,
@@ -175,6 +196,29 @@ TEST(search_iterative, insert)
     free(k_stack_ptr);
 }
 
+TEST(search_iterative, insert_k_is_one)
+{
+    int n = 1;
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
+                   *k_stack = k_stack_ptr;
+
+    initKStack(&k_stack, n);
+    struct KPoint a, b;
+
+    a.dist = 1;
+    b.dist = 0;
+
+    insert(k_stack, a, n);
+    ASSERT_EQ(a.dist, look(k_stack, n).dist);
+    ASSERT_EQ(a.dist, k_stack[0].dist);
+
+    insert(k_stack, b, n);
+    ASSERT_EQ(b.dist, look(k_stack, n).dist);
+    ASSERT_EQ(b.dist, k_stack[0].dist);
+
+    free(k_stack_ptr);
+}
+
 TEST(search_iterative, wikipedia_example)
 {
     int n = 6,
@@ -216,7 +260,8 @@ TEST(search_iterative, correctness_with_k)
 {
     int n = 6,
         k = 3,
-        result[k];
+        result[k],
+        visited;
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
     struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
@@ -230,7 +275,7 @@ TEST(search_iterative, correctness_with_k)
 
     cudaDeviceReset();
     build_kd_tree(points, n, points_out);
-    kNN(points_out[4], points_out, n, k, result);
+    kNN(points_out[4], points_out, n, k, result, &visited);
 
     ASSERT_EQ(4, result[0]);
     ASSERT_EQ(3, result[1]);
@@ -247,6 +292,146 @@ double WallTime ()
     return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
 }
 
+void readPoints(const char *file_path, int n, struct PointS *points)
+{
+    FILE *file = fopen(file_path, "rb");
+    if (file == NULL)
+    {
+        fputs ("File error\n", stderr);
+        exit (1);
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        fread(&points[i].p, sizeof(float), 3, file);
+        for (int j = 0; j < 3; ++j)
+        {
+            points[i].p[j] = round(points[i].p[j] / 100000000.0);
+        }
+    }
+
+    fclose(file);
+}
+
+int midpoint(int lower, int upper)
+{
+    return (int) floor((upper - lower) / 2) + lower;
+}
+
+struct kd_node_t
+{
+    float x[3];
+    struct kd_node_t *left, *right;
+};
+
+int convertTree(struct kd_node_t *root, struct Point *tree, int lower, int upper)
+{
+    if (!root) return -1;
+
+    int index = midpoint(lower, upper);
+
+    struct Point temp;
+
+    temp.p[0] = root->x[0];
+    temp.p[1] = root->x[1];
+    temp.p[2] = root->x[2];
+
+    temp.left = convertTree(root->left, tree, lower, index);
+    temp.right = convertTree(root->right, tree, index + 1, upper);
+
+    tree[index] = temp;
+
+    return index;
+}
+
+inline float dist(struct kd_node_t *a, struct kd_node_t *b, int dim)
+{
+    float t,
+          d = 0;
+    while (dim--)
+    {
+        t = a->x[dim] - b->x[dim];
+        d += t * t;
+    }
+    return d;
+}
+
+void swapIt(struct kd_node_t *x, struct kd_node_t *y)
+{
+    float tmp[3];
+    memcpy(tmp,  x->x, sizeof(tmp));
+    memcpy(x->x, y->x, sizeof(tmp));
+    memcpy(y->x, tmp,  sizeof(tmp));
+}
+
+/* see quickselect method */
+struct kd_node_t *findMedian(struct kd_node_t *start, struct kd_node_t *end, int idx)
+{
+    if (end <= start) return NULL;
+    if (end == start + 1)
+        return start;
+
+    struct kd_node_t *p, *store, *md = start + (end - start) / 2;
+    float pivot;
+    while (1)
+    {
+        pivot = md->x[idx];
+
+        swapIt(md, end - 1);
+        for (store = p = start; p < end; p++)
+        {
+            if (p->x[idx] < pivot)
+            {
+                if (p != store)
+                    swapIt(p, store);
+                store++;
+            }
+        }
+        swapIt(store, end - 1);
+
+        /* median has duplicate values */
+        if (store->x[idx] == md->x[idx])
+            return md;
+
+        if (store > md) end = store;
+        else        start = store;
+    }
+}
+
+struct kd_node_t *makeTree(struct kd_node_t *t, int len, int i, int dim)
+{
+    struct kd_node_t *n;
+
+    if (!len) return 0;
+
+    if ((n = findMedian(t, t + len, i)))
+    {
+        i = (i + 1) % dim;
+        n->left  = makeTree(t, n - t, i, dim);
+        n->right = makeTree(n + 1, t + len - (n + 1), i, dim);
+    }
+    return n;
+}
+
+void read_points(const char *file_path, int n, kd_node_t *points)
+{
+    FILE *file = fopen(file_path, "rb");
+    if (file == NULL)
+    {
+        fputs ("File error\n", stderr);
+        exit (1);
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        fread(&points[i].x, sizeof(float), 3, file);
+        for (int j = 0; j < 3; ++j)
+        {
+            points[i].x[j] = round(points[i].x[j] / 100000000.0);
+        }
+    }
+
+    fclose(file);
+}
+
 TEST(search_iterative, timing)
 {
     int n, k = 1;
@@ -255,35 +440,61 @@ TEST(search_iterative, timing)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+        struct Point *qp_points = (struct Point *) malloc(n  * sizeof(Point));
         srand(time(NULL));
 
-        populatePointSs(points, n);
+        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, points);
 
-        cudaDeviceReset();
-        build_kd_tree(points, n, points_out);
+        for (int i = 0; i < n; ++i)
+        {
+            struct Point point;
+            point.p[0] = points[i].p[0];
+            point.p[1] = points[i].p[1];
+            point.p[2] = points[i].p[2];
+            qp_points[i] = point;
+            points_out[i] = point;
+        }
 
-        int test_runs = n;
-        int *result = (int *) malloc(test_runs * k * sizeof(int));
+        // cudaDeviceReset();
+        // build_kd_tree(points, n, points_out);
+
+        struct kd_node_t *million = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
+
+        read_points("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, million);
+
+        struct kd_node_t *root = makeTree(million, n, 0, 3);
+
+        convertTree(root, points_out, 0, n);
+
+        // printTree(points_out, 0, n / 2);
+
+        int *result = (int *) malloc(k * sizeof(int));
 
         int i,
             visited = 0,
             sum = 0,
-            no_of_runs = n;
+            test_runs = n;
 
         struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
         double start_time = WallTime();
-        for (i = 0; i < no_of_runs; ++i)
+        for (i = 0; i < test_runs; ++i)
         {
             visited = 0;
-            kNN(points_out[i], points_out, n, k, result, &visited, stack_ptr, k_stack_ptr);
+            kNN(qp_points[i], points_out, n, k, result, &visited, stack_ptr, k_stack_ptr);
             sum += visited;
+
+            // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
+            //        qp_points[i].p[0], qp_points[i].p[1], qp_points[i].p[2],
+            //        points_out[result[0]].p[0], points_out[result[0]].p[1], points_out[result[0]].p[2]);
+
+            // ASSERT_EQ(qp_points[i].p[0], points_out[result[0]].p[0]) << "Failed at i = " << i;
+            // ASSERT_EQ(qp_points[i].p[1], points_out[result[0]].p[1]) << "Failed at i = " << i;
+            // ASSERT_EQ(qp_points[i].p[2], points_out[result[0]].p[2]) << "Failed at i = " << i;
         }
 
-        printf("Time = %lf ms, Size = %d Elements, Awg visited = %3.1f\n", ((WallTime() - start_time) * 1000), n, sum / (double)no_of_runs);
-        // timingDetails();
-
+        printf("Time = %lf ms, Size = %d Elements, Awg visited = %3.1f\n", ((WallTime() - start_time) * 1000), n, sum / (float)test_runs);
 
         free(points_out);
         free(result);
