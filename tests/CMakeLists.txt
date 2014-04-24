@@ -94,6 +94,7 @@ if (BUILD_TESTS)
     kNN/brute_force/test-knn-brute-force-bitonic.cu
     kNN/kd-tree/test-kd-tree-build.cu
     kNN/kd-tree/test-search-iterative.cu
+    kNN/kd-tree/test-search-rosetta.cu
   )
 
   cuda_add_executable(runUnitTests
