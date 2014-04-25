@@ -184,7 +184,7 @@ TEST(search_rosetta, timing)
 {
         million = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
         qp_points = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, million);
+        readPoints("../tests/data/10000_points.data", n, million);
 
         for (int i = 0; i < n; ++i)
         {

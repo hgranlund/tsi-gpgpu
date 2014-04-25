@@ -423,7 +423,7 @@ TEST(search_iterative, timing)
         struct Point *qp_points = (struct Point *) malloc(n  * sizeof(Point));
         srand(time(NULL));
 
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
+        readPoints("../tests/data/10000_points.data", n, points);
 
         for (int i = 0; i < n; ++i)
         {
