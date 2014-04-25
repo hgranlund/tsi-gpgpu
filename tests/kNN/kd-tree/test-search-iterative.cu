@@ -292,26 +292,6 @@ double WallTime ()
     return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
 }
 
-void readPoints(const char *file_path, int n, struct PointS *points)
-{
-    FILE *file = fopen(file_path, "rb");
-    if (file == NULL)
-    {
-        fputs ("File error\n", stderr);
-        exit (1);
-    }
-    for (int i = 0; i < n; ++i)
-    {
-        fread(&points[i].p, sizeof(float), 3, file);
-        for (int j = 0; j < 3; ++j)
-        {
-            points[i].p[j] = round(points[i].p[j] / 100000000.0);
-        }
-    }
-
-    fclose(file);
-}
-
 int midpoint(int lower, int upper)
 {
     return (int) floor((upper - lower) / 2) + lower;
@@ -436,7 +416,7 @@ TEST(search_iterative, timing)
 {
     int n, k = 1;
 
-    for (n = 1000; n <= 10000; n += 1000)
+    for (n = 20; n <= 20; n += 1000)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
@@ -455,43 +435,42 @@ TEST(search_iterative, timing)
             points_out[i] = point;
         }
 
-        // cudaDeviceReset();
-        // build_kd_tree(points, n, points_out);
+        build_kd_tree(points, n, points_out);
 
-        struct kd_node_t *million = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
+        // struct kd_node_t *million = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
 
-        read_points("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, million);
+        // read_points("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, million);
 
-        struct kd_node_t *root = makeTree(million, n, 0, 3);
+        // struct kd_node_t *root = makeTree(million, n, 0, 3);
 
-        convertTree(root, points_out, 0, n);
+        // convertTree(root, points_out, 0, n);
 
-        // printTree(points_out, 0, n / 2);
+        printTree(points_out, 0, n / 2);
 
         int *result = (int *) malloc(k * sizeof(int));
 
         int i,
             visited = 0,
             sum = 0,
-            test_runs = n;
+            test_runs = 17;
 
         struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
         double start_time = WallTime();
-        for (i = 0; i < test_runs; ++i)
+        for (i = 16; i < test_runs; ++i)
         {
             visited = 0;
             kNN(qp_points[i], points_out, n, k, result, &visited, stack_ptr, k_stack_ptr);
             sum += visited;
 
-            // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
-            //        qp_points[i].p[0], qp_points[i].p[1], qp_points[i].p[2],
-            //        points_out[result[0]].p[0], points_out[result[0]].p[1], points_out[result[0]].p[2]);
+            printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
+                   qp_points[i].p[0], qp_points[i].p[1], qp_points[i].p[2],
+                   points_out[result[0]].p[0], points_out[result[0]].p[1], points_out[result[0]].p[2]);
 
-            // ASSERT_EQ(qp_points[i].p[0], points_out[result[0]].p[0]) << "Failed at i = " << i;
-            // ASSERT_EQ(qp_points[i].p[1], points_out[result[0]].p[1]) << "Failed at i = " << i;
-            // ASSERT_EQ(qp_points[i].p[2], points_out[result[0]].p[2]) << "Failed at i = " << i;
+            ASSERT_EQ(qp_points[i].p[0], points_out[result[0]].p[0]) << "Failed at i = " << i;
+            ASSERT_EQ(qp_points[i].p[1], points_out[result[0]].p[1]) << "Failed at i = " << i;
+            ASSERT_EQ(qp_points[i].p[2], points_out[result[0]].p[2]) << "Failed at i = " << i;
         }
 
         printf("Time = %lf ms, Size = %d Elements, Awg visited = %3.1f\n", ((WallTime() - start_time) * 1000), n, sum / (float)test_runs);
