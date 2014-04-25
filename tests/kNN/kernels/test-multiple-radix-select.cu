@@ -69,7 +69,7 @@ TEST(multiple_radix_select, correctness)
         h_steps[3] = n;
 
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
-        populatePointSs(h_points, n);
+        populatePointSRosetta(h_points, n);
 
         checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));

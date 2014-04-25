@@ -1,13 +1,10 @@
 // Includes
+#include <math.h>
+
 #include <radix-select.cuh>
 #include <knn_gpgpu.h>
 #include "test-common.cuh"
 
-#include <math.h>
-
-#define inf 0x7f800000
-#define THREADS_PER_BLOCK 1024U
-#define MAX_BLOCK_DIM_SIZE 65535U
 #define debug 0
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
@@ -45,7 +42,6 @@ int cpu_partition1(struct PointS *data, int l, int u, int bit)
 
 struct PointS cpu_radixselect1(struct PointS *data, int l, int u, int m, int bit)
 {
-
     struct PointS t;
     t.p[0] = 0;
     t.p[1] = 0;
@@ -60,11 +56,6 @@ struct PointS cpu_radixselect1(struct PointS *data, int l, int u, int m, int bit
     if (s >= m) return cpu_radixselect1(data, l, s, m, bit + 1);
     return cpu_radixselect1(data, s + 1, u, m, bit + 1);
 }
-
-
-
-
-
 
 void printPoints1(struct PointS *l, int n)
 {
@@ -115,27 +106,19 @@ unsigned int prevPowerOf22(unsigned int n)
 TEST(radix_selection, correctness)
 {
     struct PointS *h_points;
-    float temp;
-    int i, n;
-    for (n = 4; n <= 16384; n <<= 1)
+    int n;
+    for (n = 1000; n <= 16000; n += 1000)
     {
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
-        srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n; i++)
-        {
-            temp =  (float) rand() / 100000000;
-            temp =  (float) i;
-            struct PointS t;
-            t.p[0] = temp;
-            t.p[1] = temp;
-            t.p[2] = temp;
-            h_points[i]    = t;
-        }
+
+        populatePointSRosetta(h_points, n);
+        // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, h_points);
 
         printPoints1(h_points, n);
 
         struct PointS *d_points, *d_temp;
         int *partition;
+
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n * sizeof(PointS)));
         checkCudaErrors(
@@ -145,7 +128,6 @@ TEST(radix_selection, correctness)
         checkCudaErrors(
             cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
 
-
         struct PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
 
         radixSelectAndPartition(d_points, d_temp, partition, n, 0);
@@ -153,21 +135,24 @@ TEST(radix_selection, correctness)
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
-        printPoints1(h_points, n);
+        if (n < 100)
+        {
+            printPoints1(h_points, n);
+        }
 
-        debugf("result = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
+        debugf("result_gpu = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
+        debugf("result_cpu = (%3.1f, %3.1f, %3.1f)\n", cpu_result.p[0], cpu_result.p[1], cpu_result.p[2] );
         ASSERT_EQ(cpu_result.p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
         ASSERT_EQ(cpu_result.p[1], h_points[n / 2].p[1]) << "Faild with n = " << n;
         ASSERT_EQ(cpu_result.p[2], h_points[n / 2].p[2]) << "Faild with n = " << n;
 
-        for (int i = 0; i < n / 2; ++i)
-        {
-            ASSERT_LE(h_points[i].p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
-        }
-        for (int i = n / 2; i < n; ++i)
-        {
-            ASSERT_GE(h_points[i].p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
-        }
+
+        int *h_steps = (int *) malloc( 2 * sizeof(int));
+        h_steps[0] = 0;
+        h_steps[1] = n;
+
+        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, 1);
+
         checkCudaErrors(
             cudaFree(d_points));
         checkCudaErrors(
@@ -179,29 +164,21 @@ TEST(radix_selection, correctness)
     }
 }
 
-
 TEST(radix_selection, timing)
 {
     struct PointS *h_points;
-    float temp;
-    int i, n;
+    int n;
+
     for (n = 8388608; n <= 8388608; n <<= 1)
     {
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
-        srand ( (unsigned int)time(NULL) );
-        for (i = 0 ; i < n; i++)
-        {
-            temp =  (float) n - 1 - i;
-            temp =  (float) rand() / 100000000;
-            struct PointS t;
-            t.p[0] = temp;
-            t.p[1] = temp;
-            t.p[2] = temp;
-            h_points[i]    = t;
-        }
+
+        populatePointSRosetta(h_points, n);
+        // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, h_points);
 
         struct PointS *d_points, *d_temp;
         int *partition;
+
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n * sizeof(PointS)));
         checkCudaErrors(
@@ -211,29 +188,25 @@ TEST(radix_selection, timing)
         checkCudaErrors(
             cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
 
-
-        cudaEvent_t start, stop;
-        unsigned int bytes = n * (sizeof(PointS)) ;
-        checkCudaErrors(cudaEventCreate(&start));
-        checkCudaErrors(cudaEventCreate(&stop));
-        float elapsed_time = 0;
-
-        checkCudaErrors(cudaEventRecord(start, 0));
-
         radixSelectAndPartition(d_points, d_temp, partition, n, 0);
-
-        checkCudaErrors(cudaEventRecord(stop, 0));
-        cudaEventSynchronize(start);
-        cudaEventSynchronize(stop);
-        cudaEventElapsedTime(&elapsed_time, start, stop);
-        elapsed_time = elapsed_time ;
-        double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
-        printf("radix-select, Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
-               throughput, elapsed_time, n, 1);
 
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
+        float elapsed_time = 0;
+        cudaEvent_t start, stop;
+        cudaStartTiming(start, stop, elapsed_time);
+
+        checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+        radixSelectAndPartition(d_points, d_temp, partition, n, 0);
+
+        cudaStopTiming(start, stop, elapsed_time);
+
+        int bytes = n * (sizeof(float)) ;
+        printCudaTiming(elapsed_time, bytes, n);
+
+        checkCudaErrors(
+            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
         checkCudaErrors(
             cudaFree(d_points));
