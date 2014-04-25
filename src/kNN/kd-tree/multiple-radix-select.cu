@@ -202,6 +202,7 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
     __shared__ struct PointS median;
+    __shared__ int median_index;
 
 
     int l = 0,
@@ -241,10 +242,16 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
     {
         if (partition[tid] == last)
         {
-            median = data[tid];
-            data[tid] = data[0], data[0] = median;
+            median_index = tid;
         }
         tid += blockDim.x;
+
+    }
+    __syncthreads();
+    if (threadIdx.x == 0)
+    {
+        median = data[median_index];
+        data[median_index] = data[0], data[0] = median;
     }
     __syncthreads();
     cuPartitionSwap(data + 1, data_copy, n - 1, partition, one_count, zeros_count, median, dir);

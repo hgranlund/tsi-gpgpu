@@ -10,6 +10,13 @@
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
+//TODO:
+// refactor
+// Levere alternere mellom swap og points slik at man slipper å skrive til å fra swap.
+// Ikke forandre plassering kun left and rigth????
+
+
+
 // __device__
 // void d_printIntArray___(int *l, int n, char *s)
 // {
@@ -167,6 +174,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     __shared__ int ones[1025];
     __shared__ int zeros[1025];
     __shared__ struct PointS median;
+    __shared__ int median_index;
 
     int
     tid = threadIdx.x,
@@ -184,10 +192,15 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     {
         if (partition[tid] == last)
         {
-            median = points[tid];
-            points[tid] = points[0], points[0] = median;
+            median_index = tid;
         }
         tid += blockDim.x;
+    }
+    __syncthreads();
+    if (threadIdx.x == 0)
+    {
+        median = points[median_index];
+        points[median_index] = points[0], points[0] = median;
     }
     points++;
     n--;
