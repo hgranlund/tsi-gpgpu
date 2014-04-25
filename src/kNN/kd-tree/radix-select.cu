@@ -21,7 +21,7 @@
 // void d_printIntArray___(int *l, int n, char *s)
 // {
 // #if __CUDA_ARCH__ >= 200
-//     if (debug && threadIdx.x == 0)
+//     if (debug && threadIdx.x == 0 )
 //     {
 //         int i;
 //         printf("%s: ", s);
@@ -36,7 +36,7 @@
 // #endif
 // }
 // __device__
-// void d_printstruct Points___(struct PointS *l, int n, char *s)
+// void d_print_points___(struct PointS *l, int n, char *s)
 // {
 //     if (debug && threadIdx.x == 0)
 //     {
@@ -67,6 +67,17 @@
 //     }
 // }
 
+
+int nextPowerOf2(int x)
+{
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+}
 
 __device__  void cuAccumulateIndex_(int *list, int n)
 {
@@ -291,24 +302,13 @@ __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partit
     }
 }
 
-
-int sumReduce(int *list, int n)
-{
-    int i, sum = 0;
-    for (i = 0; i < n; ++i)
-    {
-        sum += list[i];
-    }
-    return sum;
-}
-
 void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
 {
-    // threads must be power of 2
-    threads = 512;
+    // threads and blocks must be power of 2
+    threads = THREADS_PER_BLOCK_RADIX;
     blocks = n / threads / 2;
-    blocks = max(1, blocks);
-    blocks = min(MAX_BLOCK_DIM_SIZE, blocks);
+    blocks = max(1, nextPowerOf2(blocks));
+    blocks = min(MAX_BLOCK_DIM_SIZE_RADIX, blocks);
 }
 
 __global__ void fillArray(int *array, int value, int n)
@@ -332,10 +332,10 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
         *h_zeros_count_block,
         *d_zeros_count_block;
 
-    numThreads = min(n, THREADS_PER_BLOCK);
+    numThreads = min(n, 1024);
     fillArray <<< 1, numThreads>>>(partition, 2, n);
     getThreadAndBlockCountPartition(n, numBlocks, numThreads);
-    debugf("blocks = %d, threads = %d\n", numBlocks, numThreads);
+    debugf("blocks = %d, threads = %d, n = %d\n", numBlocks, numThreads, n);
     h_zeros_count_block = (int *) malloc(numBlocks * sizeof(int));
     checkCudaErrors(
         cudaMalloc((void **) &d_zeros_count_block, numBlocks * sizeof(int)));
@@ -343,9 +343,12 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
     do
     {
         cuPartitionStep <<< numBlocks, numThreads>>>(points, n, partition, d_zeros_count_block, last, bit++, dir);
+
         sum_reduce(d_zeros_count_block, numBlocks);
-        cudaMemcpy(h_zeros_count_block, d_zeros_count_block, 1 * sizeof(int), cudaMemcpyDeviceToHost);
+        cudaMemcpy(h_zeros_count_block, d_zeros_count_block, sizeof(int), cudaMemcpyDeviceToHost);
+
         cut = h_zeros_count_block[0];
+
         if ((l + cut) > m_u)
         {
             u = l + cut;
