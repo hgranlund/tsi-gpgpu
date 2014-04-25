@@ -78,6 +78,6 @@ __global__ void cuSumReduce__(int *list, int n)
 
 void sum_reduce(int *d_list, int n)
 {
-    cuSumReduce__ <<< 1, max(1, n >> 2) >>> (d_list, n);
+    cuSumReduce__ <<< 1, max(1, n >> 1) >>> (d_list, n);
 }
 
