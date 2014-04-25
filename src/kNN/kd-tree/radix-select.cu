@@ -17,55 +17,55 @@
 
 
 
-// __device__
-// void d_printIntArray___(int *l, int n, char *s)
-// {
-// #if __CUDA_ARCH__ >= 200
-//     if (debug && threadIdx.x == 0 )
-//     {
-//         int i;
-//         printf("%s: ", s);
-//         printf("[%d", l[0] );
-//         for (i = 1; i < n; ++i)
-//         {
-//             printf(", %d", l[i] );
-//         }
-//         printf("]\n");
-//         __syncthreads();
-//     }
-// #endif
-// }
-// __device__
-// void d_print_points___(struct PointS *l, int n, char *s)
-// {
-//     if (debug && threadIdx.x == 0)
-//     {
-//         int i;
-//         printf("%s: ", s);
-//         printf("[%3.1f", l[0].p[0] );
-//         for (i = 1; i < n; ++i)
-//         {
-//             printf(", %3.1f", l[i].p[0] );
-//         }
-//         printf("]\n");
-//     }
-//     __syncthreads();
-// }
+__device__
+void d_printIntArray___(int *l, int n, char *s)
+{
+#if __CUDA_ARCH__ >= 200
+    if (debug && threadIdx.x == 0 )
+    {
+        int i;
+        printf("%s: ", s);
+        printf("[%d", l[0] );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %d", l[i] );
+        }
+        printf("]\n");
+        __syncthreads();
+    }
+#endif
+}
+__device__
+void d_print_points___(struct PointS *l, int n, char *s)
+{
+    if (debug && threadIdx.x == 0)
+    {
+        int i;
+        printf("%s: ", s);
+        printf("[%3.1f", l[0].p[0] );
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %3.1f", l[i].p[0] );
+        }
+        printf("]\n");
+    }
+    __syncthreads();
+}
 
-// void h_printIntArray___(int *l, int n, char *s)
-// {
-//     if (debug)
-//     {
-//         int i;
-//         printf("%s: ", s);
-//         printf("[%d", l[0]);
-//         for (i = 1; i < n; ++i)
-//         {
-//             printf(", %d", l[i] );
-//         }
-//         printf("]\n");
-//     }
-// }
+void h_printIntArray___(int *l, int n, char *s)
+{
+    if (debug)
+    {
+        int i;
+        printf("%s: ", s);
+        printf("[%d", l[0]);
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %d", l[i] );
+        }
+        printf("]\n");
+    }
+}
 
 
 int nextPowerOf2(int x)
@@ -90,11 +90,11 @@ __device__  void cuAccumulateIndex_(int *list, int n)
     for ( i = 1; i <= n; i <<= 1)
     {
         __syncthreads();
-        int temp_index = tid * i * 2 + i  - 1;
-        if (temp_index + i  < n)
+        int temp_index = tid * i * 2  + i - 1;
+        if (temp_index + i < n)
         {
             temp = list[temp_index];
-            for (j = 1; j <= i ; ++j)
+            for (j = 1; j <= i; ++j)
             {
                 list[temp_index + j] += temp;
             }
@@ -186,6 +186,12 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     __shared__ int zeros[1025];
     __shared__ struct PointS median;
     __shared__ int median_index;
+    __shared__ unsigned int no_of_median;
+
+    if (threadIdx.x == 0)
+    {
+        no_of_median = 0;
+    }
 
     int
     tid = threadIdx.x,
@@ -203,19 +209,15 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     {
         if (partition[tid] == last)
         {
-            median_index = tid;
+            median = points[tid];
+            unsigned int local_no_of_median = atomicAdd((unsigned int *)&no_of_median, 1);
+            points[tid] = points[local_no_of_median];
         }
         tid += blockDim.x;
     }
     __syncthreads();
-    if (threadIdx.x == 0)
-    {
-        median = points[median_index];
-        points[median_index] = points[0], points[0] = median;
-    }
-    points++;
-    n--;
-    __syncthreads();
+    points += no_of_median;
+    n -= no_of_median;
     tid = threadIdx.x;
     while (tid < n)
     {
@@ -229,7 +231,6 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     __syncthreads();
     cuAccumulateIndex_(zero_count, blockDim.x);
     cuAccumulateIndex_(one_count, blockDim.x);
-
     tid = threadIdx.x;
     __syncthreads();
     one_count--;
@@ -251,11 +252,14 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
         tid += blockDim.x;
     }
     __syncthreads();
-    if (threadIdx.x == 0)
+    points -= no_of_median;
+    n += no_of_median;
+    tid = threadIdx.x;
+    while (tid < no_of_median)
     {
-        n++;
-        points--;
-        points[0] = points[n >> 1], points[n >> 1] = median; //n >> 1 is the same as n/2
+        int midpoint = zero_count[blockDim.x] + no_of_median - 1;
+        points[tid] = points[midpoint - tid], points[midpoint - tid] = median;
+        tid += blockDim.x;
     }
 }
 
@@ -304,7 +308,6 @@ __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partit
 
 void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
 {
-    // threads and blocks must be power of 2
     threads = THREADS_PER_BLOCK_RADIX;
     blocks = n / threads / 2;
     blocks = max(1, nextPowerOf2(blocks));
@@ -323,7 +326,9 @@ __global__ void fillArray(int *array, int value, int n)
 
 void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *partition, int n, int dir)
 {
-    int numBlocks, numThreads, cut,
+    int numBlocks,
+        numThreads,
+        cut,
         l = 0,
         u = n,
         m_u = ceil((float)n / 2),
@@ -362,7 +367,7 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
     }
     while (((u - l) > 1) && (bit < 32));
 
-    cuPartitionSwap <<< 1, numThreads>>>(points, swap, n, partition, last, dir);
+    cuPartitionSwap <<< 1, min(nextPowerOf2(n), MAX_BLOCK_DIM_SIZE_RADIX)>>>(points, swap, n, partition, last, dir);
 
     checkCudaErrors(
         cudaFree(d_zeros_count_block));

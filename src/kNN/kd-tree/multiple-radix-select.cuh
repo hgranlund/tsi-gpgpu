@@ -9,7 +9,6 @@
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads);
 void  multiRadixSelectAndPartition(struct PointS *data, struct PointS *data_copy, int *partition, int *steps, int n, int p,  int dir);
 
-
 __global__
 void cuBalanceBranch(struct PointS *points, struct PointS *swap, int *partition, int *steps, int p, int dir);
 

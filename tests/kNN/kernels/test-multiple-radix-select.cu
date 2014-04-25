@@ -7,6 +7,23 @@
 #define MAX_BLOCK_DIM_SIZE 65535U
 
 
+void printPoints2(struct PointS *l, int n)
+{
+    int i;
+    if (true)
+    {
+        // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
+        printf("[%3.1f, ", l[0].p[0]);
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %3.1f, ", l[i].p[0]);
+            // printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
+        }
+        printf("]\n");
+    }
+}
+
+
 int cpu_partition(struct PointS *data, int l, int u, int bit)
 {
     unsigned int radix = (1 << (31 - bit));
@@ -59,7 +76,7 @@ TEST(multiple_radix_select, correctness)
 {
     struct PointS *h_points, *d_points, *d_swap;
     int n, p, *d_partition, *h_steps, *d_steps;
-    for (n = 8; n <= 1000; n <<= 1)
+    for (n = 400; n <= 4000; n += 100)
     {
         p = 2;
         h_steps = (int *) malloc(p * 2 * sizeof(int));
@@ -69,7 +86,10 @@ TEST(multiple_radix_select, correctness)
         h_steps[3] = n;
 
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
-        populatePointSRosetta(h_points, n);
+        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+        // populatePointSRosetta(h_points, n);
+        // printPoints2(h_points, n);
+
 
         checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
@@ -82,6 +102,7 @@ TEST(multiple_radix_select, correctness)
         multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
 
         checkCudaErrors(cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
+        // printPoints2(h_points + n / 2, n / 2);
 
         ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p);
 
@@ -96,49 +117,49 @@ TEST(multiple_radix_select, correctness)
     }
 }
 
-TEST(multiple_radix_select, timing)
-{
-    struct PointS *h_points, *d_points, *d_swap;
-    int n, p, *d_partition, *h_steps, *d_steps;
-    for (n = 8388608; n <= 8388608; n <<= 1)
-    {
-        p = 2;
-        h_steps = (int *) malloc(p * 2 * sizeof(int));
-        h_steps[0] = 0;
-        h_steps[1] = n / p;
-        h_steps[2] = n / p + 1;
-        h_steps[3] = n;
+// TEST(multiple_radix_select, timing)
+// {
+//     struct PointS *h_points, *d_points, *d_swap;
+//     int n, p, *d_partition, *h_steps, *d_steps;
+//     for (n = 8388608; n <= 8388608; n <<= 1)
+//     {
+//         p = 2;
+//         h_steps = (int *) malloc(p * 2 * sizeof(int));
+//         h_steps[0] = 0;
+//         h_steps[1] = n / p;
+//         h_steps[2] = n / p + 1;
+//         h_steps[3] = n;
 
-        h_points = (struct PointS *) malloc(n * sizeof(PointS));
-        populatePointSs(h_points, n);
+//         h_points = (struct PointS *) malloc(n * sizeof(PointS));
+//         populatePointSs(h_points, n);
 
-        checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
-        checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
-        checkCudaErrors(cudaMalloc((void **)&d_partition, n  * sizeof(int)));
-        checkCudaErrors(cudaMalloc((void **)&d_steps, p * 2 * sizeof(int)));
+//         checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
+//         checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
+//         checkCudaErrors(cudaMalloc((void **)&d_partition, n  * sizeof(int)));
+//         checkCudaErrors(cudaMalloc((void **)&d_steps, p * 2 * sizeof(int)));
 
-        checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+//         checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
 
 
-        float elapsed_time = 0;
-        cudaEvent_t start, stop;
+//         float elapsed_time = 0;
+//         cudaEvent_t start, stop;
 
-        cudaStartTiming(start, stop, elapsed_time);
+//         cudaStartTiming(start, stop, elapsed_time);
 
-        checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
-        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
+//         checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+//         multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
 
-        cudaStopTiming(start, stop, elapsed_time);
+//         cudaStopTiming(start, stop, elapsed_time);
 
-        int bytes = n * (sizeof(float)) ;
-        printCudaTiming(elapsed_time, bytes, n);
+//         int bytes = n * (sizeof(float)) ;
+//         printCudaTiming(elapsed_time, bytes, n);
 
-        checkCudaErrors(cudaFree(d_points));
-        checkCudaErrors(cudaFree(d_steps));
-        checkCudaErrors(cudaFree(d_swap));
-        checkCudaErrors(cudaFree(d_partition));
-        free(h_points);
-        free(h_steps);
-        cudaDeviceReset();
-    }
-}
+//         checkCudaErrors(cudaFree(d_points));
+//         checkCudaErrors(cudaFree(d_steps));
+//         checkCudaErrors(cudaFree(d_swap));
+//         checkCudaErrors(cudaFree(d_partition));
+//         free(h_points);
+//         free(h_steps);
+//         cudaDeviceReset();
+//     }
+// }
