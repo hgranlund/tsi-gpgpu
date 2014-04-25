@@ -11,6 +11,12 @@ struct KPoint
     float dist;
 };
 
+struct SPoint
+{
+    int index;
+    int dim;
+};
+
 int store_locations(struct Point *tree, int lower, int upper, int n);
 void queryAll(struct Point *h_query_points, struct Point *tree, int qp_n, int tree_n, int k, int *result);
 

@@ -13,37 +13,40 @@ float cuDist(struct Point qp, struct Point point)
           dy = qp.p[1] - point.p[1],
           dz = qp.p[2] - point.p[2];
 
-    return dx * dx + dy * dy + dz * dz;
+    return (dx * dx) + (dy * dy) + (dz * dz);
 }
 
 __device__
-void cuPush(int **stack, int value)
+void cuPush(struct SPoint **stack, struct SPoint value)
 {
     *((*stack)++) = value;
 }
 
 __device__
-void cuInitStack(int **stack)
+void cuInitStack(struct SPoint **stack)
 {
-    cuPush(stack, -1);
+    struct SPoint temp;
+    temp.index = -1;
+    temp.dim = -1;
+    cuPush(stack, temp);
 }
 
 __device__
-int cuPop(int **stack)
+struct SPoint cuPop(struct SPoint **stack)
 {
     return *(--(*stack));
 }
 
 __device__
-int cuPeek(int *stack)
+struct SPoint cuPeek(struct SPoint *stack)
 {
     return *(stack - 1);
 }
 
 __device__
-bool cuIsNotEmpty(int *stack)
+bool cuIsEmpty(struct SPoint *stack)
 {
-    return !(cuPeek(stack) == -1);
+    return cuPeek(stack).index == -1;
 }
 
 __device__
@@ -79,9 +82,9 @@ struct KPoint cuLook(struct KPoint *k_stack, int n)
 }
 
 __device__
-int cuTarget(Point qp, Point current, int dim)
+int cuTarget(Point qp, Point current, float dx)
 {
-    if (qp.p[dim] <= current.p[dim])
+    if (dx > 0)
     {
         return current.left;
     }
@@ -89,9 +92,9 @@ int cuTarget(Point qp, Point current, int dim)
 }
 
 __device__
-int cuOther(Point qp, Point current, int dim)
+int cuOther(Point qp, Point current, float dx)
 {
-    if (qp.p[dim] <= current.p[dim])
+    if (dx > 0)
     {
         return current.right;
     }
@@ -105,58 +108,64 @@ void cuUpDim(int *dim)
 }
 
 __device__
-void cuKNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *stack_ptr, int *d_stack_ptr, struct KPoint *k_stack_ptr)
+void cuKNN(struct Point qp, struct Point *tree, int n, int k, int *result,
+         struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
 {
-    int *stack = stack_ptr,
-         *d_stack = d_stack_ptr,
-          dim = 2,
-          current = n / 2;
-
-    float current_dist;
+    int  dim = 2;
+    float current_dist, dx, dx2;
 
     struct Point current_point;
-
+    struct SPoint *stack = stack_ptr,
+                           current;
     struct KPoint *k_stack = k_stack_ptr,
                            worst_best;
 
+    current.index = n / 2;
     worst_best.dist = FLT_MAX;
 
     cuInitStack(&stack);
-    cuInitStack(&d_stack);
     cuInitKStack(&k_stack, k);
 
-    while (cuIsNotEmpty(stack) || current != -1)
+    while (!cuIsEmpty(stack) || current.index != -1)
 {
-        if (current == -1 && cuIsNotEmpty(stack))
+        if (current.index == -1 && !cuIsEmpty(stack))
         {
             current = cuPop(&stack);
-            current_point = tree[current];
-            dim = cuPop(&d_stack);
+            current_point = tree[current.index];
+            dim = current.dim;
 
-            // printf("(%3.1f, %3.1f, %3.1f) current = %d dim = %d\n",
-            // current_point.p[0], current_point.p[1], current_point.p[2], current, dim);
+
+
+            dx = current_point.p[dim] - qp.p[dim];
+            dx2 = dx * dx;
+
+            // printf("Up with (%3.1f, %3.1f, %3.1f): best_dist = %3.1f, dx2 = %3.1f, dim = %d\n",
+            //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, dx2, dim);
+
+            current.index = (dx2 < worst_best.dist) ? cuOther(qp, current_point, dx) : -1;
+        }
+        else
+        {
+            current_point = tree[current.index];
 
             current_dist = cuDist(qp, current_point);
             if (worst_best.dist > current_dist)
             {
                 worst_best.dist = current_dist;
-                worst_best.index = current;
+                worst_best.index = current.index;
                 cuInsert(k_stack, worst_best, k);
                 worst_best = cuLook(k_stack, k);
             }
 
-            current = -1;
-            if ((current_point.p[dim] - qp.p[dim]) * (current_point.p[dim] - qp.p[dim]) < worst_best.dist)
-            {
-                current = cuOther(qp, current_point, dim);
-            }
-        }
-        else
-        {
             cuUpDim(&dim);
-            cuPush(&d_stack, dim);
+            current.dim = dim;
             cuPush(&stack, current);
-            current = cuTarget(qp, tree[current], dim);
+
+            dx = current_point.p[dim] - qp.p[dim];
+            current.index = cuTarget(qp, current_point, dx);
+
+            // printf("Down with(%3.1f, %3.1f, %3.1f): best_dist = %3.1f, current_dist = %3.1f, dim = %d\n",
+            //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, current_dist, dim);
         }
     }
 
@@ -164,7 +173,6 @@ void cuKNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *
     {
         result[i] = k_stack[i].index;
     }
-
 }
 
 template <int thread_stack_size>
@@ -189,19 +197,17 @@ __global__ void dQueryAll(struct Point *query_points, struct Point *tree, int n_
     query_points += block_offset;
     result += block_offset * k;
 
-    int *stack_ptr = (int *)malloc(51 * sizeof(int)),
-         *d_stack_ptr = (int *)malloc(51 * sizeof(int));
-
+    struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
     while (tid < block_step)
     {
-        cuKNN(query_points[tid], tree, n_tree, k, result + (tid * k), stack_ptr, d_stack_ptr, k_stack_ptr);
+        cuKNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack_ptr, k_stack_ptr);
         // printf("tid = %d, result = %d, query_point = %3.1f\n", tid, result[tid], query_points[tid].p[0]);
         tid += blockDim.x;
     }
-    free(stack_ptr);
-    free(d_stack_ptr);
+    
+    free(s_stack_ptr);
     free(k_stack_ptr);
 }
 
