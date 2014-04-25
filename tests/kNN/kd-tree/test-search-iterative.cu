@@ -423,7 +423,7 @@ TEST(search_iterative, timing)
         struct Point *qp_points = (struct Point *) malloc(n  * sizeof(Point));
         srand(time(NULL));
 
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, points);
+        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
 
         for (int i = 0; i < n; ++i)
         {
@@ -439,7 +439,7 @@ TEST(search_iterative, timing)
 
         // struct kd_node_t *million = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
 
-        // read_points("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, million);
+        // read_points("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, million);
 
         // struct kd_node_t *root = makeTree(million, n, 0, 3);
 

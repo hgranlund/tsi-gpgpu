@@ -180,11 +180,11 @@ TEST(search_rosetta, timing)
 
     srand(time(0));
 
-    for (n = 1000; n <= 10000; n += 1000)
+    for (n = 20; n <= 20; n += 1000)
 {
         million = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
         qp_points = (struct kd_node_t *) calloc(n, sizeof(struct kd_node_t));
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, million);
+        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, million);
 
         for (int i = 0; i < n; ++i)
         {
@@ -196,7 +196,7 @@ TEST(search_rosetta, timing)
         }
         root = make_tree(million, n, 0, 3);
 
-        // print_tree(root, 0);
+        print_tree(root, 0);
 
         int sum = 0,
             test_runs = n;
