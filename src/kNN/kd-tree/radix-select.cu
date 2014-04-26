@@ -308,7 +308,7 @@ __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partit
 
 void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
 {
-    threads = THREADS_PER_BLOCK_RADIX;
+    threads = min(nextPowerOf2(n), THREADS_PER_BLOCK_RADIX);
     blocks = n / threads / 2;
     blocks = max(1, nextPowerOf2(blocks));
     blocks = min(MAX_BLOCK_DIM_SIZE_RADIX, blocks);
@@ -354,20 +354,20 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
 
         cut = h_zeros_count_block[0];
 
-        if ((l + cut) > m_u)
+        if ((u - cut) >= (m_u))
         {
-            u = l + cut;
-            last = 0;
+            u = u - cut;
+            last = 1;
         }
         else
         {
-            l = l + cut;
-            last = 1;
+            l = u - cut;
+            last = 0;
         }
     }
     while (((u - l) > 1) && (bit < 32));
 
-    cuPartitionSwap <<< 1, min(nextPowerOf2(n), MAX_BLOCK_DIM_SIZE_RADIX)>>>(points, swap, n, partition, last, dir);
+    cuPartitionSwap <<< 1, min(nextPowerOf2(n), MAX_BLOCK_DIM_SIZE_RADIX) >>> (points, swap, n, partition, last, dir);
 
     checkCudaErrors(
         cudaFree(d_zeros_count_block));
