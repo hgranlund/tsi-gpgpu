@@ -75,8 +75,8 @@ struct PointS cpu_radixselect(struct PointS *data, int l, int u, int m, int bit)
 TEST(multiple_radix_select, correctness)
 {
     struct PointS *h_points, *d_points, *d_swap;
-    int n, p, *d_partition, *h_steps, *d_steps;
-    for (n = 400; n <= 4000; n += 100)
+    int n, p, *d_partition, *h_steps, *d_steps, dim = 2;
+    for (n = 2; n <= 4000; n += 500)
     {
         p = 2;
         h_steps = (int *) malloc(p * 2 * sizeof(int));
@@ -99,12 +99,12 @@ TEST(multiple_radix_select, correctness)
         checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
 
-        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, dim);
 
         checkCudaErrors(cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
         // printPoints2(h_points + n / 2, n / 2);
 
-        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p);
+        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p, dim);
 
         checkCudaErrors(cudaFree(d_points));
         checkCudaErrors(cudaFree(d_steps));
