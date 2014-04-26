@@ -61,7 +61,7 @@ TEST(kd_tree_build, correctness_diagonal)
 TEST(kd_tree_build, correctness)
 {
     int n;
-    for (n = 1000; n <= 5000; n += 1000)
+    for (n = 10; n <= 5000; n += 100)
     {
 
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
@@ -70,6 +70,7 @@ TEST(kd_tree_build, correctness)
         readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
 
         build_kd_tree(points, n , points_out);
+        // cuPrintTree(points_out, 0, n / 2);
 
         ASSERT_KD_TREE(points_out, n);
 

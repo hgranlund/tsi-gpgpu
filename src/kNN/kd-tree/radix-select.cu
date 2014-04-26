@@ -265,7 +265,6 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
         }
         tid += blockDim.x;
     }
-    __syncthreads();
 }
 
 __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
@@ -372,7 +371,7 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
     }
     while (((u - l) > 1) && (bit < 32));
 
-    cuPartitionSwap <<< 1, min(nextPowerOf2(n), MAX_BLOCK_DIM_SIZE_RADIX) >>> (points, swap, n, partition, last, dir);
+    cuPartitionSwap <<< 1, min(nextPowerOf2(n), 1024) >>> (points, swap, n, partition, last, dir);
 
     checkCudaErrors(
         cudaFree(d_zeros_count_block));

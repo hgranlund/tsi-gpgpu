@@ -416,7 +416,7 @@ TEST(search_iterative, timing)
 {
     int n, k = 1;
 
-    for (n = 20; n <= 20; n += 1000)
+    for (n = 1000; n <= 10000; n += 1000)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
@@ -432,7 +432,7 @@ TEST(search_iterative, timing)
             point.p[1] = points[i].p[1];
             point.p[2] = points[i].p[2];
             qp_points[i] = point;
-            points_out[i] = point;
+            // points_out[i] = point;
         }
 
         build_kd_tree(points, n, points_out);
@@ -445,35 +445,35 @@ TEST(search_iterative, timing)
 
         // convertTree(root, points_out, 0, n);
 
-        printTree(points_out, 0, n / 2);
+        // printTree(points_out, 0, n / 2);
 
         int *result = (int *) malloc(k * sizeof(int));
 
         int i,
             visited = 0,
             sum = 0,
-            test_runs = 17;
+            test_runs = n;
 
         struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
         double start_time = WallTime();
-        for (i = 16; i < test_runs; ++i)
+        for (i = 0; i < test_runs; ++i)
         {
             visited = 0;
-            kNN(qp_points[i], points_out, n, k, result, &visited, stack_ptr, k_stack_ptr);
+            kNN(points_out[i], points_out, n, k, result, &visited, stack_ptr, k_stack_ptr);
             sum += visited;
 
-            printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
-                   qp_points[i].p[0], qp_points[i].p[1], qp_points[i].p[2],
-                   points_out[result[0]].p[0], points_out[result[0]].p[1], points_out[result[0]].p[2]);
+            // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
+            //        points_out[i].p[0], points_out[i].p[1], points_out[i].p[2],
+            //        points_out[result[0]].p[0], points_out[result[0]].p[1], points_out[result[0]].p[2]);
 
-            ASSERT_EQ(qp_points[i].p[0], points_out[result[0]].p[0]) << "Failed at i = " << i;
-            ASSERT_EQ(qp_points[i].p[1], points_out[result[0]].p[1]) << "Failed at i = " << i;
-            ASSERT_EQ(qp_points[i].p[2], points_out[result[0]].p[2]) << "Failed at i = " << i;
+            ASSERT_EQ(points_out[i].p[0], points_out[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points_out[i].p[1], points_out[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points_out[i].p[2], points_out[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
         }
 
-        printf("Time = %lf ms, Size = %d Elements, Awg visited = %3.1f\n", ((WallTime() - start_time) * 1000), n, sum / (float)test_runs);
+        // printf("Time = %lf ms, Size = %d Elements, Awg visited = %3.1f\n", ((WallTime() - start_time) * 1000), n, sum / (float)test_runs);
 
         free(points_out);
         free(result);

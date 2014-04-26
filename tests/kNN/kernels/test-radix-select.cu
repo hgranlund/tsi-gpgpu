@@ -49,7 +49,7 @@ struct PointS cpu_radixselect1(struct PointS *data, int l, int u, int m, int bit
     if (l == u) return (data[l]);
     if (bit > 32)
     {
-        printf("cpu_radixselect1 fail!\n");
+        // debugf("cpu_radixselect1 fail!\n");
         return t;
     }
     int s = cpu_partition1(data, l, u, bit);
@@ -106,15 +106,15 @@ unsigned int prevPowerOf22(unsigned int n)
 TEST(radix_selection, correctness)
 {
     struct PointS *h_points;
-    int n, dim = 2;
-    for (n = 150; n <= 150; n += 100)
+    int n, dim = 0;
+    for (n = 110; n <= 1025; n += 100)
     {
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
 
         // populatePointSRosetta(h_points, n);
         readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
 
-        printPoints1(h_points, n);
+        // printPoints1(h_points, n);
 
         struct PointS *d_points, *d_temp;
         int *partition;
@@ -135,10 +135,6 @@ TEST(radix_selection, correctness)
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
-        if (n < 100)
-        {
-            printPoints1(h_points, n);
-        }
 
         debugf("result_gpu = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
         debugf("result_cpu = (%3.1f, %3.1f, %3.1f)\n", cpu_result.p[0], cpu_result.p[1], cpu_result.p[2] );
@@ -152,6 +148,7 @@ TEST(radix_selection, correctness)
         h_steps[1] = n;
 
         ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, 1, dim);
+        printPoints1(h_points, n);
 
         checkCudaErrors(
             cudaFree(d_points));

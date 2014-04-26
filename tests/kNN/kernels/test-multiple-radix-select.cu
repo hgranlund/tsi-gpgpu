@@ -76,7 +76,7 @@ TEST(multiple_radix_select, correctness)
 {
     struct PointS *h_points, *d_points, *d_swap;
     int n, p, *d_partition, *h_steps, *d_steps, dim = 0;
-    for (n = 300; n <= 800; n += 100)
+    for (n = 100; n <= 5000; n += 500)
     {
         p = 2;
         h_steps = (int *) malloc(p * 2 * sizeof(int));

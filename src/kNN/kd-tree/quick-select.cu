@@ -94,12 +94,11 @@ void cuQuickSelectGlobal(struct PointS *points, int *steps, int p, int dir)
         list_in_block++;
     }
     steps += block_offset * 2;
-
     while ( tid < list_in_block)
     {
-        step_num = tid * blockIdx.x + tid;
-        l_points = points + steps[step_num * 2];
-        n = steps[step_num * 2 + 1] - steps[step_num * 2];
+        step_num = tid * 2;
+        l_points = points + steps[step_num];
+        n = steps[step_num + 1] - steps[step_num];
         m = n >> 1;   // same as n/2;
         left = 0;
         right = n - 1;

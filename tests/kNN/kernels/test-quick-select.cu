@@ -8,7 +8,7 @@ TEST(quick_selection, correctness)
 {
     struct PointS *h_points, *d_points;
     int  *d_steps, *h_steps, n, p, step, dim = 2;
-    for (n = 2; n <= 5000; n += 1000)
+    for (n = 125; n <= 5000; n += 1000)
     {
         p = 2;
         h_points = (struct PointS *) malloc(n  * sizeof(PointS));
@@ -30,7 +30,6 @@ TEST(quick_selection, correctness)
         quickSelectAndPartition(d_points, d_steps, step , p, dim);
 
         checkCudaErrors(cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
-
         ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p, dim);
 
         checkCudaErrors(cudaFree(d_points));
