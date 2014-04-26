@@ -107,7 +107,7 @@ TEST(radix_selection, correctness)
 {
     struct PointS *h_points;
     int n, dim = 2;
-    for (n = 20; n <= 20; n += 1000)
+    for (n = 150; n <= 150; n += 100)
     {
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
 

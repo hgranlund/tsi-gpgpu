@@ -15,15 +15,15 @@
 // void printIntArray__(int *l, int n, char *s)
 // {
 // #if __CUDA_ARCH__ >= 200
-//     if (debug && threadIdx.x == 0 && blockIdx.x == 1)
+//     if (debug && threadIdx.x == 0 && blockIdx.x == 0)
 //     {
-//         // printf("%s: ", s);
-//         // printf("[%d", l[0] );
+//         printf("%s: ", s);
+//         printf("[%d", l[0] );
 //         for (int i = 1; i < n; ++i)
 //         {
-//             // printf(", %d", l[i] );
+//             printf(", %d", l[i] );
 //         }
-//         // printf("]\n");
+//         printf("]\n");
 //     }
 // #endif
 // }
@@ -147,50 +147,70 @@ __device__ int cuSumReduce(int *list, int n)
     return list[0];
 }
 
-__device__ int cuPartitionSwap(struct PointS *data, struct PointS *swap, unsigned int n, int *partition, int *zero_count, int *one_count, struct PointS median, int dir)
+__device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n, int *partition, int *zero_count, int *one_count, int *median_count, struct PointS median, int dir)
 {
-    unsigned int
-    tid = threadIdx.x,
-    big,
-    is_bigger,
-    less;
+    int tid = threadIdx.x,
+        big,
+        mid,
+        point_difference,
+        less;
+
     zero_count++;
     one_count++;
+    median_count++;
     zero_count[threadIdx.x] = 0;
     one_count[threadIdx.x] = 0;
+    median_count[threadIdx.x] = 0;
 
     while (tid < n)
     {
         swap[tid] = data[tid];
-        is_bigger = partition[tid] = (bool)(data[tid].p[dir] > median.p[dir]);
-        one_count[threadIdx.x] += is_bigger;
-        zero_count[threadIdx.x] += !is_bigger;
+        point_difference = partition[tid] = (data[tid].p[dir] - median.p[dir]);
+        if (point_difference < 0)
+        {
+            zero_count[threadIdx.x]++;
+        }
+        else if (point_difference > 0)
+        {
+            one_count[threadIdx.x]++;
+        }
+        else
+        {
+            median_count[threadIdx.x]++;
+        }
         tid += blockDim.x;
     }
     __syncthreads();
     cuAccumulateIndex(zero_count, blockDim.x);
     cuAccumulateIndex(one_count, blockDim.x);
+    cuAccumulateIndex(median_count, blockDim.x);
+    __syncthreads();
     tid = threadIdx.x;
     one_count--;
     zero_count--;
+    median_count--;
     less = zero_count[threadIdx.x];
     big = one_count[threadIdx.x];
-    __syncthreads();
+    mid = zero_count[blockDim.x] +  median_count[threadIdx.x];
     while (tid < n)
     {
-        if (!partition[tid])
+        if (partition[tid] < 0)
         {
             data[less] = swap[tid];
             less++;
         }
-        else
+        else if (partition[tid] > 0)
         {
             data[n - big - 1] = swap[tid];
             big++;
         }
+        else
+        {
+            data[mid] = swap[tid];
+            mid++;
+        }
         tid += blockDim.x;
     }
-    return zero_count[blockDim.x];
 }
 
 __device__ unsigned int cuPartition(struct PointS *data, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
@@ -221,8 +241,8 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
 {
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
+    __shared__ int medians_count[1025];
     __shared__ struct PointS median;
-    __shared__ int no_of_median;
 
     int l = 0,
         u = n,
@@ -230,13 +250,6 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
         bit = 0,
         last = 2,
         tid = threadIdx.x;
-
-    struct PointS local_median;
-
-    if (tid == 0)
-    {
-        no_of_median = 0;
-    }
 
     while (tid < n)
     {
@@ -269,26 +282,14 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
     {
         if (partition[tid] == last)
         {
-            local_median = median = data[tid];
-            unsigned int local_no_of_median = atomicAdd((unsigned int *)&no_of_median, 1);
-            data[tid] = data[local_no_of_median];
-            data[local_no_of_median] = median; //can be removed
-
+            median = data[tid];
         }
         tid += blockDim.x;
     }
     __syncthreads();
 
-    int midpoint = cuPartitionSwap(data + no_of_median, data_copy, n - no_of_median, partition, one_count, zeros_count, median, dir);
-    midpoint = midpoint + no_of_median - 1;
-    __syncthreads();
-    tid = threadIdx.x;
+    cuPartitionSwap(data, data_copy, n, partition, one_count, zeros_count, medians_count, median, dir);
 
-    while (tid < no_of_median)
-    {
-        data[tid] = data[midpoint - tid], data[midpoint - tid] = median;
-        tid += blockDim.x;
-    }
 }
 
 __global__

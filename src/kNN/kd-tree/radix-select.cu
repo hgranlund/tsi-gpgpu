@@ -16,7 +16,6 @@
 // Ikke forandre plassering kun left and rigth????
 
 
-
 __device__
 void d_printIntArray___(int *l, int n, char *s)
 {
@@ -184,83 +183,89 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
 {
     __shared__ int ones[1025];
     __shared__ int zeros[1025];
+    __shared__ int medians[1025];
     __shared__ struct PointS median;
-    __shared__ int median_index;
-    __shared__ unsigned int no_of_median;
-
-    if (threadIdx.x == 0)
-    {
-        no_of_median = 0;
-    }
 
     int
     tid = threadIdx.x,
     big,
+    less,
+    mid,
+    point_difference,
     *zero_count = ones,
      *one_count = zeros,
-      less;
+      *median_count = medians;
 
     zero_count++;
     one_count++;
+    median_count++;
     zero_count[threadIdx.x] = 0;
     one_count[threadIdx.x] = 0;
+    median_count[threadIdx.x] = 0;
 
     while (tid < n)
     {
         if (partition[tid] == last)
         {
             median = points[tid];
-            unsigned int local_no_of_median = atomicAdd((unsigned int *)&no_of_median, 1);
-            points[tid] = points[local_no_of_median];
         }
         tid += blockDim.x;
     }
-    __syncthreads();
-    points += no_of_median;
-    n -= no_of_median;
+
     tid = threadIdx.x;
+    __syncthreads();
     while (tid < n)
     {
         swap[tid] = points[tid];
-        int is_bigger = partition[tid] = (bool)(points[tid].p[dir] > median.p[dir]);
-        one_count[threadIdx.x] += is_bigger;
-        zero_count[threadIdx.x] += !is_bigger;
+        point_difference = partition[tid] = (points[tid].p[dir] - median.p[dir]);
+        if (point_difference < 0)
+        {
+            zero_count[threadIdx.x]++;
+        }
+        else if (point_difference > 0)
+        {
+            one_count[threadIdx.x]++;
+        }
+        else
+        {
+            median_count[threadIdx.x]++;
+        }
         tid += blockDim.x;
     }
 
     __syncthreads();
     cuAccumulateIndex_(zero_count, blockDim.x);
     cuAccumulateIndex_(one_count, blockDim.x);
-    tid = threadIdx.x;
+    cuAccumulateIndex_(median_count, blockDim.x);
     __syncthreads();
+
+    tid = threadIdx.x;
     one_count--;
     zero_count--;
+    median_count--;
+    mid = zero_count[blockDim.x] +  median_count[threadIdx.x];
     less = zero_count[threadIdx.x];
     big = one_count[threadIdx.x];
     while (tid < n)
     {
-        if (!partition[tid])
+        if (partition[tid] < 0)
         {
             points[less] = swap[tid];
             less++;
         }
-        else
+        else if (partition[tid] > 0)
         {
             points[n - big - 1] = swap[tid];
             big++;
         }
+        else
+        {
+            points[mid] = swap[tid];
+            mid++;
+        }
         tid += blockDim.x;
     }
     __syncthreads();
-    points -= no_of_median;
-    n += no_of_median;
-    tid = threadIdx.x;
-    while (tid < no_of_median)
-    {
-        int midpoint = zero_count[blockDim.x] + no_of_median - 1;
-        points[tid] = points[midpoint - tid], points[midpoint - tid] = median;
-        tid += blockDim.x;
-    }
 }
 
 __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
