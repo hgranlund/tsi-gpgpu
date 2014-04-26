@@ -13,19 +13,32 @@ void cuQuickSelectShared(struct PointS *points, int *steps, int p, int dir)
     __shared__ struct PointS ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
     struct PointS *s_points = ss_points, *l_points;
     float pivot;
-    int pos, i, left, right, step_num,
-        n,
+    int pos,
+        i,
         list_in_block = p / gridDim.x,
+        block_offset = list_in_block * blockIdx.x,
         tid = threadIdx.x,
-        m;
+        rest = p % gridDim.x,
+        left,
+        right,
+        m,
+        step_num,
+        n;
+
+    if (rest >= gridDim.x - blockIdx.x)
+    {
+        block_offset += rest - (gridDim.x - blockIdx.x);
+        list_in_block++;
+    }
+    steps += block_offset * 2;
 
     s_points += (tid * maxStep);
 
     while ( tid < list_in_block)
     {
-        step_num = tid * blockIdx.x + tid;
-        l_points = points + steps[step_num * 2];
-        n = steps[step_num * 2 + 1] - steps[step_num * 2];
+        step_num =  tid * 2;
+        l_points = points + steps[step_num  ];
+        n = steps[step_num   + 1] - steps[step_num  ];
         m = n >> 1;   // same as n/2;
         for (i = 0; i < n; ++i)
         {
@@ -61,17 +74,27 @@ void cuQuickSelectShared(struct PointS *points, int *steps, int p, int dir)
 __global__
 void cuQuickSelectGlobal(struct PointS *points, int *steps, int p, int dir)
 {
-    int pos, i,
+    int pos,
+        i,
         list_in_block = p / gridDim.x,
+        block_offset = list_in_block * blockIdx.x,
         tid = threadIdx.x,
+        rest = p % gridDim.x,
         left,
         right,
+        m,
         step_num,
-        n,
-        m;
+        n;
 
     struct PointS  *l_points;
     float pivot;
+    if (rest >= gridDim.x - blockIdx.x)
+    {
+        block_offset += rest - (gridDim.x - blockIdx.x);
+        list_in_block++;
+    }
+    steps += block_offset * 2;
+
     while ( tid < list_in_block)
     {
         step_num = tid * blockIdx.x + tid;
