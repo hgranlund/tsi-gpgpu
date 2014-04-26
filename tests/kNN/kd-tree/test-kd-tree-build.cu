@@ -1,7 +1,24 @@
 #include <knn_gpgpu.h>
 #include "test-common.cuh"
 
-TEST(kd_tree_build, correctness)
+void cuPrintTree(struct Point *tree, int level, int root)
+{
+    if (root < 0) return;
+
+    int i;
+
+    printf("|");
+    for (i = 0; i < level; ++i)
+    {
+        printf("----");
+    }
+    printf("(%3.1f, %3.1f, %3.1f): dim = %d \n", tree[root].p[0], tree[root].p[1], tree[root].p[2], level % 3);
+
+    cuPrintTree(tree, 1 + level, tree[root].left);
+    cuPrintTree(tree, 1 + level, tree[root].right);
+}
+
+TEST(kd_tree_build, correctness_diagonal)
 {
     int i, n = 8;
     float temp;
@@ -27,11 +44,39 @@ TEST(kd_tree_build, correctness)
 
     build_kd_tree(points, n , points_out);
 
-    ASSERT_TREE_EQ(points_out, expected_points, n);
+    // cuPrintTree(points_out, 0, n / 2);
+    // for (int i = 0; i < n; ++i)
+    // {
+    //     printf("(%3.1f, %3.1f, %3.1f), ", points_out[i].p[0], points_out[i].p[1], points_out[i].p[2]);
+    // }
+    // printf("\n");
+    ASSERT_KD_TREE(points_out, n);
+    // ASSERT_TREE_EQ(points_out, expected_points, n);
 
     free(points);
     free(points_out);
     free(expected_points);
+}
+
+TEST(kd_tree_build, correctness)
+{
+    int n;
+    for (n = 1000; n <= 5000; n += 1000)
+    {
+
+        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+
+        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
+
+        build_kd_tree(points, n , points_out);
+
+        ASSERT_KD_TREE(points_out, n);
+
+        free(points);
+        free(points_out);
+
+    }
 }
 
 TEST(kd_tree_build, timing)

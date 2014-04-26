@@ -12,6 +12,52 @@
 #include "common-debug.cuh"
 
 
+__device__ void cuPointSwapCondition(struct PointS *p, int a, int b, int dim)
+{
+    struct PointS temp_a = p[a], temp_b = p[b];
+    if (temp_a.p[dim] > temp_b.p[dim] )
+    {
+        p[a] = temp_b, p[b] = temp_a;
+    }
+}
+
+__global__ void balance_leafs(struct PointS *points, int *steps, int p, int dim)
+{
+    struct PointS   *l_points;
+
+    int
+    list_in_block = p / gridDim.x,
+    block_offset = list_in_block * blockIdx.x,
+    tid = threadIdx.x,
+    rest = p % gridDim.x,
+    step_num,
+    n;
+
+    if (rest >= gridDim.x - blockIdx.x)
+    {
+        block_offset += rest - (gridDim.x - blockIdx.x);
+        list_in_block++;
+    }
+    steps += block_offset * 2;
+    while ( tid < list_in_block)
+    {
+        step_num =  tid * 2;
+        l_points = points + steps[step_num];
+        n = steps[step_num + 1] - steps[step_num];
+        if (n == 2)
+        {
+            cuPointSwapCondition(l_points, 0, 1, dim);
+        }
+        else if (n == 3)
+        {
+            cuPointSwapCondition(l_points, 0, 1, dim);
+            cuPointSwapCondition(l_points, 1, 2, dim);
+            cuPointSwapCondition(l_points, 0, 1, dim);
+        }
+        tid += blockDim.x;
+    }
+}
+
 int store_locations(struct Point *tree, int lower, int upper, int n)
 {
     int r;
@@ -128,12 +174,13 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
 
     radixSelectAndPartition(d_points, d_swap, d_partition, n, i % 3);
     i++;
-    while (i < h )
+    while (i < (h - 1) )
     {
         nextStep(h_steps_new, h_steps_old, p <<= 1);
         step = h_steps_new[1] - h_steps_new[0];
         checkCudaErrors(
             cudaMemcpy(d_steps, h_steps_new, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+
         if (step >= 8388608)
         {
             singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
@@ -143,9 +190,13 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
         {
             multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, step, p, i % 3);
         }
-        else
+        else if (step > 3)
         {
             quickSelectAndPartition(d_points, d_steps, step, p, i % 3);
+        }
+        else
+        {
+            balance_leafs <<< 1, min(n, 512) >>> (d_points, d_steps, p, i % 3);
         }
         swap_pointer(&h_steps_new, &h_steps_old);
         i++;
@@ -161,7 +212,6 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
 
     convertPoints <<< max(1, n / 512), 512 >>> (d_points, n, d_points_out);
     checkCudaErrors(cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
-
     store_locations(h_points_out, 0, n, n);
 
     checkCudaErrors(cudaFree(d_points));
