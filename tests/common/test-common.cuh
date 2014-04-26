@@ -20,5 +20,6 @@ void printCudaTiming(float elapsed_time, float bytes, int n);
 void readPoints(const char *file_path, int n, struct PointS *points);
 
 void ASSERT_TREE_EQ(struct Point *expected_tree, struct Point *actual_tree, int n);
-void ASSERT_TREE_LEVEL_OK(PointS *points, int *steps, int n, int p);
+void ASSERT_TREE_LEVEL_OK(PointS *points, int *steps, int n, int p, int dim);
+void ASSERT_KD_TREE(struct Point *tree, int n);
 #endif
