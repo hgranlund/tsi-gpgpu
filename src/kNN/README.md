@@ -293,6 +293,11 @@ Also in this case our estimation fit the real consumption with a high degree of 
 * Improve utiliti methods like: accumulateindex, minReduce.
 * Forloop Unrolling.
 
+V1.4 Release notes
+------------------
+
+[link to data sheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing)
+
 
 V1.3 Release notes
 ------------------
@@ -314,6 +319,9 @@ Some instability would be expected, as the amount of pruning that can be achieve
 Combining the results from the search and the tree-building, gives the following runtime for a sequence of building and N queries:
 
 ![constructionand_n_queries_v13_gtx_560](./images/constructionand_n_queries_v13_gtx_560.png)
+
+
+
 
 
 Work-plan for next week

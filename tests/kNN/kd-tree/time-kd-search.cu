@@ -76,6 +76,14 @@ int main(int argc, char const *argv[])
         step = atoi(argv[3]);
         printf("Running kd-search-all from n = %d to n = %d with step = %d\n", nu, ni, step);
     }
+    else if (argc == 5)
+    {
+        nu = atoi(argv[1]);
+        ni = atoi(argv[2]);
+        step = atoi(argv[3]);
+        k = atoi(argv[4]);
+        printf("Running kd-search-all from n = %d to n = %d with step = %d and k = %d\n", nu, ni, step, k);
+    }
     else
     {
         printf("Running kd-search-all with n = %d\n", nu);
