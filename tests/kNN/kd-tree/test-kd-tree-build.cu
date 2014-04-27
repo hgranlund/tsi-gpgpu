@@ -68,7 +68,7 @@ TEST(kd_tree_build, correctness)
         }
         else
         {
-            readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
+            readPoints("../tests/data/10000_points.data", n, points);
 
         }
 

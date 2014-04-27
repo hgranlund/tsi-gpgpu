@@ -17,6 +17,9 @@ void cudaStartTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time)
 void cudaStopTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
 void printCudaTiming(float elapsed_time, float bytes, int n);
 
+double WallTime ();
+void printTree(struct Point *tree, int level, int root);
+
 void readPoints(const char *file_path, int n, struct PointS *points);
 
 void ASSERT_TREE_EQ(struct Point *expected_tree, struct Point *actual_tree, int n);

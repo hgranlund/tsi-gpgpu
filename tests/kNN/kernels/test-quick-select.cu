@@ -24,7 +24,7 @@ TEST(quick_selection, correctness)
         checkCudaErrors(cudaMalloc((void **)&d_steps, p * 2  * sizeof(PointS)));
 
         // populatePointSs(h_points, n);
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+        readPoints("../tests/data/10000_points.data", n, h_points);
 
         checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
@@ -61,7 +61,7 @@ TEST(quick_selection, correctness_dim)
     checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
     checkCudaErrors(cudaMalloc((void **)&d_steps, p * 2  * sizeof(PointS)));
 
-    readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+    readPoints("../tests/data/10000_points.data", n, h_points);
 
     checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2  * sizeof(int), cudaMemcpyHostToDevice));
