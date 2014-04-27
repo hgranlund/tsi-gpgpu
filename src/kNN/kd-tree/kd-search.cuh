@@ -2,7 +2,7 @@
 #define _KD_SEARCH_
 #include "point.h"
 
-#define THREADS_PER_BLOCK_SEARCH 32U
+#define THREADS_PER_BLOCK_SEARCH 128U
 #define MAX_BLOCK_DIM_SIZE 65535U
 
 struct KPoint
