@@ -206,11 +206,11 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
         checkCudaErrors(
             cudaMemcpy(d_steps, h_steps_new, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
 
-        if (step >= 10000000 && p < 5)
+        if (step >= 9000000)
         {
             singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
         }
-        else if (step > 4000 && p <= 2048)
+        else if (step > 4000)
         {
             multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, step, p, i % 3);
         }
