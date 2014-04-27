@@ -8,19 +8,6 @@
 
 #include "helper_cuda.h"
 
-#define debug 0
-#include "common-debug.cuh"
-
-
-__device__ void cuPointSwapCondition(struct PointS *p, int a, int b, int dim)
-{
-    struct PointS temp_a = p[a], temp_b = p[b];
-    if (temp_a.p[dim] > temp_b.p[dim] )
-    {
-        p[a] = temp_b, p[b] = temp_a;
-    }
-}
-
 int nextPowerOf2_(int x)
 {
     --x;
@@ -31,6 +18,7 @@ int nextPowerOf2_(int x)
     x |= x >> 16;
     return ++x;
 }
+
 void getThreadAndBlockCountForBuild(int n, int &blocks, int &threads)
 {
     threads = min(nextPowerOf2_(n), 512);
@@ -40,22 +28,40 @@ void getThreadAndBlockCountForBuild(int n, int &blocks, int &threads)
     // printf("block = %d, threads = %d, n = %d\n", blocks, threads, n);
 }
 
-__global__ void balanceLeafs(struct PointS *points, int *steps, int p, int dim)
+__device__ void cuCalculateBlockOffsetAndNoOfLists_(int n, int &n_per_block, int &block_offset)
 {
-    struct PointS   *l_points;
-    int
-    list_in_block = p / gridDim.x,
-    block_offset = list_in_block * blockIdx.x,
-    tid = threadIdx.x,
-    rest = p % gridDim.x,
-    step_num,
-    n;
+    int rest = n % gridDim.x;
+
+    n_per_block = n / gridDim.x;
+    block_offset = n_per_block * blockIdx.x;
 
     if (rest >= gridDim.x - blockIdx.x)
     {
         block_offset += rest - (gridDim.x - blockIdx.x);
-        list_in_block++;
+        n_per_block++;
     }
+}
+
+__device__ void cuPointSwapCondition(struct PointS *p, int a, int b, int dim)
+{
+    struct PointS temp_a = p[a], temp_b = p[b];
+    if (temp_a.p[dim] > temp_b.p[dim] )
+    {
+        p[a] = temp_b, p[b] = temp_a;
+    }
+}
+
+__global__ void balanceLeafs(struct PointS *points, int *steps, int p, int dim)
+{
+    struct PointS   *l_points;
+
+    int list_in_block,
+        block_offset,
+        tid = threadIdx.x,
+        step_num,
+        n;
+
+    cuCalculateBlockOffsetAndNoOfLists_(p, list_in_block, block_offset);
 
     steps += block_offset * 2;
 
@@ -98,22 +104,18 @@ int store_locations(struct Point *tree, int lower, int upper, int n)
 __global__
 void convertPoints(struct PointS *points_small, int n, struct Point *points)
 {
-    int
-    block_stride = n / gridDim.x,
-    block_offset = block_stride * blockIdx.x,
-    tid = threadIdx.x,
-    rest = n % gridDim.x;
     struct PointS point_s;
-    if (rest >= gridDim.x - blockIdx.x)
-    {
-        block_offset += rest - (gridDim.x - blockIdx.x);
-        block_stride++;
-    }
+
+    int local_n,
+        block_offset,
+        tid = threadIdx.x;
+
+    cuCalculateBlockOffsetAndNoOfLists_(n, local_n, block_offset);
 
     points += block_offset;
     points_small += block_offset;
 
-    while (tid < block_stride)
+    while (tid < local_n)
     {
         struct Point point;
         point_s = points_small[tid];
@@ -127,8 +129,8 @@ void convertPoints(struct PointS *points_small, int n, struct Point *points)
 
 void nextStep(int *steps_new, int *steps_old, int n)
 {
-    int midpoint, from, to;
-    for (int i = 0; i < n / 2; ++i)
+    int i, midpoint, from, to;
+    for (i = 0; i < n / 2; ++i)
     {
         from = steps_old[i * 2];
         to = steps_old[i * 2 + 1];
@@ -184,19 +186,15 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
 
     checkCudaErrors(
         cudaMalloc(&d_steps, number_of_leafs * 2 * sizeof(int)));
-
     checkCudaErrors(
         cudaMalloc(&d_partition, n * sizeof(int)));
-
     checkCudaErrors(
         cudaMalloc(&d_points, n * sizeof(PointS)));
-
     checkCudaErrors(
         cudaMalloc(&d_swap, n * sizeof(PointS)));
 
     checkCudaErrors(
         cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
-
 
     radixSelectAndPartition(d_points, d_swap, d_partition, n, i % 3);
 
@@ -239,7 +237,9 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
 
     getThreadAndBlockCountForBuild(n, block_num, thread_num);
     convertPoints <<< block_num, thread_num >>> (d_points, n, d_points_out);
+
     checkCudaErrors(cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
+
     store_locations(h_points_out, 0, n, n);
 
     checkCudaErrors(cudaFree(d_points));
