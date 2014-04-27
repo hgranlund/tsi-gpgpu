@@ -307,7 +307,7 @@ Timing tests of the build time and query time for n queries and k = 1 was perfor
 
 ![build_query_aws](./images/v14_build_query_gtx.png)
 
-Querying for n points still takes a lot of time, but the time increase related to the number of points seems to be lower than the build time. This is further strengthened when looking at the results form AWS, graphed below.
+Querying for n points still takes a lot of time, but the time increase related to the number of points seems to be lower than the build time. This trend is more prominent when we look at the results from our tests on AWS, graphed below.
 
 ![build_query_aws](./images/v14_build_query_aws.png)
 
