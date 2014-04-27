@@ -1,7 +1,7 @@
 The quest for a fast KNN search
 ===============================
 
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the [release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v13-release-notes) for the most recent version of this project.
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the [release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v14-release-notes) for the most recent version of this project.
 
 Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
 
@@ -293,16 +293,30 @@ Also in this case our estimation fit the real consumption with a high degree of 
 * Improve utiliti methods like: accumulateindex, minReduce.
 * Forloop Unrolling.
 
+
 V1.4 Release notes
 ------------------
 
-[link to data sheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing)
+Version 1.4 introduces the possibility of a variable k when searching. Testing the impact of varying the size of k was performed with a fixed number of 1000 repeated single queries. The timing results are shown in the following graph.
 
-![build_query_aws](./images/v14_build_query_aws.png)
+![build_query_aws](./images/v14_variable_k.png)
+
+As expected, increasing k seems to increases the runtime with a constant factor. How this will affect searches in bigger trees and with a larger number of query-points should be explored next.
+
+Timing tests of the build time and query time for n queries and k = 1 was performed on a GeForce GTX 560 and at Amazon Web Services (AWS). For the GTX card we get the following graph.
 
 ![build_query_aws](./images/v14_build_query_gtx.png)
 
-![build_query_aws](./images/v14_variable_k.png)
+Querying for n points still takes a lot of time, but the time increase related to the number of points seems to be lower than the build time. This is further strengthened when looking at the results form AWS, graphed below.
+
+![build_query_aws](./images/v14_build_query_aws.png)
+
+Here we see that the runtime for the tree building algorithm catches up with the search time, and surpasses it around 50 million points. This is an interesting result.
+
+From this graph we can see that on the AWS GPU, we are able, for 90 million points, to build the tree and query for the closest point, k = 1, in a total of ~30s + ~26s = ~56s < one minute.
+
+Source data for all graphs can be found in [this spreadsheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing).
+
 
 
 V1.3 Release notes
@@ -325,12 +339,3 @@ Some instability would be expected, as the amount of pruning that can be achieve
 Combining the results from the search and the tree-building, gives the following runtime for a sequence of building and N queries:
 
 ![constructionand_n_queries_v13_gtx_560](./images/constructionand_n_queries_v13_gtx_560.png)
-
-
-
-
-
-Work-plan for next week
------------------------
-
-Major improvements of the tree-building implementation is not to bee expected, so further work will focus on improving existing code through refactoring. The unstable behavior of the parallel search should be studied in more detail, in conjunction with expanding it to work with larger values of k, and improving the memory usage of this algorithm. Finally it might be beneficial to spend some time on getting the project to build at TSI HQ, so version 1.3 can be studied in more detail by Alok.
