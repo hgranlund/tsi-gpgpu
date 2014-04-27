@@ -7,32 +7,52 @@ __device__ void cuPointSwap(struct PointS *p, int a, int b)
     p[a] = p[b], p[b] = temp;
 }
 
-template <int maxStep> __global__
-void cuQuickSelectShared(struct PointS *points, int *steps, int p, int dir)
+__device__ void cuCalculateBlockOffsetAndNoOfLists(int n, int &n_per_block, int &block_offset)
 {
-    __shared__ struct PointS ss_points[maxStep * THREADS_PER_BLOCK_QUICK];
-    struct PointS *s_points = ss_points, *l_points;
-    float pivot;
-    int pos,
-        i,
-        list_in_block = p / gridDim.x,
-        block_offset = list_in_block * blockIdx.x,
-        tid = threadIdx.x,
-        rest = p % gridDim.x,
-        left,
-        right,
-        m,
-        step_num,
-        n;
+    int rest = n % gridDim.x;
+    n_per_block = n / gridDim.x;
+    block_offset = n_per_block * blockIdx.x;
 
     if (rest >= gridDim.x - blockIdx.x)
     {
         block_offset += rest - (gridDim.x - blockIdx.x);
-        list_in_block++;
+        n_per_block++;
     }
-    steps += block_offset * 2;
+}
 
-    s_points += (tid * maxStep);
+__device__ void cuCopyPoints(struct PointS *s_points, struct PointS *l_points, int n)
+{
+    int i;
+    for (i = 0; i < n; ++i)
+    {
+        s_points[i] = l_points[i];
+    }
+}
+
+template <int max_step, bool in_shared> __global__
+void cuQuickSelect(struct PointS *points, int *steps, int p, int dir)
+{
+    __shared__ struct PointS ss_points[max_step * THREADS_PER_BLOCK_QUICK];
+
+    struct PointS *s_points = ss_points, *l_points;
+
+    float pivot;
+
+    int pos,
+        i,
+        left,
+        right,
+        m,
+        step_num,
+        n,
+        list_in_block,
+        tid = threadIdx.x,
+        block_offset;
+
+    cuCalculateBlockOffsetAndNoOfLists(p, list_in_block, block_offset);
+
+    steps += block_offset * 2;
+    s_points += (tid * max_step);
 
     while ( tid < list_in_block)
     {
@@ -40,12 +60,17 @@ void cuQuickSelectShared(struct PointS *points, int *steps, int p, int dir)
         l_points = points + steps[step_num  ];
         n = steps[step_num   + 1] - steps[step_num  ];
         m = n >> 1;   // same as n/2;
-        for (i = 0; i < n; ++i)
-        {
-            s_points[i] = l_points[i];
-        }
         left = 0;
         right = n - 1;
+
+        if (in_shared)
+        {
+            cuCopyPoints(s_points, l_points, n);
+        }
+        else
+        {
+            s_points = l_points;
+        }
         while (left < right)
         {
             pivot = s_points[m].p[dir];
@@ -63,61 +88,9 @@ void cuQuickSelectShared(struct PointS *points, int *steps, int p, int dir)
             if (pos < m) left = pos + 1;
             else right = pos - 1;
         }
-        for (i = 0; i < n; ++i)
+        if (in_shared)
         {
-            l_points[i] = s_points[i];
-        }
-        tid += blockDim.x;
-    }
-}
-
-__global__
-void cuQuickSelectGlobal(struct PointS *points, int *steps, int p, int dir)
-{
-    int pos,
-        i,
-        list_in_block = p / gridDim.x,
-        block_offset = list_in_block * blockIdx.x,
-        tid = threadIdx.x,
-        rest = p % gridDim.x,
-        left,
-        right,
-        m,
-        step_num,
-        n;
-
-    struct PointS  *l_points;
-    float pivot;
-    if (rest >= gridDim.x - blockIdx.x)
-    {
-        block_offset += rest - (gridDim.x - blockIdx.x);
-        list_in_block++;
-    }
-    steps += block_offset * 2;
-    while ( tid < list_in_block)
-    {
-        step_num = tid * 2;
-        l_points = points + steps[step_num];
-        n = steps[step_num + 1] - steps[step_num];
-        m = n >> 1;   // same as n/2;
-        left = 0;
-        right = n - 1;
-        while (left < right)
-        {
-            pivot = l_points[m].p[dir];
-            cuPointSwap(l_points, m, right);
-            for (i = pos = left; i < right; i++)
-            {
-                if (l_points[i].p[dir] < pivot)
-                {
-                    cuPointSwap(l_points, i, pos);
-                    pos++;
-                }
-            }
-            cuPointSwap(l_points, right, pos);
-            if (pos == m) break;
-            if (pos < m) left = pos + 1;
-            else right = pos - 1;
+            cuCopyPoints(l_points, s_points, n);
         }
         tid += blockDim.x;
     }
@@ -129,40 +102,23 @@ void quickSelectAndPartition(struct PointS *d_points, int *d_steps, int step , i
     getThreadAndBlockCountForQuickSelect(step, p, numBlocks, numThreads);
     if (step > 16)
     {
-        cuQuickSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
+        cuQuickSelect<1, false> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
-    else if (step > 8)
+    else if (step > 8 && step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
     {
-        if (step * sizeof(PointS) * THREADS_PER_BLOCK_QUICK < MAX_SHARED_MEM)
-        {
-            cuQuickSelectShared<16> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
-        }
-        else
-        {
-            cuQuickSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
-        }
+        cuQuickSelect<16, true> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
-    else if (step > 4)
+    else if (step > 4 && step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
     {
-        if (step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
-        {
-            cuQuickSelectShared<8> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
-        }
-        else
-        {
-            cuQuickSelectGlobal <<< numBlocks, THREADS_PER_BLOCK_QUICK>>>(d_points, d_steps, p, dir);
-        }
+        cuQuickSelect<8, true> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
+    }
+    else if (step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
+    {
+        cuQuickSelect<4, true> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
     else
     {
-        if (step * sizeof(PointS) * THREADS_PER_BLOCK_QUICK < MAX_SHARED_MEM)
-        {
-            cuQuickSelectShared<4> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
-        }
-        else
-        {
-            cuQuickSelectGlobal <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
-        }
+        cuQuickSelect<1, false> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
 }
 
