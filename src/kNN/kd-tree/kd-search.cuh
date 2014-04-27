@@ -5,18 +5,6 @@
 #define THREADS_PER_BLOCK_SEARCH 128U
 #define MAX_BLOCK_DIM_SIZE 65535U
 
-struct KPoint
-{
-    int index;
-    float dist;
-};
-
-struct SPoint
-{
-    int index;
-    int dim;
-};
-
 void initStack(struct SPoint **stack);
 bool isEmpty(struct SPoint *stack);
 void push(struct SPoint **stack, struct SPoint value);
