@@ -1,11 +1,7 @@
 #include "sum-reduction.cuh"
-#include "stdio.h"
 
 #define MAX_BLOCK_DIM_SIZE_SUM_REDUCTION 65535U
 #define THREADS_PER_BLOCK_SUM_REDUCTION 512U
-
-
-
 
 template <int blockSize>
 __global__ void cuSumReduce__(int *list, int n)
@@ -114,15 +110,12 @@ int nextPowerOf2__(int x)
     return ++x;
 }
 
-
-
 void sum_reduce(int *d_list, int n)
 {
     int threads, blocks = 1;
     threads = max(1, nextPowerOf2__(((n - 1) >> 1))), //threads must be power of 2
     threads = min(threads, THREADS_PER_BLOCK_SUM_REDUCTION);
     int smemSize = (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
-
 
     switch (threads)
     {
