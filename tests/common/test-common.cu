@@ -1,5 +1,6 @@
 #include "test-common.cuh"
 #include "math.h"
+#include <sys/time.h>
 
 void populatePoints(struct Point *points, int n)
 {
@@ -71,6 +72,30 @@ void printCudaTiming(float elapsed_time, float bytes, int n)
     double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
 
     printf("Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements\n", throughput, elapsed_time, n);
+}
+
+double WallTime ()
+{
+    struct timeval tmpTime;
+    gettimeofday(&tmpTime, NULL);
+    return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+}
+
+void printTree(struct Point *tree, int level, int root)
+{
+    if (root < 0) return;
+
+    int i;
+
+    printf("|");
+    for (i = 0; i < level; ++i)
+    {
+        printf("----");
+    }
+    printf("(%3.1f, %3.1f, %3.1f)\n", tree[root].p[0], tree[root].p[1], tree[root].p[2]);
+
+    printTree(tree, 1 + level, tree[root].left);
+    printTree(tree, 1 + level, tree[root].right);
 }
 
 void readPoints(const char *file_path, int n, struct PointS *points)
