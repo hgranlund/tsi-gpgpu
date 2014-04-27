@@ -57,17 +57,17 @@ struct PointS cpu_radixselect1(struct PointS *data, int l, int u, int m, int bit
     return cpu_radixselect1(data, s + 1, u, m, bit + 1);
 }
 
-void printPoints1(struct PointS *l, int n)
+void printPoints1(struct PointS *l, int n, int dim)
 {
     int i;
     if (debug)
     {
-        // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
-        printf("[%3.1f, ", l[0].p[0]);
+        printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
+        // printf("[%3.1f, ", l[0].p[dim]);
         for (i = 1; i < n; ++i)
         {
-            printf(", %3.1f, ", l[i].p[0]);
-            // printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
+            // printf(", %3.1f, ", l[i].p[dim]);
+            printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
         }
         printf("]\n");
     }
@@ -105,28 +105,13 @@ unsigned int prevPowerOf22(unsigned int n)
 
 TEST(radix_selection, correctness)
 {
-    struct PointS *h_points;
-    int n, dim = 0;
-    for (n = 1000000; n <= 1000000; n += 1000000)
-    {
+    struct PointS *h_points,
+            *d_points, *d_temp;
+    int n, dim = 0, *partition;
+
+    for (n = 10; n <= 1000000; n += 100000)
+{
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
-
-        if (n > 10000)
-        {
-            populatePointSRosetta(h_points, n);
-            // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, h_points);
-        }
-        else
-        {
-
-            readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
-            populatePointSRosetta(h_points, n);
-        }
-
-        // printPoints1(h_points, n);
-
-        struct PointS *d_points, *d_temp;
-        int *partition;
 
         checkCudaErrors(
             cudaMalloc((void **)&d_points, n * sizeof(PointS)));
@@ -134,30 +119,35 @@ TEST(radix_selection, correctness)
             cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * sizeof(int)));
+
+        if (n > 10000)
+        {
+            populatePointSRosetta(h_points, n);
+        }
+        else
+        {
+            readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+        }
+        // printPoints1(h_points, n, dim);
+
         checkCudaErrors(
             cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
-
-        struct PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
 
         radixSelectAndPartition(d_points, d_temp, partition, n, dim);
 
         checkCudaErrors(
             cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
 
-
+        struct PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
         debugf("result_gpu = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
         debugf("result_cpu = (%3.1f, %3.1f, %3.1f)\n", cpu_result.p[0], cpu_result.p[1], cpu_result.p[2] );
-        // ASSERT_EQ(cpu_result.p[0], h_points[n / 2].p[0]) << "Faild with n = " << n;
-        // ASSERT_EQ(cpu_result.p[1], h_points[n / 2].p[1]) << "Faild with n = " << n;
-        // ASSERT_EQ(cpu_result.p[2], h_points[n / 2].p[2]) << "Faild with n = " << n;
-
 
         int *h_steps = (int *) malloc( 2 * sizeof(int));
         h_steps[0] = 0;
         h_steps[1] = n;
 
         ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, 1, dim);
-        // printPoints1(h_points, n);
+        // printPoints1(h_points, n, dim);
 
         checkCudaErrors(
             cudaFree(d_points));

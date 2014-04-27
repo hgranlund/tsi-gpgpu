@@ -2,7 +2,7 @@
 #include <knn_gpgpu.h>
 #include "test-common.cuh"
 
-
+#define debug 0
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
 
@@ -10,7 +10,7 @@
 void printPoints2(struct PointS *l, int n)
 {
     int i;
-    if (true)
+    if (debug)
     {
         // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
         printf("[%3.1f, ", l[0].p[0]);
@@ -76,7 +76,7 @@ TEST(multiple_radix_select, correctness)
 {
     struct PointS *h_points, *d_points, *d_swap;
     int n, p, *d_partition, *h_steps, *d_steps, dim = 0;
-    for (n = 100; n <= 5000; n += 500)
+    for (n = 10; n <= 8000; n += 1000)
     {
         p = 2;
         h_steps = (int *) malloc(p * 2 * sizeof(int));

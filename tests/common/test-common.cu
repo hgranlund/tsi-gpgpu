@@ -118,12 +118,12 @@ void ASSERT_TREE_LEVEL_OK(struct PointS *points, int *steps, int n, int p, int d
 
         for (int i = 0; i < n / 2; ++i)
         {
-            ASSERT_LE(t_points[i].p[dim], t_points[n / 2].p[dim]) << "Faild with n = " << n << " and p " << p << " at i = " << i;
+            ASSERT_LE(t_points[i].p[dim], t_points[n / 2].p[dim]) << "Faild with n = " << n << " and p " << p << " at i = " << i << " with dim = " << dim;
         }
 
         for (int i = (n / 2) ; i < n; ++i)
         {
-            ASSERT_GE(t_points[i].p[dim], t_points[n / 2].p[dim]) << "Faild with n = " << n << " and p " << p << " at i =" << i;
+            ASSERT_GE(t_points[i].p[dim], t_points[n / 2].p[dim]) << "Faild with n = " << n << " and p " << p << " at i =" << i << " with dim = " << dim;
         }
     }
 }
