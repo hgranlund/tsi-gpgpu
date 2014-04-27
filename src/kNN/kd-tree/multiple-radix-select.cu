@@ -1,5 +1,4 @@
 #include "multiple-radix-select.cuh"
-#include "common.cuh"
 #include <stdio.h>
 
 #include <helper_cuda.h>
@@ -9,6 +8,32 @@
 # define debug 0
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
+
+int nextPowTwo(int x)
+{
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+}
+
+bool isPowTwo(int x)
+{
+    return ((x & (x - 1)) == 0);
+}
+
+int prevPowTwo(int n)
+{
+    if (isPowTwo(n))
+    {
+        return n;
+    }
+    n = nextPowTwo(n);
+    return n >>= 1;
+}
 
 __device__  void cuAccumulateIndex(int *list, int n)
 {
