@@ -87,6 +87,7 @@ TEST(multiple_radix_select, correctness)
 
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
         readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+        // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, h_points);
         // populatePointSRosetta(h_points, n);
         // printPoints2(h_points, n / 2);
 

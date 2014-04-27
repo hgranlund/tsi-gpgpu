@@ -45,13 +45,7 @@ TEST(kd_tree_build, correctness_diagonal)
     build_kd_tree(points, n , points_out);
 
     // cuPrintTree(points_out, 0, n / 2);
-    // for (int i = 0; i < n; ++i)
-    // {
-    //     printf("(%3.1f, %3.1f, %3.1f), ", points_out[i].p[0], points_out[i].p[1], points_out[i].p[2]);
-    // }
-    // printf("\n");
     ASSERT_KD_TREE(points_out, n);
-    // ASSERT_TREE_EQ(points_out, expected_points, n);
 
     free(points);
     free(points_out);
@@ -61,13 +55,22 @@ TEST(kd_tree_build, correctness_diagonal)
 TEST(kd_tree_build, correctness)
 {
     int n;
-    for (n = 10; n <= 5000; n += 100)
+    for (n = 2000; n <= 200000; n += 10000)
     {
 
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
 
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
+        if (n > 10000)
+        {
+            populatePointSRosetta(points,  n);
+            // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, points);
+        }
+        else
+        {
+            readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, points);
+
+        }
 
         build_kd_tree(points, n , points_out);
         // cuPrintTree(points_out, 0, n / 2);

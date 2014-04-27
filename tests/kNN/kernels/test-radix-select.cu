@@ -107,12 +107,21 @@ TEST(radix_selection, correctness)
 {
     struct PointS *h_points;
     int n, dim = 0;
-    for (n = 110; n <= 1025; n += 100)
+    for (n = 1000000; n <= 1000000; n += 1000000)
     {
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
 
-        // populatePointSRosetta(h_points, n);
-        readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+        if (n > 10000)
+        {
+            populatePointSRosetta(h_points, n);
+            // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, h_points);
+        }
+        else
+        {
+
+            readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
+            populatePointSRosetta(h_points, n);
+        }
 
         // printPoints1(h_points, n);
 
@@ -148,7 +157,7 @@ TEST(radix_selection, correctness)
         h_steps[1] = n;
 
         ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, 1, dim);
-        printPoints1(h_points, n);
+        // printPoints1(h_points, n);
 
         checkCudaErrors(
             cudaFree(d_points));
