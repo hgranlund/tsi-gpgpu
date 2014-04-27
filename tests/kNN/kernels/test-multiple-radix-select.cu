@@ -118,6 +118,50 @@ TEST(multiple_radix_select, correctness)
     }
 }
 
+TEST(multiple_radix_select, correctness_dim)
+{
+    struct PointS *h_points, *d_points, *d_swap;
+    int n = 1024,
+        p = 2,
+        dim = 0,
+        *d_partition,
+        *h_steps,
+        *d_steps;
+
+    h_steps = (int *) malloc(p * 2 * sizeof(int));
+    h_steps[0] = 0;
+    h_steps[1] = n / p;
+    h_steps[2] = n / p + 1;
+    h_steps[3] = n;
+
+    h_points = (struct PointS *) malloc(n * sizeof(PointS));
+    readPoints("../tests/data/10000_points.data", n, h_points);
+
+    checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
+    checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
+    checkCudaErrors(cudaMalloc((void **)&d_partition, n  * sizeof(int)));
+    checkCudaErrors(cudaMalloc((void **)&d_steps, p * 2 * sizeof(int)));
+
+    checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+
+    for (dim = 0; dim < 3; dim++)
+    {
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, dim);
+        checkCudaErrors(cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
+
+        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p, dim);
+
+    }
+    checkCudaErrors(cudaFree(d_points));
+    checkCudaErrors(cudaFree(d_steps));
+    checkCudaErrors(cudaFree(d_swap));
+    checkCudaErrors(cudaFree(d_partition));
+    free(h_points);
+    free(h_steps);
+    cudaDeviceSynchronize();
+}
+
 TEST(multiple_radix_select, timing)
 {
     struct PointS *h_points, *d_points, *d_swap;
