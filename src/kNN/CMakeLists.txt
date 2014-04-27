@@ -13,17 +13,13 @@ include_directories(
   )
 
 set(CUHFILES
-# brute-force/kNN-brute-force-garcia.cuh
-# brute-force/kNN-brute-force.cuh
-# kd-tree/reduction.cuh
-# kd-tree/multiple-multiple-radix-select.cuh
-kd-tree/common.cuh
-kd-tree/multiple-radix-select.cuh
-kd-tree/radix-select.cuh
-kd-tree/quick-select.cuh
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 brute-force/reduction-mod.cuh
+
+kd-tree/multiple-radix-select.cuh
+kd-tree/radix-select.cuh
+kd-tree/quick-select.cuh
 kd-tree/sum-reduction.cuh
 kd-tree/kd-tree-build.cuh
 kd-tree/kd-search.cuh
@@ -31,12 +27,11 @@ kd-tree/search-iterative.cuh
 )
 
 set(CUFILES
-# brute-force/kNN-brute-force-garcia.cu
-# brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
-kd-tree/sum-reduction.cu
 brute-force/reduction-mod.cu
+
+kd-tree/sum-reduction.cu
 kd-tree/multiple-radix-select.cu
 kd-tree/radix-select.cu
 kd-tree/quick-select.cu
@@ -60,7 +55,6 @@ set(GENCODE_SM13 -gencode=arch=compute_13,code=sm_13 -gencode=arch=compute_13,co
 set(GENCODE_SM20 -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_20,code=compute_20)
 set(GENCODE_SM30 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_30,code=compute_30)
 set(GENCODE_SM35 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_35,code=compute_35)
-
 
 
 source_group("CUDA Source Files" FILES ${CUFILES})
@@ -121,7 +115,6 @@ cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${CFILES}
   OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
   )
-
 
 install(FILES ${HFILES_PUBLIC}
   DESTINATION include

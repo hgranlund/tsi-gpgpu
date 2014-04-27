@@ -89,7 +89,7 @@ if (BUILD_TESTS)
     kNN/kernels/test-multiple-radix-select.cu
     kNN/kernels/test-radix-select.cu
     kNN/kernels/test-quick-select.cu
-    
+
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
 
@@ -104,28 +104,10 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(runUnitTests gtest gtest_main )
-  # target_link_libraries(runUnitTests common_debug )
-
   target_link_libraries(runUnitTests knn_gpgpu)
 
   add_test(run_test runUnitTests)
   add_custom_target(test runUnitTests)
-
-
-  cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
-  target_link_libraries(performance knn_gpgpu)
-  add_custom_target(time performance)
-
-  set(profile_files
-    #kNN/test-kNN-brute-force.cpp
-    # kNN/kernels/test_redution.cu
-    # kNN/kernels/test-multiple-radix-select.cu
-    # kNN/brute_force/test-knn-brute-force-reduce.cu
-    # kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kd-tree/test-kd-tree-build.cu
-    # kNN/kernels/test-quick-select.cu
-
-  )
 
   cuda_add_executable(time_kd_tree_build
     kNN/kd-tree/time-kd-tree-build.cu
@@ -133,7 +115,6 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(time_kd_tree_build knn_gpgpu)
-
   add_custom_target(kd_tree_build time_kd_tree_build)
 
   cuda_add_executable(time_kd_search
@@ -142,7 +123,6 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(time_kd_search knn_gpgpu)
-
   add_custom_target(kd-search time_kd_search)
 
   endif()
