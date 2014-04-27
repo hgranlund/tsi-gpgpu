@@ -22,7 +22,8 @@ set(GENCODE_SM20 -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_20,co
 set(GENCODE_SM30 -gencode=arch=compute_30,code=sm_30 -gencode=arch=compute_30,code=compute_30)
 set(GENCODE_SM35 -gencode=arch=compute_35,code=sm_35 -gencode=arch=compute_35,code=compute_35)
 
-set(GENCODE -gencode=arch=compute_10,code=compute_10) # at least generate PTX
+set(GENCODE -gencode=arch=compute_20,code=sm_20 -gencode=arch=compute_20,code=compute_20)
+# set(GENCODE -gencode=arch=compute_10,code=compute_10) # at least generate PTX
 
 option(CUDPP_GENCODE_SM10
        "ON to generate code for Compute Capability 1.0 devices (e.g. Tesla C870)"
@@ -88,11 +89,13 @@ if (BUILD_TESTS)
     kNN/kernels/test-multiple-radix-select.cu
     kNN/kernels/test-radix-select.cu
     kNN/kernels/test-quick-select.cu
-    kNN/kernels/test-kd-search.cu
+
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
+
+    kNN/kd-tree/test-kd-search.cu
     kNN/kd-tree/test-kd-tree-build.cu
-    kNN/kd-tree/test-search-iterative.cu
+    kNN/kd-tree/test-search-rosetta.cu
   )
 
   cuda_add_executable(runUnitTests
@@ -101,28 +104,10 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(runUnitTests gtest gtest_main )
-  # target_link_libraries(runUnitTests common_debug )
-
   target_link_libraries(runUnitTests knn_gpgpu)
 
   add_test(run_test runUnitTests)
   add_custom_target(test runUnitTests)
-
-
-  cuda_add_executable(performance kNN/performance_tests/knn-brute-force-performance-test.cu)
-  target_link_libraries(performance knn_gpgpu)
-  add_custom_target(time performance)
-
-  set(profile_files
-    #kNN/test-kNN-brute-force.cpp
-    # kNN/kernels/test_redution.cu
-    # kNN/kernels/test-multiple-radix-select.cu
-    # kNN/brute_force/test-knn-brute-force-reduce.cu
-    # kNN/brute_force/test-knn-brute-force-bitonic.cu
-    kNN/kd-tree/test-kd-tree-build.cu
-    # kNN/kernels/test-quick-select.cu
-
-  )
 
   cuda_add_executable(time_kd_tree_build
     kNN/kd-tree/time-kd-tree-build.cu
@@ -130,7 +115,6 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(time_kd_tree_build knn_gpgpu)
-
   add_custom_target(kd_tree_build time_kd_tree_build)
 
   cuda_add_executable(time_kd_search
@@ -139,7 +123,6 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(time_kd_search knn_gpgpu)
-
   add_custom_target(kd-search time_kd_search)
 
   endif()

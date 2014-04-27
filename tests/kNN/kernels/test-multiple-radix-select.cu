@@ -2,9 +2,26 @@
 #include <knn_gpgpu.h>
 #include "test-common.cuh"
 
-
+#define debug 0
 #define THREADS_PER_BLOCK 1024U
 #define MAX_BLOCK_DIM_SIZE 65535U
+
+
+void printPoints2(struct PointS *l, int n)
+{
+    int i;
+    if (debug)
+    {
+        // printf("[(%3.1f, %3.1f, %3.1f)", l[0].p[0], l[0].p[1], l[0].p[2]);
+        printf("[%3.1f, ", l[0].p[0]);
+        for (i = 1; i < n; ++i)
+        {
+            printf(", %3.1f, ", l[i].p[0]);
+            // printf(", (%3.1f, %3.1f, %3.1f)", l[i].p[0], l[i].p[1], l[i].p[2]);
+        }
+        printf("]\n");
+    }
+}
 
 
 int cpu_partition(struct PointS *data, int l, int u, int bit)
@@ -58,8 +75,8 @@ struct PointS cpu_radixselect(struct PointS *data, int l, int u, int m, int bit)
 TEST(multiple_radix_select, correctness)
 {
     struct PointS *h_points, *d_points, *d_swap;
-    int n, p, *d_partition, *h_steps, *d_steps;
-    for (n = 8; n <= 1000; n <<= 1)
+    int n, p, *d_partition, *h_steps, *d_steps, dim = 0;
+    for (n = 10; n <= 8000; n += 1000)
     {
         p = 2;
         h_steps = (int *) malloc(p * 2 * sizeof(int));
@@ -69,7 +86,11 @@ TEST(multiple_radix_select, correctness)
         h_steps[3] = n;
 
         h_points = (struct PointS *) malloc(n * sizeof(PointS));
-        populatePointSs(h_points, n);
+        readPoints("../tests/data/10000_points.data", n, h_points);
+        // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/100_mill_points.data", n, h_points);
+        // populatePointSRosetta(h_points, n);
+        // printPoints2(h_points, n / 2);
+
 
         checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
         checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
@@ -79,11 +100,12 @@ TEST(multiple_radix_select, correctness)
         checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
         checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
 
-        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, 0);
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, dim);
 
         checkCudaErrors(cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
+        // printPoints2(h_points, n / 2);
 
-        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p);
+        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p, dim);
 
         checkCudaErrors(cudaFree(d_points));
         checkCudaErrors(cudaFree(d_steps));
@@ -94,6 +116,50 @@ TEST(multiple_radix_select, correctness)
         cudaDeviceSynchronize();
         cudaDeviceReset();
     }
+}
+
+TEST(multiple_radix_select, correctness_dim)
+{
+    struct PointS *h_points, *d_points, *d_swap;
+    int n = 1024,
+        p = 2,
+        dim = 0,
+        *d_partition,
+        *h_steps,
+        *d_steps;
+
+    h_steps = (int *) malloc(p * 2 * sizeof(int));
+    h_steps[0] = 0;
+    h_steps[1] = n / p;
+    h_steps[2] = n / p + 1;
+    h_steps[3] = n;
+
+    h_points = (struct PointS *) malloc(n * sizeof(PointS));
+    readPoints("../tests/data/10000_points.data", n, h_points);
+
+    checkCudaErrors(cudaMalloc((void **)&d_points, n  * sizeof(PointS)));
+    checkCudaErrors(cudaMalloc((void **)&d_swap, n  * sizeof(PointS)));
+    checkCudaErrors(cudaMalloc((void **)&d_partition, n  * sizeof(int)));
+    checkCudaErrors(cudaMalloc((void **)&d_steps, p * 2 * sizeof(int)));
+
+    checkCudaErrors(cudaMemcpy(d_steps, h_steps, p * 2 * sizeof(int), cudaMemcpyHostToDevice));
+    checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+
+    for (dim = 0; dim < 3; dim++)
+    {
+        multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, n, p, dim);
+        checkCudaErrors(cudaMemcpy(h_points, d_points, n  * sizeof(PointS), cudaMemcpyDeviceToHost));
+
+        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, p, dim);
+
+    }
+    checkCudaErrors(cudaFree(d_points));
+    checkCudaErrors(cudaFree(d_steps));
+    checkCudaErrors(cudaFree(d_swap));
+    checkCudaErrors(cudaFree(d_partition));
+    free(h_points);
+    free(h_steps);
+    cudaDeviceSynchronize();
 }
 
 TEST(multiple_radix_select, timing)

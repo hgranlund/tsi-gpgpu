@@ -19,7 +19,6 @@ option(BUILD_TESTS
   ON
   )
 
-
 ## Set the directory where the binaries will be stored
 set(EXECUTABLE_OUTPUT_PATH
   ${PROJECT_BINARY_DIR}/bin
@@ -58,7 +57,7 @@ if (CUDA_FOUND)
         add_subdirectory(src/kNN)
         add_subdirectory(tests)
 else()
-        message("CUDA not found, doing something alternatively")
+        message("CUDA not found, doing something else")
 endif()
 
 include(CPack)

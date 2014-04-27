@@ -1,83 +1,151 @@
 #include "sum-reduction.cuh"
 
+#define THREADS_PER_BLOCK_SUM_REDUCTION 512U
+
+template <int blockSize>
 __global__ void cuSumReduce__(int *list, int n)
 {
-    unsigned int tid = threadIdx.x;
+    __shared__ int s_data[blockSize];
 
-    if (n >= 1024)
+    int tid = threadIdx.x;
+    int i = threadIdx.x;
+    int gridSize = blockSize * 2;
+
+    int mySum = 0;
+
+    while (i < n)
     {
-        if (tid < 512)
+        mySum += list[i];
+        if (i + blockSize < n)
         {
-            list[tid] += list[tid + 512];
+            mySum += list[i + blockSize];
         }
-        __syncthreads();
+
+        i += gridSize;
     }
 
-    if (n >= 512)
+    s_data[tid] = mySum;
+    __syncthreads();
+
+    if (blockSize >= 512)
     {
         if (tid < 256)
         {
-            list[tid] += list[tid + 256];
+            s_data[tid] = mySum = mySum + s_data[tid + 256];
         }
+
         __syncthreads();
     }
 
-    if (n >= 256)
+    if (blockSize >= 256)
     {
         if (tid < 128)
         {
-            list[tid] += list[tid + 128];
+            s_data[tid] = mySum = mySum + s_data[tid + 128];
         }
+
         __syncthreads();
     }
 
-    if (n >= 128)
+    if (blockSize >= 128)
     {
         if (tid <  64)
         {
-            list[tid] += list[tid +  64];
+            s_data[tid] = mySum = mySum + s_data[tid +  64];
         }
+
         __syncthreads();
     }
 
     if (tid < 32)
     {
-        volatile int *smem = list;
+        volatile int *smem = s_data;
 
-        if (n >=  64)
+        if (blockSize >=  64)
         {
-            smem[tid] += smem[tid + 32];
+            smem[tid] = mySum = mySum + smem[tid + 32];
         }
 
-        if (n >=  32)
+        if (blockSize >=  32)
         {
-            smem[tid] += smem[tid + 16];
+            smem[tid] = mySum = mySum + smem[tid + 16];
         }
 
-        if (n >=  16)
+        if (blockSize >=  16)
         {
-            smem[tid] += smem[tid +  8];
+            smem[tid] = mySum = mySum + smem[tid +  8];
         }
 
-        if (n >=   8)
+        if (blockSize >=   8)
         {
-            smem[tid] += smem[tid +  4];
+            smem[tid] = mySum = mySum + smem[tid +  4];
         }
 
-        if (n >=   4)
+        if (blockSize >=   4)
         {
-            smem[tid] += smem[tid +  2];
+            smem[tid] = mySum = mySum + smem[tid +  2];
         }
 
-        if (n >=   2)
+        if (blockSize >=   2)
         {
-            smem[tid] += smem[tid +  1];
+            smem[tid] = mySum = mySum + smem[tid +  1];
         }
     }
+
+    if (threadIdx.x == 0)
+    {
+        list[0] = s_data[0];
+    }
+}
+
+int nextPowerOf2__(int x)
+{
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+}
+
+void getThreadAndBlockCountFoSumReduction(int n, int &blocks, int &threads)
+{
+    threads = max(1, nextPowerOf2__(((n - 1) >> 1))), //threads must be power of 2
+    threads = min(threads, THREADS_PER_BLOCK_SUM_REDUCTION);
+    blocks = 1;
+    // printf("block = %d, threads = %d, n = %d, p =%d\n", blocks, threads, n, p );
 }
 
 void sum_reduce(int *d_list, int n)
 {
-    cuSumReduce__ <<< 1, max(1, n >> 2) >>> (d_list, n);
+    int threads, blocks;
+    getThreadAndBlockCountFoSumReduction(n, blocks, threads);
+
+    int smemSize = (threads <= 32) ? 2 * threads * sizeof(float) : threads * sizeof(float);
+
+    switch (threads)
+    {
+    case 512:
+        cuSumReduce__<512> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case 256:
+        cuSumReduce__<256> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case 128:
+        cuSumReduce__<128> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case 64:
+        cuSumReduce__<64> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case 32:
+        cuSumReduce__<32> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case 16:
+        cuSumReduce__<16> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case  8:
+        cuSumReduce__<8> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case  4:
+        cuSumReduce__<4> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case  2:
+        cuSumReduce__<2> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    case  1:
+        cuSumReduce__<1> <<< blocks, threads, smemSize >>>(d_list, n); break;
+    }
 }
 
