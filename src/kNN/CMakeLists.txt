@@ -6,7 +6,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/brute-force
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../common
-  ${CMAKE_CURRENT_SOURCE_DIR}/common/
   ${CMAKE_CURRENT_SOURCE_DIR}/../common/inc
   ${CMAKE_CURRENT_SOURCE_DIR}/garcia
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels
@@ -14,15 +13,17 @@ include_directories(
   )
 
 set(CUHFILES
-common/knn-common.cuh
-
-brute-force/kNN-brute-force-reduce.cuh
-brute-force/kNN-brute-force-bitonic.cuh
-brute-force/reduction-mod.cuh
-
+# brute-force/kNN-brute-force-garcia.cuh
+# brute-force/kNN-brute-force.cuh
+# kd-tree/reduction.cuh
+# kd-tree/multiple-multiple-radix-select.cuh
+kd-tree/common.cuh
 kd-tree/multiple-radix-select.cuh
 kd-tree/radix-select.cuh
 kd-tree/quick-select.cuh
+brute-force/kNN-brute-force-reduce.cuh
+brute-force/kNN-brute-force-bitonic.cuh
+brute-force/reduction-mod.cuh
 kd-tree/sum-reduction.cuh
 kd-tree/kd-tree-build.cuh
 kd-tree/kd-search.cuh
@@ -30,13 +31,12 @@ kd-tree/search-iterative.cuh
 )
 
 set(CUFILES
-common/knn-common.cu
-
+# brute-force/kNN-brute-force-garcia.cu
+# brute-force/kNN-brute-force.cu
 brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
-brute-force/reduction-mod.cu
-
 kd-tree/sum-reduction.cu
+brute-force/reduction-mod.cu
 kd-tree/multiple-radix-select.cu
 kd-tree/radix-select.cu
 kd-tree/quick-select.cu
