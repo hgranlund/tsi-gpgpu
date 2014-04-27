@@ -10,43 +10,6 @@
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
-
-// __device__
-// void printIntArray__(int *l, int n, char *s)
-// {
-// #if __CUDA_ARCH__ >= 200
-//     if (debug && threadIdx.x == 0 && blockIdx.x == 0)
-//     {
-//         printf("%s: ", s);
-//         printf("[%d", l[0] );
-//         for (int i = 1; i < n; ++i)
-//         {
-//             printf(", %d", l[i] );
-//         }
-//         printf("]\n");
-//     }
-// #endif
-// }
-
-// __device__
-// void d_print_points____(struct PointS *l, int n, char *s)
-// {
-//     __syncthreads();
-//     if (threadIdx.x == 0 && blockIdx.x == 1)
-//     {
-//         int i;
-//         // printf("%s: ", s);
-//         // printf("[%3.1f", l[0].p[0] );
-//         for (i = 1; i < n; ++i)
-//         {
-//             // printf(", %3.1f", l[i].p[0] );
-//         }
-//         // printf("]\n");
-//     }
-//     __syncthreads();
-// }
-
-
 __device__  void cuAccumulateIndex(int *list, int n)
 {
     int i, j, temp,
@@ -70,9 +33,19 @@ __device__  void cuAccumulateIndex(int *list, int n)
     }
 }
 
+__device__ void fillArray_(int *partition, int last, int  n)
+{
+    int tid = threadIdx.x;
+    while (tid < n)
+    {
+        partition[tid] = last;
+        tid += blockDim.x;
+    }
+}
+
 __device__ int cuSumReduce(int *list, int n)
 {
-    unsigned int tid = threadIdx.x;
+    int tid = threadIdx.x;
 
     if (n >= 1024)
     {
@@ -184,11 +157,13 @@ __device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n,
         }
         tid += blockDim.x;
     }
+
     __syncthreads();
     cuAccumulateIndex(zero_count, blockDim.x);
     cuAccumulateIndex(one_count, blockDim.x);
     cuAccumulateIndex(median_count, blockDim.x);
     __syncthreads();
+
     tid = threadIdx.x;
     one_count--;
     zero_count--;
@@ -196,6 +171,7 @@ __device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n,
     less = zero_count[threadIdx.x];
     big = one_count[threadIdx.x];
     mid = zero_count[blockDim.x] +  median_count[threadIdx.x];
+
     while (tid < n)
     {
         if (partition[tid] < 0)
@@ -217,13 +193,14 @@ __device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n,
     }
 }
 
-__device__ unsigned int cuPartition(struct PointS *data, unsigned int n, int *partition, int *zero_count, int last, unsigned int bit, int dir)
+__device__ int cuPartition(struct PointS *data, int n, int *partition, int *zero_count, int last, int bit, int dir)
 {
-    unsigned int
-    tid = threadIdx.x,
-    is_one,
-    radix = (1 << 31 - bit);
+    int is_one,
+        tid = threadIdx.x,
+        radix = (1 << 31 - bit);
+
     zero_count[threadIdx.x] = 0;
+
     while (tid < n)
     {
         if (partition[tid] == last)
@@ -237,6 +214,7 @@ __device__ unsigned int cuPartition(struct PointS *data, unsigned int n, int *pa
         }
         tid += blockDim.x;
     }
+
     __syncthreads();
     return cuSumReduce(zero_count, blockDim.x);
 }
@@ -249,23 +227,19 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
     __shared__ float median_value;
 
     int l = 0,
-        u = n,
-        m_u = ceil((float)n / 2),
         bit = 0,
         last = 2,
+        u = n,
+        m_u = ceil((float)n / 2),
         tid = threadIdx.x;
 
-    while (tid < n)
-    {
-        partition[tid] = last;
-        tid += blockDim.x;
-    }
+    fillArray_(partition, last, n);
 
-    tid = threadIdx.x;
     do
     {
         __syncthreads();
         int cut = cuPartition(data, n, partition, zeros_count, last, bit++, dir);
+
         if ((u - cut) >= (m_u))
         {
             u = u - cut;
@@ -281,7 +255,6 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
 
     tid = threadIdx.x;
 
-    __syncthreads();
     while (tid < n)
     {
         if (partition[tid] == last)
@@ -299,9 +272,10 @@ __global__
 void cuBalanceBranch(struct PointS *points, struct PointS *swap, int *partition, int *steps, int p, int dir)
 {
 
-    int bid = blockIdx.x,
-        blockoffset,
-        n;
+    int blockoffset,
+        n,
+        bid = blockIdx.x;
+
     while (bid < p)
     {
         blockoffset = steps[bid * 2];
@@ -309,12 +283,6 @@ void cuBalanceBranch(struct PointS *points, struct PointS *swap, int *partition,
         cuRadixSelect(points + blockoffset, swap + blockoffset, n, partition + blockoffset, dir);
         bid += gridDim.x;
     }
-}
-
-//For testing - One cannot import a __device__ kernel
-__global__ void cuRadixSelectGlobal(struct PointS *data, struct PointS *data_copy, int n, int *partition, int dir)
-{
-    cuRadixSelect(data, data_copy, n, partition, dir);
 }
 
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
@@ -328,7 +296,6 @@ void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads)
     debugf("N =%d, p = %d, blocks = %d, threads = %d\n", n, p, blocks, threads);
 }
 
-
 void  multiRadixSelectAndPartition(struct PointS *d_data, struct PointS *d_data_copy, int *d_partition, int *d_steps, int n, int p,  int dir)
 {
     int numBlocks, numThreads;
@@ -336,3 +303,8 @@ void  multiRadixSelectAndPartition(struct PointS *d_data, struct PointS *d_data_
     cuBalanceBranch <<< numBlocks, numThreads>>>(d_data, d_data_copy, d_partition, d_steps, p, dir);
 }
 
+//For testing - One cannot import a __device__ kernel
+__global__ void cuRadixSelectGlobal(struct PointS *data, struct PointS *data_copy, int n, int *partition, int dir)
+{
+    cuRadixSelect(data, data_copy, n, partition, dir);
+}
