@@ -191,10 +191,11 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     big,
     less,
     mid,
-    point_difference,
     *zero_count = ones,
      *one_count = zeros,
       *median_count = medians;
+
+    float point_difference;
 
     zero_count++;
     one_count++;
@@ -217,17 +218,20 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     while (tid < n)
     {
         swap[tid] = points[tid];
-        point_difference = partition[tid] = (points[tid].p[dir] - median.p[dir]);
+        point_difference = (points[tid].p[dir] - median.p[dir]);
         if (point_difference < 0)
         {
+            partition[tid] = -1;
             zero_count[threadIdx.x]++;
         }
         else if (point_difference > 0)
         {
+            partition[tid] = 1;
             one_count[threadIdx.x]++;
         }
         else
         {
+            partition[tid] = 0;
             median_count[threadIdx.x]++;
         }
         tid += blockDim.x;
@@ -269,7 +273,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
 
 __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partition, int *zeros_count_block, int last, unsigned int bit, int dir)
 {
-    __shared__ int zero_count[1024];
+    __shared__ int zero_count[THREADS_PER_BLOCK_RADIX];
 
     int
     tid = threadIdx.x,
@@ -320,8 +324,18 @@ void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
 
 __global__ void fillArray(int *array, int value, int n)
 {
-    int tid = threadIdx.x;
-    while (tid < n)
+    int
+    block_stride = n / gridDim.x,
+    block_offset = block_stride * blockIdx.x,
+    tid = threadIdx.x,
+    rest = n % gridDim.x;
+    if (rest >= gridDim.x - blockIdx.x)
+    {
+        block_offset += rest - (gridDim.x - blockIdx.x);
+        block_stride++;
+    }
+    array += block_offset;
+    while (tid < block_stride)
     {
         array[tid] = value;
         tid += blockDim.x;
@@ -341,9 +355,8 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
         *h_zeros_count_block,
         *d_zeros_count_block;
 
-    numThreads = min(n, 1024);
-    fillArray <<< 1, numThreads>>>(partition, 2, n);
     getThreadAndBlockCountPartition(n, numBlocks, numThreads);
+    fillArray <<< numBlocks, numThreads>>>(partition, 2, n);
     debugf("blocks = %d, threads = %d, n = %d\n", numBlocks, numThreads, n);
     h_zeros_count_block = (int *) malloc(numBlocks * sizeof(int));
     checkCudaErrors(
@@ -369,7 +382,7 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
             last = 0;
         }
     }
-    while (((u - l) > 1) && (bit < 32));
+    while (((u - l) > 1) && (bit <= 32));
 
     cuPartitionSwap <<< 1, min(nextPowerOf2(n), 1024) >>> (points, swap, n, partition, last, dir);
 
