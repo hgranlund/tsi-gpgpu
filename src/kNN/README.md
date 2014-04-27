@@ -298,6 +298,12 @@ V1.4 Release notes
 
 [link to data sheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing)
 
+![build_query_aws](./images/v14_build_query_aws.png)
+
+![build_query_aws](./images/v14_build_query_gtx.png)
+
+![build_query_aws](./images/v14_variable_k.png)
+
 
 V1.3 Release notes
 ------------------
