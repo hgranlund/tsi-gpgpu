@@ -54,8 +54,12 @@ int main(int argc, char const *argv[])
 {
     int n, nu, ni = 1024,
                step = 250000,
-               k = 1;
-    bool from_file = 0;
+               k = 1,
+               no_of_runs = 1000;
+
+    bool from_file = 0,
+        variable_k = 0;
+
     n = nu = ni;
 
     if (argc == 2)
@@ -82,7 +86,8 @@ int main(int argc, char const *argv[])
         ni = atoi(argv[2]);
         step = atoi(argv[3]);
         k = atoi(argv[4]);
-        printf("Running kd-search-all from n = %d to n = %d with step = %d and k = %d\n", nu, ni, step, k);
+        variable_k = 1;
+        printf("Running kd-search-%d from n = %d to n = %d with step = %d, k = %d\n", no_of_runs, nu, ni, step, k);
     }
     else
     {
@@ -124,7 +129,22 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        queryAll(points_out, points_out, n, n, k, result);
+        if (variable_k)
+        {
+            struct Point *query_points = (struct Point *) malloc(no_of_runs * sizeof(Point));
+
+            for (int i = 0; i < no_of_runs; ++i)
+            {
+                query_points[i] = points_out[i];
+            }
+
+            queryAll(query_points, points_out, no_of_runs, n, k, result);
+
+            free(query_points);
+        } else
+        {
+            queryAll(points_out, points_out, n, n, k, result);
+        }
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
