@@ -126,7 +126,7 @@ TEST(radix_selection, correctness)
         }
         else
         {
-            readPoints("../../tests/data/10000_points.data", n, h_points);
+            readPoints("../tests/data/10000_points.data", n, h_points);
         }
         // printPoints1(h_points, n, dim);
 

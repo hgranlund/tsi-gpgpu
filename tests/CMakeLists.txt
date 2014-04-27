@@ -89,11 +89,13 @@ if (BUILD_TESTS)
     kNN/kernels/test-multiple-radix-select.cu
     kNN/kernels/test-radix-select.cu
     kNN/kernels/test-quick-select.cu
-    kNN/kernels/test-kd-search.cu
+    
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
+
+    kNN/kd-tree/test-kd-search.cu
     kNN/kd-tree/test-kd-tree-build.cu
-    kNN/kd-tree/test-search-iterative.cu
+    # kNN/kd-tree/test-search-iterative.cu
     kNN/kd-tree/test-search-rosetta.cu
   )
 
