@@ -147,7 +147,7 @@ __device__ int cuSumReduce(int *list, int n)
     return list[0];
 }
 
-__device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n, int *partition, int *zero_count, int *one_count, int *median_count, struct PointS median, int dir)
+__device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n, int *partition, int *zero_count, int *one_count, int *median_count, float median_value, int dir)
 {
     int tid = threadIdx.x,
         big,
@@ -166,7 +166,7 @@ __device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n,
     while (tid < n)
     {
         swap[tid] = data[tid];
-        point_difference = (data[tid].p[dir] - median.p[dir]);
+        point_difference = (data[tid].p[dir] - median_value);
         if (point_difference < 0)
         {
             partition[tid] = -1;
@@ -246,7 +246,7 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
     __shared__ int one_count[1025];
     __shared__ int zeros_count[1025];
     __shared__ int medians_count[1025];
-    __shared__ struct PointS median;
+    __shared__ float median_value;
 
     int l = 0,
         u = n,
@@ -286,14 +286,13 @@ __device__ void cuRadixSelect(struct PointS *data, struct PointS *data_copy, int
     {
         if (partition[tid] == last)
         {
-            median = data[tid];
+            median_value = data[tid].p[dir];
         }
         tid += blockDim.x;
     }
     __syncthreads();
 
-    cuPartitionSwap(data, data_copy, n, partition, one_count, zeros_count, medians_count, median, dir);
-
+    cuPartitionSwap(data, data_copy, n, partition, one_count, zeros_count, medians_count, median_value, dir);
 }
 
 __global__

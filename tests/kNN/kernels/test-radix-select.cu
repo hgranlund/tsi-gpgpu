@@ -160,6 +160,63 @@ TEST(radix_selection, correctness)
     }
 }
 
+TEST(radix_selection, correctness_dim)
+{
+    struct PointS *h_points,
+            *d_points, *d_temp;
+    int dim = 0, n = 10, *partition, *h_steps;
+
+    h_points = (struct PointS *) malloc(n * sizeof(PointS));
+    h_steps = (int *) malloc( 2 * sizeof(int));
+
+    h_steps[0] = 0;
+    h_steps[1] = n;
+
+    checkCudaErrors(
+        cudaMalloc((void **)&d_points, n * sizeof(PointS)));
+    checkCudaErrors(
+        cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
+    checkCudaErrors(
+        cudaMalloc((void **)&partition, n * sizeof(int)));
+
+    if (n > 10000)
+{
+        populatePointSRosetta(h_points, n);
+    }
+    else
+    {
+        readPoints("../tests/data/10000_points.data", n, h_points);
+    }
+
+    checkCudaErrors(
+        cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
+
+    for (dim = 1; dim < 2; dim++)
+    {
+        radixSelectAndPartition(d_points, d_temp, partition, n, dim);
+
+        struct PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
+        debugf("result_gpu = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
+        debugf("result_cpu = (%3.1f, %3.1f, %3.1f)\n", cpu_result.p[0], cpu_result.p[1], cpu_result.p[2] );
+
+        checkCudaErrors(
+            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
+
+        printPoints1(h_points, n, dim);
+
+        ASSERT_TREE_LEVEL_OK(h_points, h_steps, n, 1, dim);
+    }
+    checkCudaErrors(
+        cudaFree(d_points));
+    checkCudaErrors(
+        cudaFree(d_temp));
+    checkCudaErrors(
+        cudaFree(partition));
+    cudaDeviceSynchronize();
+    cudaDeviceReset();
+}
+
+
 TEST(radix_selection, timing)
 {
     struct PointS *h_points;
