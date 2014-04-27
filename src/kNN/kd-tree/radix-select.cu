@@ -184,7 +184,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     __shared__ int ones[1025];
     __shared__ int zeros[1025];
     __shared__ int medians[1025];
-    __shared__ struct PointS median;
+    __shared__ float median_value;
 
     int
     tid = threadIdx.x,
@@ -208,7 +208,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     {
         if (partition[tid] == last)
         {
-            median = points[tid];
+            median_value = points[tid].p[dir];
         }
         tid += blockDim.x;
     }
@@ -218,7 +218,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     while (tid < n)
     {
         swap[tid] = points[tid];
-        point_difference = (points[tid].p[dir] - median.p[dir]);
+        point_difference = (points[tid].p[dir] - median_value);
         if (point_difference < 0)
         {
             partition[tid] = -1;
@@ -286,6 +286,7 @@ __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partit
     block_step = n / gridDim.x;
     n = block_step;
     block_offset = block_step * blockIdx.x;
+
     if (rest >= gridDim.x - blockIdx.x)
     {
         block_offset += rest - (gridDim.x - blockIdx.x);
@@ -293,6 +294,7 @@ __global__ void cuPartitionStep(struct PointS *data, unsigned int n, int *partit
     }
     data += block_offset;
     partition += block_offset;
+
     while (tid < n)
     {
         if (partition[tid] == last)
@@ -383,7 +385,6 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
         }
     }
     while (((u - l) > 1) && (bit <= 32));
-
     cuPartitionSwap <<< 1, min(nextPowerOf2(n), 1024) >>> (points, swap, n, partition, last, dir);
 
     checkCudaErrors(
