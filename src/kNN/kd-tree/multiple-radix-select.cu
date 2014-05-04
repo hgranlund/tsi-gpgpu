@@ -150,9 +150,11 @@ __device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n,
     int tid = threadIdx.x,
         big,
         mid,
+        par,
         less;
 
     float point_difference;
+    struct PointS point;
 
     zero_count++;
     one_count++;
@@ -163,23 +165,25 @@ __device__ void cuPartitionSwap(struct PointS *data, struct PointS *swap, int n,
 
     while (tid < n)
     {
-        swap[tid] = data[tid];
-        point_difference = (data[tid].p[dir] - median_value);
+        point = data[tid];
+        swap[tid] = point;
+        point_difference = (point.p[dir] - median_value);
         if (point_difference < 0)
         {
-            partition[tid] = -1;
+            par = -1;
             zero_count[threadIdx.x]++;
         }
         else if (point_difference > 0)
         {
-            partition[tid] = 1;
+            par = 1;
             one_count[threadIdx.x]++;
         }
         else
         {
-            partition[tid] = 0;
+            par = 0;
             median_count[threadIdx.x]++;
         }
+        partition[tid] = par;
         tid += blockDim.x;
     }
 

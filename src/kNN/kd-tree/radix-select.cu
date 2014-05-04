@@ -151,12 +151,14 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     int big,
         less,
         mid,
+        par,
         *zero_count = ones,
          *one_count = zeros,
           *median_count = medians,
            tid = threadIdx.x;
 
     float point_difference;
+    struct PointS point;
 
     zero_count++;
     one_count++;
@@ -179,23 +181,25 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
 
     while (tid < n)
     {
-        swap[tid] = points[tid];
-        point_difference = (points[tid].p[dir] - median_value);
+        swap[tid] = point = points[tid];
+        point_difference = (point.p[dir] - median_value);
+        par = partition[tid] ;
         if (point_difference < 0)
         {
-            partition[tid] = -1;
+            par = -1;
             zero_count[threadIdx.x]++;
         }
         else if (point_difference > 0)
         {
-            partition[tid] = 1;
+            par = 1;
             one_count[threadIdx.x]++;
         }
         else
         {
-            partition[tid] = 0;
+            par = 0;
             median_count[threadIdx.x]++;
         }
+        partition[tid] = par;
         tid += blockDim.x;
     }
 
@@ -343,7 +347,7 @@ void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *pa
     }
     while (((u - l) > 1) && (bit <= 32));
 
-    cuPartitionSwap <<< 1, min(nextPowerOf2(n), 1024) >>> (points, swap, n, partition, last, dir);
+    cuPartitionSwap <<< 1, min(nextPowerOf2(n), THREADS_PER_BLOCK_RADIX) >>> (points, swap, n, partition, last, dir);
 
     checkCudaErrors(
         cudaFree(d_zeros_count_block));
