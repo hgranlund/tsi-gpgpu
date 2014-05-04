@@ -46,7 +46,7 @@ bool isEmpty(struct SPoint *stack)
     return peek(stack).index == -1;
 }
 
-void initKStack(KPoint **k_stack, int n)
+void initKStack(struct KPoint **k_stack, int n)
 {
     (*k_stack)[0].dist = -1;
     (*k_stack)++;
@@ -75,7 +75,7 @@ struct KPoint look(struct KPoint *k_stack, int n)
     return k_stack[n - 1];
 }
 
-int target(Point qp, Point current, float dx)
+int target(struct Point qp, struct Point current, float dx)
 {
     if (dx > 0)
     {
@@ -84,7 +84,7 @@ int target(Point qp, Point current, float dx)
     return current.right;
 }
 
-int other(Point qp, Point current, float dx)
+int other(struct Point qp, struct Point current, float dx)
 {
     if (dx > 0)
     {

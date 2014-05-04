@@ -50,7 +50,7 @@ struct SPoint peek(struct SPoint *stack)
 
 
 __device__ __host__
-void initKStack(KPoint **k_stack, int n)
+void initKStack(struct KPoint **k_stack, int n)
 {
     (*k_stack)[0].dist = -1;
     (*k_stack)++;
@@ -88,7 +88,7 @@ void upDim(int *dim)
 }
 
 __device__ __host__
-int target(Point qp, Point current, float dx)
+int target(struct Point qp, struct Point current, float dx)
 {
     if (dx > 0)
     {
@@ -98,7 +98,7 @@ int target(Point qp, Point current, float dx)
 }
 
 __device__ __host__
-int other(Point qp, Point current, float dx)
+int other(struct Point qp, struct Point current, float dx)
 {
     if (dx > 0)
     {
@@ -206,7 +206,7 @@ __global__ void dQueryAll(struct Point *query_points, struct Point *tree, int n_
         // printf("tid = %d, result = %d, query_point = %3.1f\n", tid, result[tid], query_points[tid].p[0]);
         tid += blockDim.x;
     }
-    
+
     free(s_stack_ptr);
     free(k_stack_ptr);
 }
