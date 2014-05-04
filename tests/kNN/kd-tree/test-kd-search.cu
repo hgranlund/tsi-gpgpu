@@ -216,7 +216,7 @@ TEST(kd_search, correctness_with_k)
         k = 3,
         result[k];
 
-    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
     struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
 
     struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
@@ -252,7 +252,7 @@ TEST(kd_search, correctness_with_10000_points_file)
 
     for (n = 1000; n <= 10000; n += 1000)
     {
-        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
         struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
 
@@ -307,7 +307,7 @@ TEST(kd_search, knn_wikipedia_example)
     int n = 6,
         k = 1;
 
-    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
     struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
@@ -342,7 +342,7 @@ TEST(kd_search, knn_wikipedia_example)
 TEST(kd_search, query_all_wikipedia_example)
 {
     int n = 6, k = 1;
-    struct PointS *points = (struct PointS *) malloc(n * sizeof(PointS));
+    struct Point *points = (struct Point *) malloc(n * sizeof(Point));
     struct Node *points_out = (struct Node *) malloc(n * sizeof(Node));
     int *result = (int *) malloc(n * k * sizeof(int));
 
@@ -373,7 +373,7 @@ TEST(kd_search, knn_timing)
 
     for (n = 10000; n <= 10000; n += 1000)
     {
-        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
         struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
 
@@ -422,7 +422,7 @@ TEST(kd_search, query_all_timing)
 
     for (n = 10000; n <= 10000; n += 1000)
     {
-        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
         struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
 

@@ -141,7 +141,7 @@ __device__ void cuSumReduce_(int *list, int n)
     __syncthreads();
 }
 
-__global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int n, int *partition, int last, int dir)
+__global__ void cuPartitionSwap(struct Point *points, struct Point *swap, int n, int *partition, int last, int dir)
 {
     __shared__ int ones[1025];
     __shared__ int zeros[1025];
@@ -158,7 +158,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
            tid = threadIdx.x;
 
     float point_difference;
-    struct PointS point;
+    struct Point point;
 
     zero_count++;
     one_count++;
@@ -238,7 +238,7 @@ __global__ void cuPartitionSwap(struct PointS *points, struct PointS *swap, int 
     }
 }
 
-__global__ void cuPartitionStep(struct PointS *data, int n, int *partition, int *zeros_count_block, int last, int bit, int dir)
+__global__ void cuPartitionStep(struct Point *data, int n, int *partition, int *zeros_count_block, int last, int bit, int dir)
 {
     __shared__ int zero_count[THREADS_PER_BLOCK_RADIX];
 
@@ -304,7 +304,7 @@ void getThreadAndBlockCountPartition(int n, int &blocks, int &threads)
     debugf("blocks = %d, threads = %d, n = %d\n", blocks, threads, n);
 }
 
-void radixSelectAndPartition(struct PointS *points, struct PointS *swap, int *partition, int n, int dir)
+void radixSelectAndPartition(struct Point *points, struct Point *swap, int *partition, int n, int dir)
 {
     int numBlocks,
         numThreads,

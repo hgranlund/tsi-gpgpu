@@ -10,10 +10,10 @@
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
 
-int cpu_partition1(struct PointS *data, int l, int u, int bit)
+int cpu_partition1(struct Point *data, int l, int u, int bit)
 {
     unsigned int radix = (1 << (31 - bit));
-    struct PointS *temp = (struct PointS *)malloc(((u - l) + 1) * sizeof(PointS));
+    struct Point *temp = (struct Point *)malloc(((u - l) + 1) * sizeof(Point));
     int pos = 0;
     for (int i = l; i <= u; i++)
     {
@@ -40,9 +40,9 @@ int cpu_partition1(struct PointS *data, int l, int u, int bit)
     return result;
 }
 
-struct PointS cpu_radixselect1(struct PointS *data, int l, int u, int m, int bit)
+struct Point cpu_radixselect1(struct Point *data, int l, int u, int m, int bit)
 {
-    struct PointS t;
+    struct Point t;
     t.p[0] = 0;
     t.p[1] = 0;
     t.p[2] = 0;
@@ -57,7 +57,7 @@ struct PointS cpu_radixselect1(struct PointS *data, int l, int u, int m, int bit
     return cpu_radixselect1(data, s + 1, u, m, bit + 1);
 }
 
-void printPoints1(struct PointS *l, int n, int dim)
+void printPoints1(struct Point *l, int n, int dim)
 {
     int i;
     if (debug)
@@ -105,18 +105,18 @@ unsigned int prevPowerOf22(unsigned int n)
 
 TEST(radix_selection, correctness)
 {
-    struct PointS *h_points,
+    struct Point *h_points,
             *d_points, *d_temp;
     int n, dim = 0, *partition;
 
     for (n = 10; n <= 1000000; n += 100000)
 {
-        h_points = (struct PointS *) malloc(n * sizeof(PointS));
+        h_points = (struct Point *) malloc(n * sizeof(Point));
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(PointS)));
+            cudaMalloc((void **)&d_points, n * sizeof(Point)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
+            cudaMalloc((void **)&d_temp, n * sizeof(Point)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * sizeof(int)));
 
@@ -131,14 +131,14 @@ TEST(radix_selection, correctness)
         // printPoints1(h_points, n, dim);
 
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
+            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
         radixSelectAndPartition(d_points, d_temp, partition, n, dim);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
-        struct PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
+        struct Point cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
         debugf("result_gpu = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
         debugf("result_cpu = (%3.1f, %3.1f, %3.1f)\n", cpu_result.p[0], cpu_result.p[1], cpu_result.p[2] );
 
@@ -162,20 +162,20 @@ TEST(radix_selection, correctness)
 
 TEST(radix_selection, correctness_dim)
 {
-    struct PointS *h_points,
+    struct Point *h_points,
             *d_points, *d_temp;
     int dim = 0, n = 10, *partition, *h_steps;
 
-    h_points = (struct PointS *) malloc(n * sizeof(PointS));
+    h_points = (struct Point *) malloc(n * sizeof(Point));
     h_steps = (int *) malloc( 2 * sizeof(int));
 
     h_steps[0] = 0;
     h_steps[1] = n;
 
     checkCudaErrors(
-        cudaMalloc((void **)&d_points, n * sizeof(PointS)));
+        cudaMalloc((void **)&d_points, n * sizeof(Point)));
     checkCudaErrors(
-        cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
+        cudaMalloc((void **)&d_temp, n * sizeof(Point)));
     checkCudaErrors(
         cudaMalloc((void **)&partition, n * sizeof(int)));
 
@@ -189,18 +189,18 @@ TEST(radix_selection, correctness_dim)
     }
 
     checkCudaErrors(
-        cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
+        cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
     for (dim = 1; dim < 2; dim++)
     {
         radixSelectAndPartition(d_points, d_temp, partition, n, dim);
 
-        struct PointS cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
+        struct Point cpu_result = cpu_radixselect1(h_points, 0, n - 1, n / 2, 0);
         debugf("result_gpu = (%3.1f, %3.1f, %3.1f)\n", h_points[n / 2].p[0], h_points[n / 2].p[1], h_points[n / 2].p[2] );
         debugf("result_cpu = (%3.1f, %3.1f, %3.1f)\n", cpu_result.p[0], cpu_result.p[1], cpu_result.p[2] );
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
         printPoints1(h_points, n, dim);
 
@@ -219,38 +219,38 @@ TEST(radix_selection, correctness_dim)
 
 TEST(radix_selection, timing)
 {
-    struct PointS *h_points;
+    struct Point *h_points;
     int n;
 
     for (n = 8388608; n <= 8388608; n <<= 1)
     {
-        h_points = (struct PointS *) malloc(n * sizeof(PointS));
+        h_points = (struct Point *) malloc(n * sizeof(Point));
 
         populatePointSRosetta(h_points, n);
         // readPoints("/home/simenhg/workspace/tsi-gpgpu/tests/data/10000_points.data", n, h_points);
 
-        struct PointS *d_points, *d_temp;
+        struct Point *d_points, *d_temp;
         int *partition;
 
         checkCudaErrors(
-            cudaMalloc((void **)&d_points, n * sizeof(PointS)));
+            cudaMalloc((void **)&d_points, n * sizeof(Point)));
         checkCudaErrors(
-            cudaMalloc((void **)&d_temp, n * sizeof(PointS)));
+            cudaMalloc((void **)&d_temp, n * sizeof(Point)));
         checkCudaErrors(
             cudaMalloc((void **)&partition, n * sizeof(int)));
         checkCudaErrors(
-            cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
+            cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
         radixSelectAndPartition(d_points, d_temp, partition, n, 0);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
         float elapsed_time = 0;
         cudaEvent_t start, stop;
         cudaStartTiming(start, stop, elapsed_time);
 
-        checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(PointS), cudaMemcpyHostToDevice));
+        checkCudaErrors(cudaMemcpy(d_points, h_points, n  * sizeof(Point), cudaMemcpyHostToDevice));
         radixSelectAndPartition(d_points, d_temp, partition, n, 0);
 
         cudaStopTiming(start, stop, elapsed_time);
@@ -259,7 +259,7 @@ TEST(radix_selection, timing)
         printCudaTiming(elapsed_time, bytes, n);
 
         checkCudaErrors(
-            cudaMemcpy(h_points, d_points, n * sizeof(PointS), cudaMemcpyDeviceToHost));
+            cudaMemcpy(h_points, d_points, n * sizeof(Point), cudaMemcpyDeviceToHost));
 
         checkCudaErrors(
             cudaFree(d_points));

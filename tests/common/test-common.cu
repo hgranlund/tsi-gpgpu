@@ -19,7 +19,7 @@ void populatePoints(struct Node *points, int n)
     }
 }
 
-void populatePointSs(struct PointS *points, int n)
+void populatePointSs(struct Point *points, int n)
 {
     int i;
     float temp;
@@ -27,7 +27,7 @@ void populatePointSs(struct PointS *points, int n)
 
     for (i = 0; i < n; ++i)
     {
-        struct PointS t;
+        struct Point t;
         temp = n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
@@ -38,14 +38,14 @@ void populatePointSs(struct PointS *points, int n)
 
 #define rand1() (rand() / (double)RAND_MAX)
 
-void populatePointSRosetta(struct PointS *points, int n)
+void populatePointSRosetta(struct Point *points, int n)
 {
     int i;
     srand(time(NULL));
 
     for (i = 0; i < n; ++i)
     {
-        struct PointS t;
+        struct Point t;
         t.p[0] = rand1(), t.p[1] = rand1(), t.p[2] = rand1();
         points[i] = t;
     }
@@ -98,7 +98,7 @@ void printTree(struct Node *tree, int level, int root)
     printTree(tree, 1 + level, tree[root].right);
 }
 
-void readPoints(const char *file_path, int n, struct PointS *points)
+void readPoints(const char *file_path, int n, struct Point *points)
 {
     FILE *file = fopen(file_path, "rb");
     if (file == NULL)
@@ -132,9 +132,9 @@ void ASSERT_TREE_EQ(struct Node *expected_tree, struct Node *actual_tree, int n)
 }
 
 
-void ASSERT_TREE_LEVEL_OK(struct PointS *points, int *steps, int n, int p, int dim)
+void ASSERT_TREE_LEVEL_OK(struct Point *points, int *steps, int n, int p, int dim)
 {
-    struct PointS *t_points;
+    struct Point *t_points;
 
     for (int i = 0; i < p; ++i)
     {

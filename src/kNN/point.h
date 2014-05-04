@@ -10,7 +10,7 @@ struct Node
 };
 
 // Small point used as in-data to the kd-tree building algorithm.
-struct PointS
+struct Point
 {
     float p[3];
 };

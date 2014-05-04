@@ -42,18 +42,18 @@ __device__ void cuCalculateBlockOffsetAndNoOfLists_(int n, int &n_per_block, int
     }
 }
 
-__device__ void cuPointSwapCondition(struct PointS *p, int a, int b, int dim)
+__device__ void cuPointSwapCondition(struct Point *p, int a, int b, int dim)
 {
-    struct PointS temp_a = p[a], temp_b = p[b];
+    struct Point temp_a = p[a], temp_b = p[b];
     if (temp_a.p[dim] > temp_b.p[dim] )
     {
         p[a] = temp_b, p[b] = temp_a;
     }
 }
 
-__global__ void balanceLeafs(struct PointS *points, int *steps, int p, int dim)
+__global__ void balanceLeafs(struct Point *points, int *steps, int p, int dim)
 {
-    struct PointS   *l_points;
+    struct Point   *l_points;
 
     int list_in_block,
         block_offset,
@@ -102,9 +102,9 @@ int store_locations(struct Node *tree, int lower, int upper, int n)
 }
 
 __global__
-void convertPoints(struct PointS *points_small, int n, struct Node *points)
+void convertPoints(struct Point *points_small, int n, struct Node *points)
 {
-    struct PointS point_s;
+    struct Point point_s;
 
     int local_n,
         block_offset,
@@ -149,7 +149,7 @@ void swap_pointer(int **a, int **b)
     swap = *a, *a = *b, *b = swap;
 }
 
-void singleRadixSelectAndPartition(struct PointS *d_points, struct PointS *d_swap, int *d_partition, int *h_steps, int p, int  dir)
+void singleRadixSelectAndPartition(struct Point *d_points, struct Point *d_swap, int *d_partition, int *h_steps, int p, int  dir)
 {
     int nn, offset, j;
     for (j = 0; j < p; j ++)
@@ -163,9 +163,9 @@ void singleRadixSelectAndPartition(struct PointS *d_points, struct PointS *d_swa
     }
 }
 
-void build_kd_tree(struct PointS *h_points, int n, struct Node *h_points_out)
+void build_kd_tree(struct Point *h_points, int n, struct Node *h_points_out)
 {
-    struct PointS *d_points, *d_swap;
+    struct Point *d_points, *d_swap;
     struct Node *d_points_out;
     int *d_partition,
         block_num, thread_num,
@@ -189,12 +189,12 @@ void build_kd_tree(struct PointS *h_points, int n, struct Node *h_points_out)
     checkCudaErrors(
         cudaMalloc(&d_partition, n * sizeof(int)));
     checkCudaErrors(
-        cudaMalloc(&d_points, n * sizeof(PointS)));
+        cudaMalloc(&d_points, n * sizeof(Point)));
     checkCudaErrors(
-        cudaMalloc(&d_swap, n * sizeof(PointS)));
+        cudaMalloc(&d_swap, n * sizeof(Point)));
 
     checkCudaErrors(
-        cudaMemcpy(d_points, h_points, n * sizeof(PointS), cudaMemcpyHostToDevice));
+        cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
     radixSelectAndPartition(d_points, d_swap, d_partition, n, i % 3);
 

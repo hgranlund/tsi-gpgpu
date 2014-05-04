@@ -23,7 +23,7 @@ TEST(kd_tree_build, correctness_diagonal)
     int i, n = 8;
     float temp;
 
-    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
     struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
     struct Node *expected_points = (struct Node *) malloc(n * sizeof(Node));
 
@@ -32,7 +32,7 @@ TEST(kd_tree_build, correctness_diagonal)
     for (i = 0; i < n; ++i)
     {
         struct Node t2;
-        struct PointS t;
+        struct Point t;
         temp = n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
@@ -58,7 +58,7 @@ TEST(kd_tree_build, correctness)
     for (n = 2000; n <= 200000; n += 10000)
     {
 
-        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
 
         if (n > 10000)
@@ -90,14 +90,14 @@ TEST(kd_tree_build, timing)
     // for (n = 8388608; n <= 8388608 ; n += 250000)
     for (n = 1024; n <= 1024 ; n += 250000)
     {
-        struct PointS *points = (struct PointS *) malloc(n * sizeof(PointS));
+        struct Point *points = (struct Point *) malloc(n * sizeof(Point));
         struct Node *points_out = (struct Node *) malloc(n * sizeof(Node));
 
         populatePointSs(points, n);
         populatePoints(points_out, n);
 
         float elapsed_time;
-        int bytes = n * (sizeof(PointS));
+        int bytes = n * (sizeof(Point));
         cudaEvent_t start, stop;
 
         cudaStartTiming(start, stop, elapsed_time);
@@ -115,9 +115,9 @@ TEST(kd_tree_build, wikipedia_example)
 {
     cudaDeviceReset();
     int n = 6;
-    struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
     struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
-    struct PointS *points_correct = (struct PointS *) malloc(n  * sizeof(PointS));
+    struct Point *points_correct = (struct Point *) malloc(n  * sizeof(Point));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
     points[1].p[0] = 5, points[1].p[1] = 4, points[1].p[2] = 0;

@@ -1,9 +1,9 @@
 #include "quick-select.cuh"
 #include <stdio.h>
 
-__device__ void cuPointSwap(struct PointS *p, int a, int b)
+__device__ void cuPointSwap(struct Point *p, int a, int b)
 {
-    struct PointS temp = p[a];
+    struct Point temp = p[a];
     p[a] = p[b], p[b] = temp;
 }
 
@@ -20,7 +20,7 @@ __device__ void cuCalculateBlockOffsetAndNoOfLists(int n, int &n_per_block, int 
     }
 }
 
-__device__ void cuCopyPoints(struct PointS *s_points, struct PointS *l_points, int n)
+__device__ void cuCopyPoints(struct Point *s_points, struct Point *l_points, int n)
 {
     int i;
     for (i = 0; i < n; ++i)
@@ -30,11 +30,11 @@ __device__ void cuCopyPoints(struct PointS *s_points, struct PointS *l_points, i
 }
 
 template <int max_step, bool in_shared> __global__
-void cuQuickSelect(struct PointS *points, int *steps, int p, int dir)
+void cuQuickSelect(struct Point *points, int *steps, int p, int dir)
 {
-    __shared__ struct PointS ss_points[max_step * THREADS_PER_BLOCK_QUICK];
+    __shared__ struct Point ss_points[max_step * THREADS_PER_BLOCK_QUICK];
 
-    struct PointS *s_points = ss_points, *l_points;
+    struct Point *s_points = ss_points, *l_points;
 
     float pivot;
 
@@ -96,7 +96,7 @@ void cuQuickSelect(struct PointS *points, int *steps, int p, int dir)
     }
 }
 
-void quickSelectAndPartition(struct PointS *d_points, int *d_steps, int step , int p, int dir)
+void quickSelectAndPartition(struct Point *d_points, int *d_steps, int step , int p, int dir)
 {
     int numBlocks, numThreads;
     getThreadAndBlockCountForQuickSelect(step, p, numBlocks, numThreads);
@@ -104,15 +104,15 @@ void quickSelectAndPartition(struct PointS *d_points, int *d_steps, int step , i
     {
         cuQuickSelect<1, false> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
-    else if (step > 8 && step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
+    else if (step > 8 && step * sizeof(Point) * numThreads < MAX_SHARED_MEM)
     {
         cuQuickSelect<16, true> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
-    else if (step > 4 && step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
+    else if (step > 4 && step * sizeof(Point) * numThreads < MAX_SHARED_MEM)
     {
         cuQuickSelect<8, true> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }
-    else if (step * sizeof(PointS) * numThreads < MAX_SHARED_MEM)
+    else if (step * sizeof(Point) * numThreads < MAX_SHARED_MEM)
     {
         cuQuickSelect<4, true> <<< numBlocks, numThreads>>>(d_points, d_steps, p, dir);
     }

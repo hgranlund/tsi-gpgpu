@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <helper_cuda.h>
 
-void writePoints(char *file_path, int n, struct PointS *points)
+void writePoints(char *file_path, int n, struct Point *points)
 {
     printf("writing points...\n");
 
@@ -19,7 +19,7 @@ void writePoints(char *file_path, int n, struct PointS *points)
     fclose(file);
 }
 
-void readPoints(const char *file_path, int n, struct PointS *points)
+void readPoints(const char *file_path, int n, struct Point *points)
 {
     printf("Reading points...\n");
 
@@ -37,12 +37,12 @@ void readPoints(const char *file_path, int n, struct PointS *points)
     fclose(file);
 }
 
-void populatePoints(struct PointS *points, int n)
+void populatePoints(struct Point *points, int n)
 {
     srand(time(NULL));
     for (int i = 0; i < n; ++i)
     {
-        struct PointS t;
+        struct Point t;
         t.p[0] = rand();
         t.p[1] = rand();
         t.p[2] = rand();
@@ -97,7 +97,7 @@ int main(int argc, char const *argv[])
     for (n = nu; n <= ni ; n += step)
     {
         struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
-        struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
+        struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         int *result = (int *) malloc(n * k * sizeof(int));
 
         if (from_file)
