@@ -2,7 +2,7 @@
 #include "math.h"
 #include <sys/time.h>
 
-void populatePoints(struct Point *points, int n)
+void populatePoints(struct Node *points, int n)
 {
     int i;
     float temp;
@@ -10,7 +10,7 @@ void populatePoints(struct Point *points, int n)
 
     for (i = 0; i < n; ++i)
     {
-        struct Point t;
+        struct Node t;
         temp = n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
@@ -81,7 +81,7 @@ double WallTime ()
     return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
 }
 
-void printTree(struct Point *tree, int level, int root)
+void printTree(struct Node *tree, int level, int root)
 {
     if (root < 0) return;
 
@@ -118,7 +118,7 @@ void readPoints(const char *file_path, int n, struct PointS *points)
     fclose(file);
 }
 
-void ASSERT_TREE_EQ(struct Point *expected_tree, struct Point *actual_tree, int n)
+void ASSERT_TREE_EQ(struct Node *expected_tree, struct Node *actual_tree, int n)
 {
     int i, j;
 
@@ -153,13 +153,13 @@ void ASSERT_TREE_LEVEL_OK(struct PointS *points, int *steps, int n, int p, int d
     }
 }
 
-void ASSERT_KD_TREE_LEVEL(struct Point *tree, int dim, int lower, int upper, int n)
+void ASSERT_KD_TREE_LEVEL(struct Node *tree, int dim, int lower, int upper, int n)
 {
 
     int i,
         mid = lower + ((upper - lower) / 2);
 
-    struct Point piv = tree[mid];
+    struct Node piv = tree[mid];
 
     if (piv.left == -1 || piv.right == -1)
     {
@@ -190,7 +190,7 @@ void ASSERT_KD_TREE_LEVEL(struct Point *tree, int dim, int lower, int upper, int
     ASSERT_KD_TREE_LEVEL(tree, dim, mid + 1, upper, n);
 }
 
-void ASSERT_KD_TREE(struct Point *tree, int n)
+void ASSERT_KD_TREE(struct Node *tree, int n)
 {
     ASSERT_KD_TREE_LEVEL(tree, 0, 0, n, n);
 }

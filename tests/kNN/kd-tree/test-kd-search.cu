@@ -6,15 +6,15 @@
 #include <kd-search.cuh>
 #include <knn_gpgpu.h>
 
-bool isExpectedPoint(struct Point *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
+bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
 {
-    struct Point query_point;
+    struct Node query_point;
 
     struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
     int result[k];
-    
+
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
     kNN(query_point, tree, n, k, result, s_stack_ptr, k_stack_ptr);
@@ -217,7 +217,7 @@ TEST(kd_search, correctness_with_k)
         result[k];
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+    struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
 
     struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
@@ -253,8 +253,8 @@ TEST(kd_search, correctness_with_10000_points_file)
     for (n = 1000; n <= 10000; n += 1000)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
-        struct Point *qp_points = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
 
         srand(time(NULL));
 
@@ -262,7 +262,7 @@ TEST(kd_search, correctness_with_10000_points_file)
 
         for (int i = 0; i < n; ++i)
         {
-            struct Point point;
+            struct Node point;
             point.p[0] = points[i].p[0];
             point.p[1] = points[i].p[1];
             point.p[2] = points[i].p[2];
@@ -308,7 +308,7 @@ TEST(kd_search, knn_wikipedia_example)
         k = 1;
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+    struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
     points[1].p[0] = 5, points[1].p[1] = 4, points[1].p[2] = 0;
@@ -343,7 +343,7 @@ TEST(kd_search, query_all_wikipedia_example)
 {
     int n = 6, k = 1;
     struct PointS *points = (struct PointS *) malloc(n * sizeof(PointS));
-    struct Point *points_out = (struct Point *) malloc(n * sizeof(Point));
+    struct Node *points_out = (struct Node *) malloc(n * sizeof(Node));
     int *result = (int *) malloc(n * k * sizeof(int));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
@@ -374,8 +374,8 @@ TEST(kd_search, knn_timing)
     for (n = 10000; n <= 10000; n += 1000)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
-        struct Point *qp_points = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
 
         struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
@@ -388,7 +388,7 @@ TEST(kd_search, knn_timing)
 
         for (int i = 0; i < n; ++i)
         {
-            struct Point point;
+            struct Node point;
             point.p[0] = points[i].p[0];
             point.p[1] = points[i].p[1];
             point.p[2] = points[i].p[2];
@@ -423,14 +423,14 @@ TEST(kd_search, query_all_timing)
     for (n = 10000; n <= 10000; n += 1000)
     {
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
-        struct Point *qp_points = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
         for (int i = 0; i < n; ++i)
         {
-            struct Point point;
+            struct Node point;
             point.p[0] = points[i].p[0];
             point.p[1] = points[i].p[1];
             point.p[2] = points[i].p[2];
@@ -445,7 +445,7 @@ TEST(kd_search, query_all_timing)
 
         cudaEvent_t start, stop;
         float elapsed_time = 0;
-        int bytes = n * (sizeof(Point));
+        int bytes = n * (sizeof(Node));
 
         cudaStartTiming(start, stop, elapsed_time);
         queryAll(qp_points, points_out, test_runs, n, k, result);

@@ -84,7 +84,7 @@ __global__ void balanceLeafs(struct PointS *points, int *steps, int p, int dim)
     }
 }
 
-int store_locations(struct Point *tree, int lower, int upper, int n)
+int store_locations(struct Node *tree, int lower, int upper, int n)
 {
     int r;
 
@@ -102,7 +102,7 @@ int store_locations(struct Point *tree, int lower, int upper, int n)
 }
 
 __global__
-void convertPoints(struct PointS *points_small, int n, struct Point *points)
+void convertPoints(struct PointS *points_small, int n, struct Node *points)
 {
     struct PointS point_s;
 
@@ -117,7 +117,7 @@ void convertPoints(struct PointS *points_small, int n, struct Point *points)
 
     while (tid < local_n)
     {
-        struct Point point;
+        struct Node point;
         point_s = points_small[tid];
         point.p[0] = point_s.p[0];
         point.p[1] = point_s.p[1];
@@ -163,10 +163,10 @@ void singleRadixSelectAndPartition(struct PointS *d_points, struct PointS *d_swa
     }
 }
 
-void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
+void build_kd_tree(struct PointS *h_points, int n, struct Node *h_points_out)
 {
     struct PointS *d_points, *d_swap;
-    struct Point *d_points_out;
+    struct Node *d_points_out;
     int *d_partition,
         block_num, thread_num,
         *d_steps, *h_steps_old, *h_steps_new,
@@ -233,12 +233,12 @@ void build_kd_tree(struct PointS *h_points, int n, struct Point *h_points_out)
     free(h_steps_new);
     free(h_steps_old);
 
-    checkCudaErrors(cudaMalloc(&d_points_out, n * sizeof(Point)));
+    checkCudaErrors(cudaMalloc(&d_points_out, n * sizeof(Node)));
 
     getThreadAndBlockCountForBuild(n, block_num, thread_num);
     convertPoints <<< block_num, thread_num >>> (d_points, n, d_points_out);
 
-    checkCudaErrors(cudaMemcpy(h_points_out, d_points_out, n * sizeof(Point), cudaMemcpyDeviceToHost));
+    checkCudaErrors(cudaMemcpy(h_points_out, d_points_out, n * sizeof(Node), cudaMemcpyDeviceToHost));
 
     store_locations(h_points_out, 0, n, n);
 

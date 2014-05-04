@@ -1,7 +1,7 @@
 #include <knn_gpgpu.h>
 #include "test-common.cuh"
 
-void cuPrintTree(struct Point *tree, int level, int root)
+void cuPrintTree(struct Node *tree, int level, int root)
 {
     if (root < 0) return;
 
@@ -24,14 +24,14 @@ TEST(kd_tree_build, correctness_diagonal)
     float temp;
 
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
-    struct Point *expected_points = (struct Point *) malloc(n * sizeof(Point));
+    struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+    struct Node *expected_points = (struct Node *) malloc(n * sizeof(Node));
 
     srand(time(NULL));
 
     for (i = 0; i < n; ++i)
     {
-        struct Point t2;
+        struct Node t2;
         struct PointS t;
         temp = n - i - 1;
 
@@ -59,7 +59,7 @@ TEST(kd_tree_build, correctness)
     {
 
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
 
         if (n > 10000)
         {
@@ -91,7 +91,7 @@ TEST(kd_tree_build, timing)
     for (n = 1024; n <= 1024 ; n += 250000)
     {
         struct PointS *points = (struct PointS *) malloc(n * sizeof(PointS));
-        struct Point *points_out = (struct Point *) malloc(n * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n * sizeof(Node));
 
         populatePointSs(points, n);
         populatePoints(points_out, n);
@@ -116,7 +116,7 @@ TEST(kd_tree_build, wikipedia_example)
     cudaDeviceReset();
     int n = 6;
     struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
-    struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+    struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
     struct PointS *points_correct = (struct PointS *) malloc(n  * sizeof(PointS));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;

@@ -37,7 +37,7 @@ To do so, use the procedure documented by the package, typically `autoreconf'.])
 AC_DEFUN([AM_AUTOMAKE_VERSION],
 [am__api_version='1.11'
 dnl Some users find AM_AUTOMAKE_VERSION and mistake it for a way to
-dnl require some minimum version.  struct struct struct Point them to the right macro.
+dnl require some minimum version.  struct struct struct Node them to the right macro.
 m4_if([$1], [1.11.3], [],
       [AC_FATAL([Do not call $0, use AM_INIT_AUTOMAKE([$1]).])])dnl
 ])

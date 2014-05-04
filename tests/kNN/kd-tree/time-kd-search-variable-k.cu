@@ -58,7 +58,7 @@ int main(int argc, char const *argv[])
                no_of_runs = 1000;
 
     bool from_file = 0,
-        variable_k = 0;
+         variable_k = 0;
 
     n = nu = ni;
 
@@ -96,7 +96,7 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
         int *result = (int *) malloc(n * k * sizeof(int));
 
@@ -131,7 +131,7 @@ int main(int argc, char const *argv[])
 
         if (variable_k)
         {
-            struct Point *query_points = (struct Point *) malloc(no_of_runs * sizeof(Point));
+            struct Node *query_points = (struct Node *) malloc(no_of_runs * sizeof(Node));
 
             for (int i = 0; i < no_of_runs; ++i)
             {
@@ -141,7 +141,8 @@ int main(int argc, char const *argv[])
             queryAll(query_points, points_out, no_of_runs, n, k, result);
 
             free(query_points);
-        } else
+        }
+        else
         {
             queryAll(points_out, points_out, n, n, k, result);
         }

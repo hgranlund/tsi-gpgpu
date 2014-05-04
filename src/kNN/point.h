@@ -2,7 +2,7 @@
 #define _POINT_
 
 // Main point struct used in finished kd-tree
-struct Point
+struct Node
 {
     float p[3];
     int left;

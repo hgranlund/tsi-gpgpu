@@ -82,7 +82,7 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        struct Point *points_out = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
         struct PointS *points = (struct PointS *) malloc(n  * sizeof(PointS));
 
         if (from_file)

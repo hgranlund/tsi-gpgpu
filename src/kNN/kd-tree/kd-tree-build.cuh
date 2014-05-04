@@ -2,7 +2,7 @@
 #define _KD_TREE_NAIVE_
 #include "point.h"
 
-void build_kd_tree(struct PointS *points, int n, struct Point *points_out);
+void build_kd_tree(struct PointS *points, int n, struct Node *points_out);
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads);
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads);
 

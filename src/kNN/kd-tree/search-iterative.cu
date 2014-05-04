@@ -8,7 +8,7 @@
 
 
 
-float dist(struct Point qp, struct Point point)
+float dist(struct Node qp, struct Node point)
 {
     float dx = qp.p[0] - point.p[0],
           dy = qp.p[1] - point.p[1],
@@ -75,7 +75,7 @@ struct KPoint look(struct KPoint *k_stack, int n)
     return k_stack[n - 1];
 }
 
-int target(struct Point qp, struct Point current, float dx)
+int target(struct Node qp, struct Node current, float dx)
 {
     if (dx > 0)
     {
@@ -84,7 +84,7 @@ int target(struct Point qp, struct Point current, float dx)
     return current.right;
 }
 
-int other(struct Point qp, struct Point current, float dx)
+int other(struct Node qp, struct Node current, float dx)
 {
     if (dx > 0)
     {
@@ -98,13 +98,13 @@ void upDim(int *dim)
     *dim = (*dim + 1) % 3;
 }
 
-void kNN(struct Point qp, struct Point *tree, int n, int k, int *result,
+void kNN(struct Node qp, struct Node *tree, int n, int k, int *result,
          int *visited, struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
 {
     int  dim = 2;
     float current_dist, dx, dx2;
 
-    struct Point current_point;
+    struct Node current_point;
     struct SPoint *stack = stack_ptr,
                            current;
     struct KPoint *k_stack = k_stack_ptr,
@@ -167,7 +167,7 @@ void kNN(struct Point qp, struct Point *tree, int n, int k, int *result,
     }
 }
 
-void kNN(struct Point qp, struct Point *tree, int n, int k, int *result, int *visited)
+void kNN(struct Node qp, struct Node *tree, int n, int k, int *result, int *visited)
 {
     struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
