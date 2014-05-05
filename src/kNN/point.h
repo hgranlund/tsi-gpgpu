@@ -20,6 +20,8 @@ struct SPoint
 {
     int index;
     int dim;
+    int dx;
+    int other;
 };
 
 // Used to handle the points when they are potential k nearest points.

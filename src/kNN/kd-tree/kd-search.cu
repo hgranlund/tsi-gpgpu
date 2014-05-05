@@ -131,18 +131,15 @@ void kNN(struct Node qp, struct Node *tree, int n, int k, int *result,
         if (current.index == -1 && !isEmpty(stack))
         {
             current = pop(&stack);
-            current_point = tree[current.index];
             dim = current.dim;
 
-
-
-            dx = current_point.p[dim] - qp.p[dim];
+            dx = current.dx;
             dx2 = dx * dx;
 
             // printf("Up with (%3.1f, %3.1f, %3.1f): best_dist = %3.1f, dx2 = %3.1f, dim = %d\n",
             //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, dx2, dim);
 
-            current.index = (dx2 < worst_best.dist) ? other(qp, current_point, dx) : -1;
+            current.index = (dx2 < worst_best.dist) ? current.other : -1;
         }
         else
         {
@@ -159,10 +156,11 @@ void kNN(struct Node qp, struct Node *tree, int n, int k, int *result,
 
             upDim(&dim);
             current.dim = dim;
+            current.dx = current_point.p[dim] - qp.p[dim];
+            current.other = other(qp, current_point, current.dx);
             push(&stack, current);
 
-            dx = current_point.p[dim] - qp.p[dim];
-            current.index = target(qp, current_point, dx);
+            current.index = target(qp, current_point, current.dx);
 
             // printf("Down with(%3.1f, %3.1f, %3.1f): best_dist = %3.1f, current_dist = %3.1f, dim = %d\n",
             //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, current_dist, dim);
