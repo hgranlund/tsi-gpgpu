@@ -295,6 +295,40 @@ TEST(kd_search, correctness_with_10000_points_file)
         free(k_stack_ptr);
     };
 };
+TEST(kd_search, queryAll_correctness_with_10000_points_file)
+{
+    int n, i, k = 1;
+
+    for (n = 1000; n <= 10000; n += 1000)
+    {
+        struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
+        struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
+
+        srand(time(NULL));
+
+        readPoints("../tests/data/10000_points.data", n, points);
+
+        cudaDeviceReset();
+        build_kd_tree(points, n, tree);
+
+        // printTree(tree, 0, n / 2);
+
+        int *result = (int *) malloc(n * k * sizeof(int));
+
+
+        queryAll(points, tree, n, n, 1, result);
+        for (i = 0; i < n; ++i)
+        {
+            ASSERT_EQ(points[i].p[0], tree[result[i]].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[result[i]].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[result[i]].p[2]) << "Failed at i = " << i << " with n = " << n;
+        }
+
+        free(tree);
+        free(result);
+        free(points);
+    };
+};
 
 TEST(kd_search, knn_wikipedia_example)
 {
