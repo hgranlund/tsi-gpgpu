@@ -187,7 +187,9 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
         block_step = n_qp / gridDim.x,
         block_offset = block_step * blockIdx.x;
 
-    struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
+    // struct SPoint *s_stack_ptr = (struct SPoint *)malloc(41 * sizeof(struct SPoint));
+    struct SPoint s_stack_ptr[40 * THREADS_PER_BLOCK_SEARCH], *s_stack;
+    s_stack = s_stack_ptr + (threadIdx.x * 40);
 
     cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
@@ -217,7 +219,7 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
         free(k_stack_ptr);
     }
 
-    free(s_stack_ptr);
+    // free(s_stack_ptr);
 }
 
 void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
