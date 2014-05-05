@@ -188,6 +188,7 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
         block_offset = block_step * blockIdx.x;
 
     // struct SPoint *s_stack_ptr = (struct SPoint *)malloc(41 * sizeof(struct SPoint));
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
     struct SPoint s_stack_ptr[40 * THREADS_PER_BLOCK_SEARCH], *s_stack;
     s_stack = s_stack_ptr + (threadIdx.x * 40);
 
@@ -196,29 +197,13 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
     query_points += block_offset;
     result += block_offset * k;
 
-    if (k_in_shared)
+    while (tid < block_step)
     {
-        __shared__ struct KPoint k_stack[(max_k + 1) * THREADS_PER_BLOCK_SEARCH];
-
-        while (tid < block_step)
-        {
-            kNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack, k_stack + (k + 1)* threadIdx.x);
-            tid += blockDim.x;
-        }
-    }
-    else
-    {
-        struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
-
-        while (tid < block_step)
-        {
-            kNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack, k_stack_ptr);
-            tid += blockDim.x;
-        }
-
-        free(k_stack_ptr);
+        kNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack, k_stack_ptr);
+        tid += blockDim.x;
     }
 
+    free(k_stack_ptr);
     // free(s_stack_ptr);
 }
 
@@ -246,14 +231,7 @@ void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n
 
     getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
 
-    if (k <= 25 && k * sizeof(KPoint) * THREADS_PER_BLOCK_SEARCH < MAX_SHARED_MEM)
-    {
-        dQueryAll<25, true> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
-    }
-    else
-    {
-        dQueryAll<1, false> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
-    }
+    dQueryAll<1, false> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
 
     checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaFree(d_tree));
