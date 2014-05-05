@@ -212,7 +212,7 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
 
         while (tid < block_step)
         {
-            kNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack_ptr, k_stack_ptr);
+            kNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack, k_stack_ptr);
             tid += blockDim.x;
         }
 
