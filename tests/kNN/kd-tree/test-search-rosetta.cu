@@ -1,6 +1,6 @@
 #include <knn_gpgpu.h>
 #include <float.h>
-#include <sys/time.h>
+// #include <sys/time.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -142,9 +142,10 @@ void nearest(struct kd_node_t *root, struct kd_node_t *nd, int i, int dim,
 
 double wall_time ()
 {
-    struct timeval tmpTime;
-    gettimeofday(&tmpTime, NULL);
-    return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+    // struct timeval tmpTime;
+    // gettimeofday(&tmpTime, NULL);
+    // return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+    return -1;
 }
 
 void readPoints(const char *file_path, int n, kd_node_t *points)

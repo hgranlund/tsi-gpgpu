@@ -1,6 +1,6 @@
 #include "test-common.cuh"
 #include "math.h"
-#include <sys/time.h>
+// #include <time.h>
 
 void populatePoints(struct Node *points, int n)
 {
@@ -76,9 +76,10 @@ void printCudaTiming(float elapsed_time, float bytes, int n)
 
 double WallTime ()
 {
-    struct timeval tmpTime;
-    gettimeofday(&tmpTime, NULL);
-    return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+    // struct timeval tmpTime;
+    // gettimeofday(&tmpTime, NULL);
+    // return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
+    return -1;
 }
 
 void printTree(struct Node *tree, int level, int root)

@@ -13,7 +13,7 @@ bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float
     struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
-    int result[k];
+    int *result= (int*) malloc(k*sizeof(int));
 
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
@@ -29,6 +29,7 @@ bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float
 
     free(s_stack_ptr);
     free(k_stack_ptr);
+    free(result);
 
     if (actual == expected)
     {
@@ -213,8 +214,10 @@ TEST(kd_search, upDim)
 TEST(kd_search, correctness_with_k)
 {
     int n = 6,
-        k = 3,
-        result[k];
+        k = 3;
+
+    int *result= (int*) malloc(k*sizeof(int));
+
 
     struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
     struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include "sys/time.h"
+// #include "time.h"
 
 #include <search-iterative.cuh>
 
