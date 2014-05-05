@@ -91,7 +91,7 @@ int main(int argc, char const *argv[])
 
     for (n = nu; n <= ni ; n += step)
     {
-        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         int *result = (int *) malloc(n * k * sizeof(int));
 
@@ -110,7 +110,7 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        build_kd_tree(points, n, points_out);
+        build_kd_tree(points, n, tree);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        queryAll(points_out, points_out, n, n, k, result);
+        queryAll(points, tree, n, n, k, result);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -136,7 +136,7 @@ int main(int argc, char const *argv[])
 
         free(points);
         free(result);
-        free(points_out);
+        free(tree);
         cudaDeviceReset();
     }
     return 0;

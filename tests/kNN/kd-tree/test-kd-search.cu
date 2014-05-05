@@ -8,12 +8,12 @@
 
 bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
 {
-    struct Node query_point;
+    struct Point query_point;
 
     struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
 
-    int *result= (int*) malloc(k*sizeof(int));
+    int *result = (int *) malloc(k * sizeof(int));
 
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
@@ -216,11 +216,10 @@ TEST(kd_search, correctness_with_k)
     int n = 6,
         k = 3;
 
-    int *result= (int*) malloc(k*sizeof(int));
-
+    int *result = (int *) malloc(k * sizeof(int));
 
     struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
-    struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+    struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
     struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
@@ -233,17 +232,17 @@ TEST(kd_search, correctness_with_k)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(points, n, points_out);
+    build_kd_tree(points, n, tree);
 
     cudaDeviceReset();
-    kNN(points_out[4], points_out, n, k, result, s_stack_ptr, k_stack_ptr);
+    kNN(points[4], tree, n, k, result, s_stack_ptr, k_stack_ptr);
 
     ASSERT_EQ(4, result[0]);
     ASSERT_EQ(3, result[1]);
     ASSERT_EQ(1, result[2]);
 
     free(points);
-    free(points_out);
+    free(tree);
 
     free(s_stack_ptr);
     free(k_stack_ptr);
@@ -256,26 +255,16 @@ TEST(kd_search, correctness_with_10000_points_file)
     for (n = 1000; n <= 10000; n += 1000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
-        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
-        struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
         srand(time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
-        for (int i = 0; i < n; ++i)
-        {
-            struct Node point;
-            point.p[0] = points[i].p[0];
-            point.p[1] = points[i].p[1];
-            point.p[2] = points[i].p[2];
-            qp_points[i] = point;
-        }
-
         cudaDeviceReset();
-        build_kd_tree(points, n, points_out);
+        build_kd_tree(points, n, tree);
 
-        // printTree(points_out, 0, n / 2);
+        // printTree(tree, 0, n / 2);
 
         int *result = (int *) malloc(k * sizeof(int));
 
@@ -288,20 +277,22 @@ TEST(kd_search, correctness_with_10000_points_file)
         for (i = 0; i < test_runs; ++i)
         {
             cudaDeviceReset();
-            kNN(points_out[i], points_out, n, k, result, stack_ptr, k_stack_ptr);
+            kNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
 
             // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
-            //        points_out[i].p[0], points_out[i].p[1], points_out[i].p[2],
-            //        points_out[result[0]].p[0], points_out[result[0]].p[1], points_out[result[0]].p[2]);
+            //        tree[i].p[0], tree[i].p[1], tree[i].p[2],
+            //        tree[result[0]].p[0], tree[result[0]].p[1], tree[result[0]].p[2]);
 
-            ASSERT_EQ(points_out[i].p[0], points_out[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points_out[i].p[1], points_out[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
-            ASSERT_EQ(points_out[i].p[2], points_out[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
         }
 
-        free(points_out);
+        free(tree);
         free(result);
         free(points);
+        free(stack_ptr);
+        free(k_stack_ptr);
     };
 };
 
@@ -311,7 +302,7 @@ TEST(kd_search, knn_wikipedia_example)
         k = 1;
 
     struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
-    struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
+    struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
     points[1].p[0] = 5, points[1].p[1] = 4, points[1].p[2] = 0;
@@ -321,32 +312,32 @@ TEST(kd_search, knn_wikipedia_example)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(points, n, points_out);
+    build_kd_tree(points, n, tree);
 
 
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 2, 3, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 5, 4, 0, 5, 4, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 9, 6, 0, 9, 6, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 4, 7, 0, 4, 7, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 8, 1, 0, 8, 1, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 7, 2, 0, 7, 2, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 10, 10, 0, 9, 6, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 0, 0, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 4, 4, 0, 5, 4, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 3, 2, 0, 2, 3, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 2, 6, 0, 4, 7, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 10, 0, 0, 8, 1, 0));
-    ASSERT_EQ(true, isExpectedPoint(points_out, n, k, 0, 10, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 2, 3, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 5, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 9, 6, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 4, 7, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 8, 1, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 7, 2, 0, 7, 2, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 10, 10, 0, 9, 6, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 0, 0, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 4, 4, 0, 5, 4, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 3, 2, 0, 2, 3, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 2, 6, 0, 4, 7, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 10, 0, 0, 8, 1, 0));
+    ASSERT_EQ(true, isExpectedPoint(tree, n, k, 0, 10, 0, 4, 7, 0));
 
     free(points);
-    free(points_out);
+    free(tree);
 }
 
 TEST(kd_search, query_all_wikipedia_example)
 {
     int n = 6, k = 1;
     struct Point *points = (struct Point *) malloc(n * sizeof(Point));
-    struct Node *points_out = (struct Node *) malloc(n * sizeof(Node));
+    struct Node *tree = (struct Node *) malloc(n * sizeof(Node));
     int *result = (int *) malloc(n * k * sizeof(int));
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
@@ -357,16 +348,18 @@ TEST(kd_search, query_all_wikipedia_example)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(points, n, points_out);
-    queryAll(points_out, points_out, n, n, 1, result);
+    build_kd_tree(points, n, tree);
+    queryAll(points, tree, n, n, 1, result);
 
-    for (int i = 0; i < n; ++i)
-    {
-        ASSERT_EQ(result[i], i);
-    }
+    ASSERT_EQ(result[0], 0);
+    ASSERT_EQ(result[1], 1);
+    ASSERT_EQ(result[2], 5);
+    ASSERT_EQ(result[3], 2);
+    ASSERT_EQ(result[4], 4);
+    ASSERT_EQ(result[5], 3);
 
     free(points);
-    free(points_out);
+    free(tree);
     free(result);
 }
 
@@ -377,8 +370,7 @@ TEST(kd_search, knn_timing)
     for (n = 10000; n <= 10000; n += 1000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
-        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
-        struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
         struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
@@ -389,17 +381,10 @@ TEST(kd_search, knn_timing)
 
         readPoints("../tests/data/10000_points.data", n, points);
 
-        for (int i = 0; i < n; ++i)
-        {
-            struct Node point;
-            point.p[0] = points[i].p[0];
-            point.p[1] = points[i].p[1];
-            point.p[2] = points[i].p[2];
-            qp_points[i] = point;
-        }
+
 
         cudaDeviceReset();
-        build_kd_tree(points, n, points_out);
+        build_kd_tree(points, n, tree);
 
         int i,
             test_runs = n;
@@ -409,39 +394,31 @@ TEST(kd_search, knn_timing)
         double start_time = WallTime();
         for (i = 0; i < test_runs; ++i)
         {
-            kNN(points_out[i], points_out, n, k, result, stack_ptr, k_stack_ptr);
+            kNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
         }
         printf("Time = %lf ms, Size = %d Elements\n", ((WallTime() - start_time) * 1000), n);
 
-        free(points_out);
+        free(tree);
         free(result);
         free(points);
+        free(stack_ptr);
+        free(k_stack_ptr);
     };
 };
 
 TEST(kd_search, query_all_timing)
 {
-    int n, k = 1;
+    int n, k = 5;
 
     for (n = 10000; n <= 10000; n += 1000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
-        struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
-        struct Node *qp_points = (struct Node *) malloc(n  * sizeof(Node));
+        struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
-        for (int i = 0; i < n; ++i)
-        {
-            struct Node point;
-            point.p[0] = points[i].p[0];
-            point.p[1] = points[i].p[1];
-            point.p[2] = points[i].p[2];
-            qp_points[i] = point;
-        }
-
         cudaDeviceReset();
-        build_kd_tree(points, n, points_out);
+        build_kd_tree(points, n, tree);
 
         int test_runs = n;
         int *result = (int *) malloc(test_runs * k * sizeof(int));
@@ -451,12 +428,11 @@ TEST(kd_search, query_all_timing)
         int bytes = n * (sizeof(Node));
 
         cudaStartTiming(start, stop, elapsed_time);
-        queryAll(qp_points, points_out, test_runs, n, k, result);
+        queryAll(points, tree, test_runs, n, k, result);
         cudaStopTiming(start, stop, elapsed_time);
         printCudaTiming(elapsed_time, bytes, n);
 
-        free(qp_points);
-        free(points_out);
+        free(tree);
         free(points);
         cudaDeviceReset();
     };
