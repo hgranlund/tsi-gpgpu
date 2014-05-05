@@ -4,6 +4,8 @@
 
 #define THREADS_PER_BLOCK_SEARCH 64U
 #define MAX_BLOCK_DIM_SIZE 65535U
+#define MAX_SHARED_MEM 49152U
+
 
 __device__ __host__
 void initStack(struct SPoint **stack);
