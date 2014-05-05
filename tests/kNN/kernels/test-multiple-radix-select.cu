@@ -166,14 +166,13 @@ TEST(multiple_radix_select, timing)
 {
     struct Point *h_points, *d_points, *d_swap;
     int n, p, *d_partition, *h_steps, *d_steps;
+
     for (n = 8388608; n <= 8388608; n <<= 1)
     {
-        p = 2;
+        p = 16;
         h_steps = (int *) malloc(p * 2 * sizeof(int));
-        h_steps[0] = 0;
-        h_steps[1] = n / p;
-        h_steps[2] = n / p + 1;
-        h_steps[3] = n;
+
+        n_step(h_steps, n, p);
 
         h_points = (struct Point *) malloc(n * sizeof(Point));
         populatePointSs(h_points, n);
