@@ -210,7 +210,7 @@ void build_kd_tree(struct Point *h_points, int n, struct Node *h_points_out)
         {
             singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
         }
-        else if (step > 4000)
+        else if (step > 3000)
         {
             multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, step, p, i % 3);
         }
