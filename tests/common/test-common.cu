@@ -82,6 +82,48 @@ double WallTime ()
     return -1;
 }
 
+void nextStep_(int *steps_new, int *steps_old, int p)
+{
+    int i, midpoint, from, to;
+    for (i = 0; i < p / 2; ++i)
+    {
+        from = steps_old[i * 2];
+        to = steps_old[i * 2 + 1];
+        midpoint = (to - from) / 2 + from;
+
+        steps_new[i * 4] = from;
+        steps_new[i * 4 + 1] = midpoint;
+        steps_new[i * 4 + 2] = midpoint + 1;
+        steps_new[i * 4 + 3] = to;
+    }
+}
+
+void swap_pointer_(int **a, int **b)
+{
+    int *swap;
+    swap = *a, *a = *b, *b = swap;
+}
+
+void n_step(int *steps, int n, int h)
+{
+    int p = 1,
+        *h_steps_old = (int *)malloc(h * 3 * sizeof(int));
+
+    steps[0] = 0;
+    h_steps_old[0] = 0;
+    h_steps_old[1] = n;
+    steps[1] = n;
+
+    swap_pointer_(&steps, &h_steps_old);
+    while (p < h )
+    {
+        nextStep_(steps, h_steps_old, p <<= 1);
+        swap_pointer_(&steps, &h_steps_old);
+    }
+}
+
+
+
 void printTree(struct Node *tree, int level, int root)
 {
     if (root < 0) return;

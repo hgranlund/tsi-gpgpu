@@ -20,6 +20,8 @@ void printCudaTiming(float elapsed_time, float bytes, int n);
 double WallTime ();
 void printTree(struct Node *tree, int level, int root);
 
+void n_step(int *steps, int n, int h);
+
 void readPoints(const char *file_path, int n, struct Point *points);
 
 void ASSERT_TREE_EQ(struct Node *expected_tree, struct Node *actual_tree, int n);
