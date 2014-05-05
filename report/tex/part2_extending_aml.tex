@@ -1,0 +1,447 @@
+%!TEX root = ../main.tex
+
+\section{Extending AML} % (fold)
+\label{sec:extending_aml}
+
+\subsection{Interfacing with the AML modeling framework} % (fold)
+\label{sub:interfacing_with_the_aml_modeling_framework}
+In order to be able to extend the AML modeling framework, without writing every extension from the ground up, we need to understand how we can interact with AML from other applications. In this section we will look at how to control AML from other applications. We will first discuss control through the console, and then through the use of sub-processes in Python.
+
+\subsubsection{Interfacing with AML from the console} % (fold)
+\label{ssub:interfacing_with_aml_from_the_console}
+Using the console is a simple but powerful way to control a computer. Not only can the user give complex instructions in a short and concise manner, these instructions can be automated through batch-scripting, the resulting batch-files can be executed from other programs. Commands and results can even be streamed from one program to another. Although not the norm for consumer applications, a solid command line interface is the standard for GSD tools.
+
+In this section we will compare the AML command line interface with the command line interface of comparable general purpose programming languages. We will identify similarities and features suitable for improving the AML command line experience.
+
+We started our investigation by searching for documentation on using AML as a command line tool. This topic is not covered in the AML basic training \citep{aml_ref} and we where unable to get hold of such documentation from Technosoft. This was unfortunate, as we had to base our investigation on previous work done by Olivier \citep{olivier}, reverse engineering of the existing start-up batch-files supplied with AML, as well as a good bit of experimentation.
+
+To investigate AML as a command line tool, we choose two simple tasks, launching and interacting with the interpreter from the command line, as well as running a previously written program, and displaying the results in the command line. This would be compared with the procedures for accomplishing the same tasks with Common Lisp (in the form of the CLISP implementation) and Python.
+
+Common Lisp and Python are good languages to compare AML against, as both features an interpreter, and relies heavily in this feature for development. Common Lisp is also interesting, because it shares the same syntax as AML. Python does not share the syntax, but is also implemented by using the C programming language. Let's start out by looking at how the two tasks are preformed by the CLISP and Python interpreter.
+
+Depending on the installation and underlying operating system, you start the interpreters in any directory by simply typing \texttt{clisp} or \texttt{python} into the command line. On Windows systems, you sometimes have to to specify the path to the interpreter executable file in the environment variables to make the executable reachable from any directory. This is dependent on the installer, as some might set this variable as a part of the installation process.
+
+Interacting with the interpreter is then as simple as writing commands in the command line, and executing them with return. Examples of launch and use of Python and CLISP is shown in Listing~\ref{lst:multiLinePython} and Listing~\ref{lst:multiLineClisp}.
+
+\begin{python}[caption={Use of the Python interpreter},label={lst:multiLinePython}]
+teodoran@HAL:~$ python
+Python 2.7.4 (default, Sep 26 2013, 03:20:26)
+[GCC 4.7.3] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> def greetProfessor(name):
+...     print("Good day professor " + name)
+...
+>>> greetProfessor("Ole-Ivar")
+Good day professor Ole-Ivar
+\end{python}
+
+\begin{clisp}[caption={Use of the  the Clisp interpreter},label={lst:multiLineClisp}]
+teodoran@HAL:~$ clisp
+
+Welcome to GNU CLISP 2.49 (2010-07-07) <http://clisp.cons.org/>
+
+(Copyright statements omitted)
+
+Type :h and hit Enter for context help.
+
+[1]> (defun greet-teacher-assistant (name)
+(format t ``I promise I'll deliver the assignment soon ~s!'' name))
+GREET-TEACHER-ASSISTANT
+[2]> (greet-teacher-assistant ``Jens'')
+I promise I'll deliver the assignment soon ``Jens''!
+NIL
+\end{clisp}
+
+In the case of a malformed statement, both interpreters return the error message and stack trace directly into the command line. CLISP even supports injection of new code, instead of the erroneous code, through the use of restarts.
+
+To start AML in the console, a minimal environment has to be set up. This is sometimes performed by a included batch script. A version of this script, describing the required setup, is shown in Listing~\ref{lst:amlStartup}
+
+\begin{bash}[caption={AML5-startup-win32.bat},label={lst:amlStartup}]
+ECHO OFF
+
+SETLOCAL
+
+set "AML_TRAINING_ROOT=%CD%\"
+set "AML_STARTUP_DIR=%AML_TRAINING_ROOT%AML-Startups\AML-Startup-Win32\"
+set "AML_DIR=%AML_TRAINING_ROOT%AML\AML5_Win32\"
+
+cd %AML_STARTUP_DIR%
+"%AML_DIR%AML.exe" "%AML_DIR%aml.img"
+
+ENDLOCAL
+\end{bash}
+
+The startup script initiates a few variables needed by the AML process. Then it launches AML.exe with the AML.img file.
+
+This gives us an running AML interpreter, that functions much in the same way as the CLISP and Python interpreter. Errors also gives rise to a pop-up dialog, where the user can choose to debug or abort. Choosing the debug option, prints the stack trace to the console.
+
+Using a pop-up dialog to display debug information might have its benefits in a GUI setting, but as a part of a command line interface, it can cause some troubles. If the user where to use the program remotely with a networking interface without graphical forwarding, like ssh without X11 forwarding, the open dialog would cause the AML interpreter to hang indefinitely.
+
+Using a interpreter in this fashion is a quite common occurrence in the general software world. You might have a centralized testing or deployment server set up, where accessing and running code remotely would be beneficial. It also makes batch-scripting with AML more prone to fatal errors, as the script has no way to know if something went wrong with the AML process.
+
+Over to the task of running previously written programs. With CLISP or Python, this is performed by executing the program with the program piped through standard in. This code can be piped directly from a source file, or from the output of another program. Listing~\ref{lst:executingPython} and Listing~\ref{lst:executingClisp} shows how this is done for Python and CLISP respectively.
+
+\begin{bash}[caption={Executing Python},label={lst:executingPython}]
+teodoran@HAL:~$ python print-ta.py
+Teacher assistant
+\end{bash}
+
+\begin{bash}[caption={Executing Clisp},label={lst:executingClisp}]
+teodoran@HAL:~$ clisp print-professor.lisp
+"Professor"
+\end{bash}
+
+Running previously written AML-programs is a bit more laborious. You can load and compile systems on startup by editing the logical.pth file or you can load or compile you system with commands directly in the AML interpreter.
+
+The problem with the available options for running previously written programs with AML, is that it makes it harder to automate tasks with batch scripts, since the batch-process cannot interact with the interpreter after it is launched. This makes executing AML programs seemingly unnecessary hard, and during our experimentations, we have not been able to perform this task.
+% subsubsection interfacing_with_aml_from_the_console (end)
+
+\subsubsection{Running AML from another application} % (fold)
+\label{ssub:running_aml_from_another_application}
+One way of handling programming language interoperability, is to let one language execute code in the other, by using subprocesses. A classic example is an application interfacing with a relational database, through execution of SQL-statements. This is by no means the only way to handle programming language interoperability. Another way is using languages that can be compiled into the same executable code, .Net being the famous example of this approach, and it is an approach that makes one language interface with a very different one. In this sections we will investigate the possibilities for controlling the AML framework through subprocesses in another language.
+
+
+The case used for this investigation will be a REPL application (Read Eval Print Loop), written in Python, that implements the full functionality of the AML interpreter. The user should be able to launch the Python application, and use it as he or she would use the AML interpreter.
+
+This is conceptually a simple problem. You query the user for input, evaluate the input through the AML-subprocess, and then print the result to the command line, before looping the sequence all over again. Pseudo-code for such an application is shown in Listing~\ref{lst:replPseudoCode}.
+
+\begin{python}[caption={Pseudo-code for a AML REPL application},label={lst:replPseudoCode}]
+while true:
+    print(evalWithAMLSubProcess(readLine()))
+\end{python}
+
+Naive translation of Listing~\ref{lst:replPseudoCode} into Python code, using the Popen class to handle the subprocess, did not work, and displayed an interesting bug. The program prints out the loading statements, but hangs indefinitely when the user should be prompted for the first input. Why was this happening?
+
+Although we cannot be absolutely certain of what has gone wrong in the previous example, since we do not have access to the AML source code, the problem shows symptoms of a known problem relating unbuffered, line buffered and fully-buffered output. In the draft for the ISO C standard N1124, we can read the following:
+
+\begin{quote}
+When a stream is unbuffered, characters are intended to appear from the source or at the destination as soon as possible. Otherwise characters may be accumulated and transmitted to or from the host environment as a block. When a stream is fully buffered, characters are intended to be transmitted to or from the host environment as a block when a buffer is filled. When a stream is line buffered, characters are intended to be transmitted to or from the host environment as a block when a new-line character is encountered. \cite{N1124}
+\end{quote}
+
+At program startup, three text streams are predefined and need not be opened explicitly: standard input (for reading conventional input), standard output (for writing conventional output), and standard error (for writing diagnostic output). As initially opened, the standard error stream is not fully buffered; the standard input and standard output streams are fully buffered if and only if the stream can be determined not to refer to an interactive device.
+
+This applies to our problem. It is known that AML is implemented in C, and it is fair to assume that it uses the C standard IO library (stdio) to preform IO operations. This would not be a problem if the standard out stream was unbuffered or line buffered, since the results would have been sent for every character or line. The main problem is that the stdio library only sees that it is connected to a pipe in our program, and will therefore conclude that it is not connected to a interactive device, therefor going into a fully buffered mode. The result is that our Python program waits indefinitely for the result from the AML process.
+
+To test this theory we ran the same example, using Python with an option to force line-buffered IO. This worked as intended.
+
+One way to try to circumvent this problem, is by reading and writing to the AML process in two threads. Listing~\ref{lst:replThreadedPopen} shows one way op accomplishing this.
+
+\begin{python}[caption={Python AML REPL with two threads},label={lst:replThreadedPopen}]
+import subprocess
+import sys
+from threading import Thread
+
+process = subprocess.Popen(['AML5-startup-Win32.bat'], shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+def print_stdout():
+        while process.poll() is None:
+                output = process.stdout.readline()
+                sys.stdout.write(output)
+
+t = Thread(target=print_stdout, args=())
+t.start()
+
+while True:
+        input = sys.stdin.readline()
+        process.stdin.write(input)
+        process.stdin.flush()
+\end{python}
+
+This will accomplish our task, but has the unfortunate side effect of having us manage the communication between two different threads.
+
+Another way of accomplishing the task, is to use a pseudo-TTY. This is a program that emulates the command line environment, making the stdio library believe it is communicating with an interactive device. Developing an application that uses a pseudo-TTY requires a lot of development, or the use of a framework for pseudo-TTY work, as this is a quite complex task. Due to the difficulties in finding a suitable pseudo-TTY library for the Windows 8 operating system, the test was performed on Ubuntu 13.04, with CLISP emulating AML, by running in block-buffered mode. This test was successful.
+
+\pythonstyle
+\begin{lstlisting}[caption={Python CLISP REPL with pseudo-TTY},label={lst:replPseudoTty}]
+
+import pexpect
+
+c = pexpect.spawn('clisp')
+c.expect('\[\d+]>')
+print c.before.strip()
+
+def evalArg(arg):
+    c.sendline(arg)
+    c.expect('\[\d+]>')
+    return c.before.replace(arg, '', 1).strip().replace('\n', '', 1)
+
+done = False
+while not done:
+    expression = raw_input('> ')
+
+    if expression == 'exit':
+        done = True
+        c.sendline('(exit)')
+        c.expect(pexpect.EOF)
+        print c.before.replace('(exit)', '', 1)
+    else:
+        print evalArg(expression)
+\end{lstlisting}
+
+The benefit of this approach is the possibility of getting real interaction between the AML process and our own program, but this interaction comes with an sizable overhead and increase of complexity.
+% subsubsection running_aml_from_another_application (end)
+% subsection interfacing_with_the_aml_modeling_framework (end)
+
+
+\subsection{Extending the development environment} % (fold)
+\label{sub:extending_the_development_environment}
+
+\subsubsection{The importance of development environment choice} % (fold)
+\label{ssub:the_importance_of_development_enviroment_choice}
+When developing applications in the world of general software development, you have the choice of selecting from a wide array of tools. You'll more often than not start out by determining what kind of programming language, development framework, development methodology, project organization tools, testing framework, continuous integration tool, and so forth, is most suited for the task at hand, and maybe more important, compatible with the knowledge in your team.
+
+An important point to consider for the programmer, is the choice of development environment. Development environment is a term with different definitions, but we will define it as the software-tools used by the programmer to develop the new application, which is not part of the code-base.
+
+\begin{mydef}
+Development environment: The software-tools used by the programmer to develop the new application, which is not part of the code-base.
+
+Software frameworks is omitted from this definition. Although software frameworks can be considered a tool for the software engineer, it becomes a part of the developed application.
+\end{mydef}
+
+The development environment forms the tools used by the software engineer to perform his or her craft. Important parts of this environment is the code editor, source control tools, project planning tools, and so on. You could even argue that the chosen operating system is a part of the development environment.
+
+An woodworking analogy would be the tool chest. The nail and wood is not part of the development environment, as it is destined to become a part of the final product. The hammer used for hammering the nails, and the saw used for cutting the wood is a part of the development environment, and can differ from tool chest to tool chest.
+
+A motivation for making this division, is that the choice of development environment is often partially determined by the individual programmer, and can often differ within the same development project. These choices is also a factor that'll remain constant for a programmer between projects. An simple example: a programmer can use Emacs to work on both a web-development project in Python and a email-client in C++.
+
+One of the most important tools of the development environment is the code editor. This is the tool that enables the software engineer to write code, and although we can find no statistical study, it is safe to assume that a large amount of the software engineers workday is spent using the code editor to write code. Therefore have we chosen to focus our work on the code-editor part of the AML development environment.
+
+Almost no other tool is at such a whim of the taste of the programmer as the code editing tool. The therm “Editor war” is well known, and so is Richard Stallman humorous “Church of Emacs” \citep{stallman}. Although there has been made endless non-constructive arguments over which editor or IDE reign supreme, we will not be discussing this. Instead we will put forth some arguments for why editor diversity is beneficial for development in AML.
+
+\begin{itemize}
+  \item Editor choice gives new KBE developers the option of choosing the editor that most closely resembles a editor they are familiar with, in effect reducing the training time.
+
+  \item A choice of editor, makes AML less dependent on one editor technology. If the dominant editor style where to change in the future, AML would be more ready to support such a change. This is indeed a case of today, where programmers is moving from simple text-editors to integrated development frameworks (IDE's).
+
+  \item Exposing AML to different development environments gives the AML-developer access to the different features of the different development environments associated with each editor.
+
+  \item Choice is freedom for the developer. A trait that is usually cherished by today's software developers.
+\end{itemize}
+
+There is an argument to be made against supporting multiple editors for AML, in that it it steals valuable development resource from the core functions of AML. This is a big concern, because a KBE-vendor should be able to focus on delivering the best tools for KBE-development, not code-editing. But is it possible to have the best of both worlds? Can the relationship between the AML-development environment and the code editor be structured in such a way that it is easy to maintain for the vendor, yet enables the developer to use his favorite editor of choice? This is indeed the case with general software development today, where most programming systems can be used with any number of development environments. Our hypothesis will therefore be that this is possible for AML development as well.
+
+\begin{myrq}
+\label{rq:structure_aml}
+    It is possible to structure the relationship between the AML-development system and the code editing tool, in such a way, that it is possible to use other editors than XEmacs, with a minimum of development and maintenance.
+\end{myrq}
+
+We will also investigate the new features integrating another code editor gives to the AML development environment.
+
+\begin{myrq}
+\label{rq:another_editor}
+    Can another editor, give access to other development environment features, not readily available in XEmacs.
+\end{myrq}
+
+We will investigate these questions by trying to integrate the AML development framework with the Sublime Text 2 editor, and we will briefly review the work made by Oluf Tonning \cite{oluf} on integrating AML with Eclipse and Olivier Doucet \cite{olivier} on integrating AML into the .Net framework.
+% subsubsection the_importance_of_development_enviroment_choice (end)
+
+\subsubsection{Features of an AML editor} % (fold)
+\label{ssub:features_of_an_aml_editor}
+Let's start our investigation by looking at the most important features of the current XEmacs integration, and try to organize the features by importance to the programmer. We will then try to divide our findings into features that should be part of the AML integration and features that are related to the editor choice.
+
+
+
+\begin{description}
+    \item[AML console:] At the center of the XEmacs is the AML console. The console allows the developer to interact with the running AML process through a REPL interface in one of the emacs buffers. The developer is, amongst other, able to compile and run code, interact with the compiled models and send commands to the AML system.
+
+    \item[Launch of AML GUI:] This can be performed directly in the AML console by using the \texttt{(aml)} command, but GUI elements for performing this is also present.
+
+    \item[AML Documentation:] GUI elements give direct access to the AML manual by opening the manual in the default web browser.
+
+    \item[AML syntax highlighting:] The XEmacs integration features Lisp-style syntax highlighting, as well as highlighting of some AML-specific expressions.
+
+    \item[AML code completion:] Code completion can be performed through XEmacs extensive macro system, but no default completions are included. Dynamic abbreviation, completion of words previously written in any open buffer, is supported and can be accessed by pressing {M - /}.
+
+    \item[AML code navigation:] The XEmacs integration features ILISP-like code navigation (a well known emacs major mode for editing Lisp, \cite{cliki}, superseded by SLIME, the Superior Lisp Interaction Mode for Emacs). Most notable is the possibility to search for definitions of functions from anywhere in the project.
+
+    \item[AML code formatting:] Auto-formatting of sections of code in standard Lisp style is supported, although on a side note, lines with lone right parentheses is encouraged in the AML documentation. This is in direct conflict with general Lisp style guides, as documented by both the GNU Emacs Lisp coding conventions, \cite{gnu} and the Google style guide for Common Lisp, \cite{google}.
+\end{description}
+
+We can categorize these features into two groups. The first group is the features strictly unique to the AML development framework. The second is features that is more general in nature, and could be implemented by using existing editor functionality or plug-ins from the general software development community.
+
+The AML console, launch of the AML GUI and the AML documentation is features which are unique to AML, but the syntax highlighting, code completion, navigation and formatting are features that closely resembles general editor features for Lisp-like languages. We note that launch of the AML GUI is a sub function of the AML console. If the AML console is implemented, will launch of the AML GUI be possible.
+
+Access to the AML documentation is of also of a lower importance. Opening a local web page is something a developer would be able to do, even if there was no explicit GUI functionality for doing so in the editor. Geir Iversen \cite{geir} could also inform us that this is the preferred way to use the AML manual at Aker Solutions KBeDesign.
+
+This implies that a basic integration of AML into any editor consists of two parts:
+
+\begin{enumerate}
+    \item Integrating the AML console into the chosen editor.
+    \item Configure relevant existing Lisp-editing tools and plug-ins to work with AML.
+\end{enumerate}
+
+This strategy already has its merits. Oluf Tonning \cite{oluf} used this strategy to successfully integrate the AML development framework into the Eclipse IDE. Although this integration never gained major use, due to the quality of the Lisp support in Eclipse \cite{geir}, it remains an important proof of concept.
+
+Based on the previous discussion, we can evaluate existing code-editing tools for AML integration suitability. We will include categories for console support, Lisp support, as well as general configurability, since this will be important in configuring the editor for a new language. We will also consider user-friendliness for beginner programmers, since \enquote{KBE development should not only be for natural born hackers} \cite{rocca}. The results of this evaluation can be found in Table \ref{tab:editorEval}.
+
+\begin{table}
+    \begin{center}
+        \begin{tabular}{| l | l | l | l | l |}
+            \hline
+            Editor/IDE & Console support & Lisp support & Configurability & Beginner friendly \\ \hline
+            Visual Studio & Yes & Low & Medium & Medium \\ \hline
+            Eclipse & Yes & Medium & Medium & Medium \\ \hline
+            Emacs & Yes & High & High & Low \\ \hline
+            Vim & Yes & High & High & Low \\ \hline
+            Sublime Text & Yes & High & High & High \\ \hline
+        \end{tabular}
+    \end{center}
+    \caption{Editor/IDE evaluation}
+    \label{tab:editorEval}
+\end{table}
+
+Based on the evaluation and our familiarity with the editor, we chose to base further work on Sublime Text 2 (Sublime Text version 2).
+% subsubsection features_of_an_aml_editor (end)
+
+\subsubsection{Configuration of existing Lisp tools in Sublime} % (fold)
+\label{ssub:configuration_of_existing_lisp_tools_in_sublime}
+The first step was to configure existing Lisp support tools for use with AML. This is done through the existing package support in Sublime. A new folder was made for AML, and the existing configuration for Common Lisp was included. In addition code completion snippets for AML KBE classes was made. This gave the editor satisfactory syntax highlighting and, combined with the default dynamic abbreviation in Sublime, code completion features.
+
+The default editor provided good code navigation by default, except for the possibility of searching for function definitions. Some auto formatting features was also included by default, but these features was found to be insufficient.
+
+Sublime features an extensive library of open source, third party plug-ins. Installation and maintenance of these features is most easily organized through Sublime Package Control \citep{bond}.
+
+To enhance auto-formatting, the package Sublime Lispindent \citep{Friberg}, was installed. Testing revealed this plug-in to give good results by re-using the default configuration for Common Lisp as shown in Listing~\ref{lst:lispindentConfig}.
+
+%TODO fjerne syntax on the word self.
+\begin{lstlisting}[language=json, caption={Lispindent config},label={lst:lispindentConfig}]
+"aml": {
+    "detect": ".*\\.(aml)$",
+    "default_indent": "function",
+    "regex":        ["(catch|defvar|defclass|
+        defconstant|defcustom|defparameter|
+        defconst|define-condition|define-modify-macro|",
+        "defsetf|defun|defgeneric|define-setf-method|
+        define-self-expander|defmacro|defsubst|deftype|
+        defmethod|",
+        "defpackage|defstruct|dolist|dotimes|lambda|
+        let|let\\*|prog1|prog2|unless|when)$"]
+}
+\end{lstlisting}
+
+The indentation behavior of Lispindent can also be modified through regex parameter in the config file, although this was never desired in our tests.
+
+In order to enable search for function definitions, the package Find Function Definition \citep{Douglas}, was added. This enables the developer to highlight a function name, and search for the corresponding definition in the current project by pressing F8. The plug-in will display a list of files to open if multiple instances of possible definitions is found.
+
+This plug-in also required a minimal setup to work with AML, and the setup can be extended to include other syntactic elements, like classes.
+
+\begin{lstlisting}[language=json,caption={Find Function Definition Config},label={lst:findFuctionDefinitionConfig}]
+
+{
+    "definitions": /* where $NAME$ is the name of the function */
+    [
+        "function $NAME$",
+        "$NAME$: function",
+        "$NAME$:function",
+        "$NAME$ = function",
+        "$NAME$= function",
+        "$NAME$=function",
+        "def $NAME$(",
+        "(defun $NAMES$"
+    ]
+}
+\end{lstlisting}
+% subsubsection configuration_of_existing_lisp_tools_in_sublime (end)
+
+
+\subsubsection{Integration of the AML console} % (fold)
+\label{ssub:integration_of_the_aml_console}
+Based on the discussion under Section~\ref{ssub:running_aml_from_another_application}, we choose to base our console integration on the multi-threaded approach. The code for this integration is found in Appendix~\ref{sec:amlrepl}. A pseudo-TTY approach would be better, but the added complexity would mean that we would not be able to even remotely argue for the integration being easy to maintain and develop.
+
+A approach based on an AML-process in unbuffered or line buffered mode would have been even better, as there exist ready made tools for integrating such interpreters into Sublime \cite{bederski}.
+
+The problems with having to juggle two different threads became apparent when implementing the AMLRepl. In order for the main thread to be able to access the write out from STDOUT, the reading thread had to write the lines into a global variable. The main thread would the try to check at regular interval for new out-print in this global variable, and clearing it after writing the content to the text buffer.
+
+This is not the most elegant solution, and regularly requires the user to force an out-print of the global variable with the command Ctrl + Alt + w.
+
+Sending code to the AML interpreter was, on the other hand, an easy job. The open API of Sublime made it an breeze to get the wanted code from the text buffers.
+
+Some design choices where made in regards to the functionality of the REPL. One was to try to maintain as much of the default editing capabilities of the text-buffer containing AMLRepl. This meant that we would keep the default behavior of the return key. Instead we ended up using \texttt{Ctrl + Return} as our default evaluate expression key.
+
+Since the Lisp syntax is so easy to parse, we made the default evaluate expression function to look for the last complete Lisp expression in the current file. This behavior can be overridden, by first marking the desired statements to evaluate. Entire files can also be evaluated by pressing Ctrl + Alt + e.
+% subsubsection integration_of_the_aml_console_ (end)
+
+\subsubsection{Additional Configuration} % (fold)
+\label{ssub:additional_configuration}
+A couple of additional features was added, once the basic editing and REPL functionality was in place. The first one to be added was functions for launching the AML GUI. This was simply done by using the existing functions to make a function that always would send (AML) to the interpreter.
+
+Using the same approach launch of AUnit, the AML unit test framework, was integrated into Sublime. This required a bit more setup, since the logical.pth file has to include the AUnit paths, as shown in Listing~\ref{lst:aunitLogicalPth}.
+
+\begin{lstlisting}[caption={Aunit logical path},label={lst:aunitLogicalPth}]
+:aunit                "<full-path-to-sublime-text-folder> ...
+                    ... \Data\Packages\AMLRepl\AUnit\src\"
+:aunit-main-system    :aunit main\
+:aunit-core-system    :aunit core\
+:aunit-print-system   :aunit print\
+:aunit-gui-system     :aunit gui\
+\end{lstlisting}
+
+%TODO: edit (anuint) and(comple-system)
+The AUnit system can then be compiled and launched using the (compile-system ...) and (aunit) functions.
+
+We hoped to be able to display test results from AUnit directly in another text-buffer, as this would have given a more seamless integration. The developer would then have been able to edit, execute and test the AML code, using only the Sublime interface, and the AML GUI where graphical inspection was needed. This should have been possible, due to AUnit being developed with a command line mode \cite{aunit}. Unfortunately our version of AUnit had a bug in the command line functionality, and coupled with project time constraints, this was never realized.
+
+Finally the different functions of the integrations was made available through menu entries and the command palette, as well as being available directly from shortcuts.
+
+User configurable parameters was bundled together into suitable JSON configuration files, accessible from the settings menu. Readme-files, describing basic use and installation was also added.
+% subsubsection additional_configuration (end)
+
+\subsubsection{Notable differences between Sublime and XEmacs} % (fold)
+\label{ssub:notable_differences_between_sublime_and_xemacs}
+As stated in the introduction, we will not argue for one editor over another, as we believe that preference of one editor over another is largely due to taste and familiarity. Although the main benefit of integrating AML into Sublime is to give the developer several options to choose from, some notable features of Sublime should be mentioned.
+
+\begin{itemize}
+    \item AML console: At the center of the XEmacs is the AML console. The console allows the developer to interact with the running AML process through a REPL interface in one of the emacs buffers. The developer is, amongst other, able to compile and run code, interact with the compiled models and send commands to the AML system.
+
+    \item Sublime has a more modern GUI, with a tab system that closely matches modern tabbed applications, like web browsers. This is a interface that younger developers is more familiar with, and might make the editor learning process easier.
+
+    \item Sublime is customized by using the widely used general programming language Python. This will make customization of the editor easier for developers familiar with Python, as they do not have to learn the lesser known Emacs Lisp language.
+
+    \item The command palette, gives the developer access to all the options and commands available in Sublime, by utilizing fuzzy search. This makes it easy to find features and commands for the beginner, as well as lesser used features and commands for the experienced user.
+
+    \item Sublime has a more modern default key-binding, familiar from most other applications. One example is Ctrl-c for copy and Ctrl-v for paste.
+
+    \item Browsing and editing the project files and folders can easily be done in the left side bar of the editor.
+
+    \item Sublime has a large and active plug-in community. This gives the developer access to , easily installed to the Sublime package manager.
+
+    \item The minimap on the right side of the editor, gives the developer an instant overview of the open file. This is especially useful when editing large files.
+\end{itemize}
+% subsubsection notable_differences_between_sublime_and_xemacs (end)
+% subsection extending_the_development_environment (end)
+
+\subsection{Learning material} % (fold)
+\label{sub:learning_material}
+The learning material is often the first part of a programming system the developer experiences. For complex tools, like AML, it plays a large role in making the tool easy to use.
+
+When debugging an error, you do not have a good reference to the error messages. For most general software development tools, you can simply search for the error text to get a better explanation. This is also something that could be covered in the training documents.
+
+We have, in retrospect, evaluated our learning experience with AML. Technosoft delivers the AML Basic Training Manual \cite{aml_ref}. This manual is meant as a complete, beginners course to AML. The manual tries to cover the most important features of AML, mostly by following a case, concerning the aerodynamic surfaces of a missile. In addition, Technosoft delivers AML with a manual \cite{AML}. The manual is meant as an documentation of all the features available in AML, and although examples and explanation to the different language constructs are given, it's focus is on being a reference manual, not a training text.
+
+Our experience with the reference manual was that it has two major strong-points. The first is it being a web-page with an exhaustive index. Chapters on different subjects can be opened in different browser tabs, and terms can be searched for by using the browser command find on the index page. The organization of the different terms also feels natural, and makes it easy to find related terms to the terms you already know. The second strong-point is the examples. As well as efficiently displaying the usage of the language term, it is a great starting point for further exploration in the AML interpreter. In our opinion even more examples would have been a useful addition to the reference manual.
+
+The basic training manual left us with the impression that in the effort of trying to cover all aspects of AML, it does not manage to cover each section with enough depth. More intermediate and advances examples are not given not given enough space, and as a result, developing real world KBE-applications is a big step after finishing the manual. This we felt, was especially a problem when covering the topics relating to general use of a programming language with Lisp syntax.
+
+The most dominating programming languages today, Java, C\#, C++, and so on, uses C-derived syntax, quite different from the Lisp syntax of AML. Concepts as cons cells as the underlying data structure, functions as data, immutable variables, dynamic typing and macro programming is fundamental to Lisp programming, but does not play a big part in the C-derived languages. To gain a bigger understanding of these concepts, we turned to learning material for Common Lisp.
+
+Another factor in efficient training, is the possibility of getting several different explanations of the same topic. While you might not understand a given language concept with one explanation, several explanations from different point of view might help you to form an understanding. We used the following resources when learning to use AML.
+
+\begin{itemize}
+    \item Land on Lisp by Conrad Barski \cite{landoflisp}.
+
+    \item Practical Common Lisp by Peter Seibel \cite{practicalcommonlisp}.
+
+    \item On Lisp by Paul Graham \cite{Graham.1994}.
+
+    \item Common Lisp hyperspec \cite{www.lispworks.com}.
+\end{itemize}
+
+Our experience was that the lessons learned form working with Common Lisp, translated well into working with AML. The basic syntax was very similar, and most basic examples could be compiled as AML. Although small syntactic differences was still an annoyance when they arose.
+
+Looking at the learning material for general programming languages, we can find a lot of interactive tutorials. Some good examples are Codecademy \cite{codecademy}, Try Clojure \cite{tryclojure} and Learn Knockout.js \cite{learnknockoutjs}. Common for all the learning resources is that they bundle code editing, compilation and a step by step tutorial text into the same interface. The user is guided step by step through different tasks, first being explained the concept and then advancing when they supply the correct code to the given problem, or choose to be shown the solution.
+
+Such an interactive learning experience might be interesting to explore with AML, and should be able to implement in both the Sublime and Emacs editor.
+
+The most popular general software programming languages usually have active on-line communities. The communities discuss use of the language, improvements, solutions to common problems and is often a place for beginners to get answers and guidance. Some communities use on-line forums or maintain sites for questions and answers (QA sites). A very successful on-line community for programming language QA is the site Stack Overflow \cite{stackoverflow}. Technosoft curating such a forum or QA site, might be beneficial.
+% subsection learning_material (end)
+% section extending_aml (end)
