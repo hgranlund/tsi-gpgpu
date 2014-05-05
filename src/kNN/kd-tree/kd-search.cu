@@ -136,9 +136,6 @@ void kNN(struct Node qp, struct Node *tree, int n, int k, int *result,
             dx = current.dx;
             dx2 = dx * dx;
 
-            // printf("Up with (%3.1f, %3.1f, %3.1f): best_dist = %3.1f, dx2 = %3.1f, dim = %d\n",
-            //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, dx2, dim);
-
             current.index = (dx2 < worst_best.dist) ? current.other : -1;
         }
         else
@@ -161,9 +158,6 @@ void kNN(struct Node qp, struct Node *tree, int n, int k, int *result,
             push(&stack, current);
 
             current.index = target(qp, current_point, current.dx);
-
-            // printf("Down with(%3.1f, %3.1f, %3.1f): best_dist = %3.1f, current_dist = %3.1f, dim = %d\n",
-            //        current_point.p[0], current_point.p[1], current_point.p[2], worst_best.dist, current_dist, dim);
         }
     }
 
@@ -173,28 +167,32 @@ void kNN(struct Node qp, struct Node *tree, int n, int k, int *result,
     }
 }
 
-template <int max_k, bool k_in_shared>
-__global__ void dQueryAll(struct Node *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
+__device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, int &block_offset)
 {
-    int tid = threadIdx.x,
-        rest = n_qp % gridDim.x,
-        block_step = n_qp / gridDim.x,
-        // *l_stack,
-        block_offset = block_step * blockIdx.x;
-
-    // l_stack = stack;
-    // l_stack += thread_stack_size * threadIdx.x;
+    int rest = n % gridDim.x;
+    n_per_block = n / gridDim.x;
+    block_offset = n_per_block * blockIdx.x;
 
     if (rest >= gridDim.x - blockIdx.x)
     {
         block_offset += rest - (gridDim.x - blockIdx.x);
-        block_step++;
+        n_per_block++;
     }
+}
+
+template <int max_k, bool k_in_shared>
+__global__ void dQueryAll(struct Node *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
+{
+    int tid = threadIdx.x,
+        block_step = n_qp / gridDim.x,
+        block_offset = block_step * blockIdx.x;
+
+    struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
+
+    cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
     query_points += block_offset;
     result += block_offset * k;
-
-    struct SPoint *s_stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
 
     if (k_in_shared)
     {
@@ -218,6 +216,7 @@ __global__ void dQueryAll(struct Node *query_points, struct Node *tree, int n_qp
 
         free(k_stack_ptr);
     }
+
     free(s_stack_ptr);
 }
 
