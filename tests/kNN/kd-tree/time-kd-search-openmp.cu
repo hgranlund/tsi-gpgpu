@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include "omp.h"
 #include <helper_cuda.h>
 
 void writePoints(char *file_path, int n, struct Point *points)
@@ -121,13 +122,13 @@ int main(int argc, char const *argv[])
 
         cudaDeviceReset();
 
-        long start_time = clock();
+        const double start_time = omp_get_wtime();
 
         mpQueryAll(points, tree, n, n, k, result);
 
-        long elapsed_time_search = (clock() - start_time) * 1000 / CLOCKS_PER_SEC;
+        const double elapsed_time_search = (omp_get_wtime() - start_time) * 1000;
 
-        printf("kd-search-all,  Build Time = %.5f ms, Query Time = %ld ms, Total time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+        printf("kd-search-all,  Build Time = %.5f ms, Query Time = %lf ms, Total time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
                elapsed_time_build, elapsed_time_search, elapsed_time_build + elapsed_time_search, n, 1);
 
         free(points);
