@@ -9,6 +9,8 @@ option(BUILD_SHARED_LIBS
   OFF
   )
 
+option(ENABLE_OPENMP "Enable OpenMP support?" ON)
+
 option(CUDA_VERBOSE_PTXAS
   "On to enable verbose output from the PTXAS assembler."
   OFF
@@ -57,7 +59,18 @@ if (CUDA_FOUND)
         add_subdirectory(src/kNN)
         add_subdirectory(tests)
 else()
-        message("CUDA not found, doing something else")
+        message("CUDA not found")
 endif()
+
+if(ENABLE_OPENMP)
+  find_package(OpenMP)
+  if(OPENMP_FOUND)
+    # list(APPEND COMMON_DEFINITIONS -DHAVE_OPENMP)
+    # set(COMMON_C_FLAGS "${COMMON_C_FLAGS} ${OpenMP_C_FLAGS}")
+  else()
+        message("OpenMP not found")
+  endif()
+endif()
+
 
 include(CPack)
