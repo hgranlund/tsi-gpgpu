@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-// #include "time.h"
+
+// #ifdef HAVE_OPENMP
+#include <omp.h>
+// #endif
 
 #include "kd-search-openmp.cuh"
 
@@ -161,19 +164,23 @@ void kNN(struct Point qp, struct Node *tree, int n, int k, int *result,
 
 void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
-    int i;
 
-    struct SPoint *stack_ptr = (struct SPoint *)malloc(51 * sizeof(struct SPoint));
-    struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(struct KPoint));
-
-
-    for (i = 0; i < n_qp; ++i)
+    #pragma omp parallel
     {
-        kNN(query_points[i], tree, n_tree, k, result + (i * k), stack_ptr, k_stack_ptr);
+        int th_id = omp_get_thread_num();
+        struct SPoint *stack_ptr = (struct SPoint *) malloc(30 * sizeof(struct SPoint));
+        struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(struct KPoint));
+
+        while (th_id < n_qp)
+        {
+            kNN(query_points[th_id], tree, n_tree, k, result + (th_id * k), stack_ptr, k_stack_ptr);
+            th_id += omp_get_num_threads();
+        }
+
+        free(stack_ptr);
+        free(k_stack_ptr);
     }
 
-    free(stack_ptr);
-    free(k_stack_ptr);
 }
 
 // void timingDetails()

@@ -4,6 +4,7 @@
 #include "test-common.cuh"
 #include "kd-search-openmp.cuh"
 #include <knn_gpgpu.h>
+#include "omp.h"
 
 bool isExpectedPoint_(struct Node *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
 {
@@ -436,9 +437,9 @@ TEST(kd_search_openmp, knn_timing)
 
 TEST(kd_search_openmp, query_all_timing)
 {
-    int n, k = 5;
+    int n, k = 1;
 
-    for (n = 10000; n <= 10000; n += 1000)
+    for (n = 1000000; n <= 1000000; n += 1000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(struct Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(struct Node));
@@ -451,17 +452,21 @@ TEST(kd_search_openmp, query_all_timing)
         int test_runs = n;
         int *result = (int *) malloc(test_runs * k * sizeof(int));
 
-        cudaEvent_t start, stop;
-        float elapsed_time = 0;
-        int bytes = n * (sizeof(struct Node));
 
-        cudaStartTiming(start, stop, elapsed_time);
-        queryAll(points, tree, test_runs, n, k, result);
-        cudaStopTiming(start, stop, elapsed_time);
-        printCudaTiming(elapsed_time, bytes, n);
+        // long start_time = clock();
+        const double start_time = omp_get_wtime();
+
+        mpQueryAll(points, tree, n, n, k, result);
+
+        const double elapsed_time_search = (omp_get_wtime() - start_time) * 1000;
+
+        printf("kd-search-all: Query Time = %lf ms,  Size = %u Elements, NumDevsUsed = %d\n"
+               , elapsed_time_search, n, 1);
+
 
         free(tree);
         free(points);
+        free(result);
         cudaDeviceReset();
     };
 };
