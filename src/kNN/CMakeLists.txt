@@ -1,5 +1,4 @@
 # Append current NVCC flags by something, eg comput capability
-set(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS} -lcuda)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../../include
@@ -113,9 +112,7 @@ cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${HFILES}
   ${CUFILES}
   ${CFILES}
-  OPTIONS ${GENCODE}
-  ${VERBOSE_PTXAS}
-  -Xcompiler -fopenmp
+  OPTIONS ${GENCODE} ${VERBOSE_PTXAS}
   )
 
 install(FILES ${HFILES_PUBLIC}

@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
-
+cmake_minimum_required (VERSION 2.8)
 project(tsi_gpgpu)
 
 find_package(CUDA REQUIRED)
@@ -55,13 +54,6 @@ endif(BUILD_SHARED_LIBS)
 
 file(COPY tests/data DESTINATION tests)
 
-if (CUDA_FOUND)
-        add_subdirectory(src/kNN)
-        add_subdirectory(tests)
-else()
-        message("CUDA not found")
-endif()
-
 if(ENABLE_OPENMP)
   find_package(OpenMP)
   if(OPENMP_FOUND)
@@ -69,13 +61,15 @@ if(ENABLE_OPENMP)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-    # list(APPEND COMMON_DEFINITIONS -DHAVE_OPENMP)
-    # set(COMMON_C_FLAGS "${COMMON_C_FLAGS} ${OpenMP_C_FLAGS}")
-    # set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
   else()
         message("OpenMP not found")
   endif()
 endif()
 
+if (CUDA_FOUND)
+        add_subdirectory(src/kNN)
+        add_subdirectory(tests)
+else()
+        message("CUDA not found")
+endif()
 
-include(CPack)
