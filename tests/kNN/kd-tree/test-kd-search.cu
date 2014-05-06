@@ -17,7 +17,7 @@ bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float
 
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
-    kNN(query_point, tree, n, k, result, s_stack_ptr, k_stack_ptr);
+    cuKNN(query_point, tree, n, k, result, s_stack_ptr, k_stack_ptr);
 
     float actual = tree[result[0]].p[0] + tree[result[0]].p[1] + tree[result[0]].p[2];
     float expected = ex + ey + ez;
@@ -44,15 +44,15 @@ TEST(kd_search, isEmpty)
                    *stack = stack_ptr,
                     value1;
 
-    initStack(&stack);
+    cuInitStack(&stack);
 
     value1.index = 10;
 
-    ASSERT_TRUE(isEmpty(stack));
+    ASSERT_TRUE(cuIsEmpty(stack));
 
     stack[0] = value1;
     stack++;
-    ASSERT_FALSE(isEmpty(stack));
+    ASSERT_FALSE(cuIsEmpty(stack));
 
     free(stack_ptr);
 }
@@ -64,13 +64,13 @@ TEST(kd_search, push)
                     value1,
                     value2;
 
-    initStack(&stack);
+    cuInitStack(&stack);
 
     value1.index = 1;
     value2.index = 3;
 
-    push(&stack, value1);
-    push(&stack, value2);
+    cuPush(&stack, value1);
+    cuPush(&stack, value2);
     ASSERT_EQ(value1.index, stack_ptr[1].index);
     ASSERT_EQ(value2.index, stack_ptr[2].index);
 
@@ -85,7 +85,7 @@ TEST(kd_search, pop)
                     value2,
                     value3;
 
-    initStack(&stack);
+    cuInitStack(&stack);
 
     value1.index = 1;
     value2.index = 2;
@@ -96,9 +96,9 @@ TEST(kd_search, pop)
     stack[2] = value3;
     stack += 3;
 
-    ASSERT_EQ(value3.index, pop(&stack).index);
-    ASSERT_EQ(value2.index, pop(&stack).index);
-    ASSERT_EQ(value1.index, pop(&stack).index);
+    ASSERT_EQ(value3.index, cuPop(&stack).index);
+    ASSERT_EQ(value2.index, cuPop(&stack).index);
+    ASSERT_EQ(value1.index, cuPop(&stack).index);
 
     free(stack_ptr);
 }
@@ -109,17 +109,17 @@ TEST(kd_search, peek)
                    *stack = stack_ptr,
                     value1;
 
-    initStack(&stack);
+    cuInitStack(&stack);
 
     value1.index = 10;
 
-    ASSERT_EQ(-1, peek(stack).index);
-    ASSERT_EQ(-1, peek(stack).index);
+    ASSERT_EQ(-1, cuPeek(stack).index);
+    ASSERT_EQ(-1, cuPeek(stack).index);
 
-    push(&stack, value1);
+    cuPush(&stack, value1);
 
-    ASSERT_EQ(value1.index, peek(stack).index);
-    ASSERT_EQ(value1.index, peek(stack).index);
+    ASSERT_EQ(value1.index, cuPeek(stack).index);
+    ASSERT_EQ(value1.index, cuPeek(stack).index);
 
     free(stack_ptr);
 }
@@ -129,7 +129,7 @@ TEST(kd_search, initKStack)
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
-    initKStack(&k_stack, 50);
+    cuInitKStack(&k_stack, 50);
 
     ASSERT_EQ(-1, k_stack[-1].dist);
     ASSERT_EQ(FLT_MAX, k_stack[0].dist);
@@ -144,7 +144,7 @@ TEST(kd_search, insert)
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
-    initKStack(&k_stack, n);
+    cuInitKStack(&k_stack, n);
     struct KPoint a, b, c, d;
 
     a.dist = 1;
@@ -152,20 +152,20 @@ TEST(kd_search, insert)
     c.dist = 3;
     d.dist = 0;
 
-    insert(k_stack, a, n);
-    ASSERT_EQ(FLT_MAX, look(k_stack, n).dist);
+    cuInsert(k_stack, a, n);
+    ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
     ASSERT_EQ(a.dist, k_stack[0].dist);
 
-    insert(k_stack, b, n);
-    ASSERT_EQ(FLT_MAX, look(k_stack, n).dist);
+    cuInsert(k_stack, b, n);
+    ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
     ASSERT_EQ(b.dist, k_stack[1].dist);
 
-    insert(k_stack, c, n);
-    ASSERT_EQ(c.dist, look(k_stack, n).dist);
+    cuInsert(k_stack, c, n);
+    ASSERT_EQ(c.dist, cuLook(k_stack, n).dist);
     ASSERT_EQ(c.dist, k_stack[2].dist);
 
-    insert(k_stack, d, n);
-    ASSERT_EQ(b.dist, look(k_stack, n).dist);
+    cuInsert(k_stack, d, n);
+    ASSERT_EQ(b.dist, cuLook(k_stack, n).dist);
     ASSERT_EQ(d.dist, k_stack[0].dist);
 
     free(k_stack_ptr);
@@ -177,18 +177,18 @@ TEST(kd_search, insert_k_is_one)
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
-    initKStack(&k_stack, n);
+    cuInitKStack(&k_stack, n);
     struct KPoint a, b;
 
     a.dist = 1;
     b.dist = 0;
 
-    insert(k_stack, a, n);
-    ASSERT_EQ(a.dist, look(k_stack, n).dist);
+    cuInsert(k_stack, a, n);
+    ASSERT_EQ(a.dist, cuLook(k_stack, n).dist);
     ASSERT_EQ(a.dist, k_stack[0].dist);
 
-    insert(k_stack, b, n);
-    ASSERT_EQ(b.dist, look(k_stack, n).dist);
+    cuInsert(k_stack, b, n);
+    ASSERT_EQ(b.dist, cuLook(k_stack, n).dist);
     ASSERT_EQ(b.dist, k_stack[0].dist);
 
     free(k_stack_ptr);
@@ -198,16 +198,16 @@ TEST(kd_search, upDim)
 {
     int dim = 0;
 
-    upDim(&dim);
+    cuUpDim(&dim);
     ASSERT_EQ(1, dim);
 
-    upDim(&dim);
+    cuUpDim(&dim);
     ASSERT_EQ(2, dim);
 
-    upDim(&dim);
+    cuUpDim(&dim);
     ASSERT_EQ(0, dim);
 
-    upDim(&dim);
+    cuUpDim(&dim);
     ASSERT_EQ(1, dim);
 }
 
@@ -235,7 +235,7 @@ TEST(kd_search, correctness_with_k)
     build_kd_tree(points, n, tree);
 
     cudaDeviceReset();
-    kNN(points[4], tree, n, k, result, s_stack_ptr, k_stack_ptr);
+    cuKNN(points[4], tree, n, k, result, s_stack_ptr, k_stack_ptr);
 
     ASSERT_EQ(4, result[0]);
     ASSERT_EQ(3, result[1]);
@@ -277,7 +277,7 @@ TEST(kd_search, correctness_with_10000_points_file)
         for (i = 0; i < test_runs; ++i)
         {
             cudaDeviceReset();
-            kNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
+            cuKNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
 
             // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
             //        tree[i].p[0], tree[i].p[1], tree[i].p[2],
@@ -428,7 +428,7 @@ TEST(kd_search, knn_timing)
         double start_time = WallTime();
         for (i = 0; i < test_runs; ++i)
         {
-            kNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
+            cuKNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
         }
         printf("Time = %lf ms, Size = %d Elements\n", ((WallTime() - start_time) * 1000), n);
 
