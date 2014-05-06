@@ -113,7 +113,9 @@ cuda_add_library(knn_gpgpu ${LIB_TYPE}
   ${HFILES}
   ${CUFILES}
   ${CFILES}
-  OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
+  OPTIONS ${GENCODE}
+  ${VERBOSE_PTXAS}
+  -Xcompiler -fopenmp
   )
 
 install(FILES ${HFILES_PUBLIC}

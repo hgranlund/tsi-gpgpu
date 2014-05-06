@@ -106,7 +106,7 @@ if (BUILD_TESTS)
   )
 
   target_link_libraries(runUnitTests gtest gtest_main )
-  target_link_libraries(runUnitTests knn_gpgpu)
+  target_link_libraries(runUnitTests knn_gpgpu -fopenmp)
 
   add_test(run_test runUnitTests)
   add_custom_target(test runUnitTests)
@@ -140,7 +140,7 @@ if (BUILD_TESTS)
     OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
   )
 
-  target_link_libraries(time_kd_search_openmp knn_gpgpu)
+  target_link_libraries(time_kd_search_openmp knn_gpgpu -fopenmp)
   add_custom_target(kd_search_openmp time_kd_search_openmp)
 
   endif()
