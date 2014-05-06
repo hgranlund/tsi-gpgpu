@@ -1,6 +1,6 @@
 #include "test-common.cuh"
 #include "math.h"
-// #include <time.h>
+#include <time.h>
 
 void populatePoints(struct Node *points, int n)
 {
@@ -74,12 +74,14 @@ void printCudaTiming(float elapsed_time, float bytes, int n)
     printf("Throughput = %.4f GB/s, Time = %.5f ms, Size = %u Elements\n", throughput, elapsed_time, n);
 }
 
-double WallTime ()
+long startTiming()
 {
-    // struct timeval tmpTime;
-    // gettimeofday(&tmpTime, NULL);
-    // return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
-    return -1;
+    return clock();
+}
+
+long endTiming(long start_time)
+{
+    return (clock() - start_time) * 1000 / CLOCKS_PER_SEC;
 }
 
 void nextStep_(int *steps_new, int *steps_old, int p)

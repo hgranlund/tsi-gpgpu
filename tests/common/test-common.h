@@ -3,23 +3,14 @@
 
 #include <point.h>
 #include <stdio.h>
-#include <cuda.h>
-#include <helper_cuda.h>
 #include "gtest/gtest.h"
 
-#define checkCudaErrors(val)           check ( (val), #val, __FILE__, __LINE__ )
 
 void populatePoints(struct Node *points, int n);
 void populatePointSs(struct Point *points, int n);
 void populatePointSRosetta(struct Point *points, int n);
 
-void cudaStartTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
-void cudaStopTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
-void printCudaTiming(float elapsed_time, float bytes, int n);
-
-long startTiming();
-long endTiming(long start_time);
-
+double WallTime ();
 void printTree(struct Node *tree, int level, int root);
 
 void n_step(int *steps, int n, int h);

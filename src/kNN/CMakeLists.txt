@@ -23,7 +23,6 @@ kd-tree/quick-select.cuh
 kd-tree/sum-reduction.cuh
 kd-tree/kd-tree-build.cuh
 kd-tree/kd-search.cuh
-kd-tree/search-iterative.cuh
 )
 
 set(CUFILES
@@ -37,13 +36,14 @@ kd-tree/radix-select.cu
 kd-tree/quick-select.cu
 kd-tree/kd-tree-build.cu
 kd-tree/kd-search.cu
-kd-tree/search-iterative.cu
 )
 
 set(CFILES
+kd-tree/kd-search-openmp.cu
 )
 
 set(HFILES
+kd-tree/kd-search-openmp.cuh
 )
 
 set(HFILES_PUBLIC

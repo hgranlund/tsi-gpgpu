@@ -82,6 +82,7 @@ if (BUILD_TESTS)
   set(common_files
     common/test-common.cuh
     common/test-common.cu
+    common/test-common.h
   )
 
   set(test_files
@@ -94,6 +95,7 @@ if (BUILD_TESTS)
     kNN/brute_force/test-knn-brute-force-bitonic.cu
 
     kNN/kd-tree/test-kd-search.cu
+    kNN/kd-tree/test-kd-search-openmp.cu
     kNN/kd-tree/test-kd-tree-build.cu
     kNN/kd-tree/test-search-rosetta.cu
   )
@@ -132,5 +134,13 @@ if (BUILD_TESTS)
 
   target_link_libraries(time_kd_search_variable_k knn_gpgpu)
   add_custom_target(kd_search_variable_k time_kd_search_variable_k)
+
+  cuda_add_executable(time_kd_search_openmp
+    kNN/kd-tree/time-kd-search-openmp.cu
+    OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
+  )
+
+  target_link_libraries(time_kd_search_openmp knn_gpgpu)
+  add_custom_target(kd_search_openmp time_kd_search_openmp)
 
   endif()
