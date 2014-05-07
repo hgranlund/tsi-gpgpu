@@ -19,11 +19,18 @@ Accepts a list of n PointS. Builds a balanced kd-tree from these points on the G
 Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/blob/master/tests/kNN/kd-tree/time-kd-search.cu) test file.
 
 
-#### [void queryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-search.cu)
+#### [void cuQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-search.cu)
 
 Queries a previously built kd-tree of size n_tree for the k closest neighbors to the points specified in the query_points list of size n_qp. The index location of the k closest points are written to the result array.
 
 Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/blob/master/tests/kNN/kd-tree/time-kd-tree-build.cu) test file.
+
+
+#### [void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-search-openmp.cu)
+
+Performes same operations as cuQueryAll, but is paralellized on the CPU using OpenMP insted of CUDA.
+
+Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/blob/master/tests/kNN/kd-tree/time-kd-search-openmp.cu) test file.
 
 
 #### [void knn_brute_force_garcia(float *ref_host, int ref_width, float *query_host, int query_width, int height, int k, float *dist_host, int *ind_host)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/brute-force/kNN-brute-force-garcia.cu)
