@@ -180,7 +180,7 @@ __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, in
     }
 }
 
-template <int max_k, bool k_in_shared>
+template <int max_k>
 __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
@@ -189,8 +189,8 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
 
     // struct SPoint *s_stack_ptr = (struct SPoint *)malloc(41 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
-    struct SPoint s_stack_ptr[40 * THREADS_PER_BLOCK_SEARCH], *s_stack;
-    s_stack = s_stack_ptr + (threadIdx.x * 40);
+    struct SPoint s_stack_ptr[max_k * THREADS_PER_BLOCK_SEARCH],
+    *s_stack = s_stack_ptr + (threadIdx.x * max_k);
 
     cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
@@ -231,7 +231,7 @@ void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n
 
     getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
 
-    dQueryAll<1, false> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
+    dQueryAll<40> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
 
     checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaFree(d_tree));
