@@ -1,6 +1,7 @@
 #ifndef _RADIX_SELECT_
 #define _RADIX_SELECT_
-#include "point.h"
+#include <point.h>
+#include <stack.h>
 
 
 #define THREADS_PER_BLOCK_RADIX 512U

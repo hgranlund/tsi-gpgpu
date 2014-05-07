@@ -1,6 +1,7 @@
 #ifndef _KD_SEARCH_
 #define _KD_SEARCH_
-#include "point.h"
+#include <point.h>
+#include <stack.h>
 
 #define THREADS_PER_BLOCK_SEARCH 64U
 #define MAX_BLOCK_DIM_SIZE 65535U
