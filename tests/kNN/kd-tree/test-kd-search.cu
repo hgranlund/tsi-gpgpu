@@ -415,8 +415,6 @@ TEST(kd_search, knn_timing)
 
         readPoints("../tests/data/10000_points.data", n, points);
 
-
-
         cudaDeviceReset();
         build_kd_tree(points, n, tree);
 
@@ -425,14 +423,20 @@ TEST(kd_search, knn_timing)
 
         cudaDeviceReset();
 
+        cudaEvent_t start, stop;
+        float elapsed_time = 0;
+        int bytes = n * (sizeof(Node));
+
+        cudaStartTiming(start, stop, elapsed_time);
+
         long start_time = startTiming();
         for (i = 0; i < test_runs; ++i)
         {
             cuKNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
         }
-        long elapsed_time = endTiming(start_time);
-
-        printf("Time = %ld ms, Size = %d Elements\n", elapsed_time, n);
+        
+        cudaStopTiming(start, stop, elapsed_time);
+        printCudaTiming(elapsed_time, bytes, n);
 
         free(tree);
         free(result);
