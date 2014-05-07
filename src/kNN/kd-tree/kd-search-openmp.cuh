@@ -1,6 +1,7 @@
 #ifndef _KD_SEARCH_OPENMP
 #define _KD_SEARCH_OPENMP
 #include <point.h>
+#include <stack.h>
 
 
 void push(struct SPoint **stack, struct SPoint value);
