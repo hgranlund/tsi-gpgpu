@@ -88,30 +88,25 @@ void cuUpDim(int *dim)
 }
 
 __device__ __host__
-int cuTarget(struct Point qp, struct Node current, float dx)
+void cuChildren(struct Point qp, struct Node current, float dx, int &target, int &other)
 {
     if (dx > 0)
     {
-        return current.left;
+        other = current.right;
+        target = current.left;
     }
-    return current.right;
-}
-
-__device__ __host__
-int cuOther(struct Point qp, struct Node current, float dx)
-{
-    if (dx > 0)
+    else
     {
-        return current.right;
+        other = current.left;
+        target = current.right;
     }
-    return current.left;
 }
 
 __device__ __host__
 void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
            struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
 {
-    int  dim = 2;
+    int  dim = 2, target;
     float current_dist, dx, dx2;
 
     struct Node current_point;
@@ -154,10 +149,10 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
             cuUpDim(&dim);
             current.dim = dim;
             current.dx = current_point.p[dim] - qp.p[dim];
-            current.other = cuOther(qp, current_point, current.dx);
+            cuChildren(qp, current_point, current.dx, target, current.other);
             cuPush(&stack, current);
 
-            current.index = cuTarget(qp, current_point, current.dx);
+            current.index = target;
         }
     }
 
@@ -180,17 +175,16 @@ __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, in
     }
 }
 
-template <int max_k>
-__global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
+template <int max_k> __global__
+void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
-        block_step = n_qp / gridDim.x,
-        block_offset = block_step * blockIdx.x;
+        block_step,
+        block_offset;
 
-    // struct SPoint *s_stack_ptr = (struct SPoint *)malloc(41 * sizeof(struct SPoint));
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
-    struct SPoint s_stack_ptr[max_k * THREADS_PER_BLOCK_SEARCH],
-    *s_stack = s_stack_ptr + (threadIdx.x * max_k);
+    struct SPoint s_stack_ptr[max_k * THREADS_PER_BLOCK_SEARCH];
+    struct SPoint *s_stack = s_stack_ptr + (threadIdx.x * max_k);
 
     cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
@@ -204,7 +198,6 @@ __global__ void dQueryAll(struct Point *query_points, struct Node *tree, int n_q
     }
 
     free(k_stack_ptr);
-    // free(s_stack_ptr);
 }
 
 void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
@@ -231,7 +224,7 @@ void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n
 
     getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
 
-    dQueryAll<40> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
+    dQueryAll<20> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
 
     checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
     checkCudaErrors(cudaFree(d_tree));
