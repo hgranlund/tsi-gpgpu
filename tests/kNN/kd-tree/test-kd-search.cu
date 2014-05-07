@@ -316,7 +316,7 @@ TEST(kd_search, correctness_with_10000_points_file)
 //         int *result = (int *) malloc(n * k * sizeof(int));
 
 
-//         queryAll(points, tree, n, n, 1, result);
+//         cuQueryAll(points, tree, n, n, 1, result);
 //         // for (i = 0; i < n; ++i)
 //         // {
 //         //     ASSERT_EQ(points[i].p[0], tree[result[i]].p[0]) << "Failed at i = " << i << " with n = " << n ;
@@ -383,7 +383,7 @@ TEST(kd_search, knn_wikipedia_example)
 
 //     cudaDeviceReset();
 //     build_kd_tree(points, n, tree);
-//     queryAll(points, tree, n, n, 1, result);
+//     cuQueryAll(points, tree, n, n, 1, result);
 
 //     ASSERT_EQ(result[0], 0);
 //     ASSERT_EQ(result[1], 1);
@@ -464,7 +464,7 @@ TEST(kd_search, query_all_timing)
         int bytes = n * (sizeof(Node));
 
         cudaStartTiming(start, stop, elapsed_time);
-        queryAll(points, tree, test_runs, n, k, result);
+        cuQueryAll(points, tree, test_runs, n, k, result);
         cudaStopTiming(start, stop, elapsed_time);
         printCudaTiming(elapsed_time, bytes, n);
 
