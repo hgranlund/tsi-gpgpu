@@ -216,7 +216,7 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
     // printf("blocks = %d, threads = %d, n= %d\n", blocks, threads, n);
 }
 
-void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
+void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
     int *d_result, numBlocks, numThreads;
     struct Node *d_tree;

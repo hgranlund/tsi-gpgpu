@@ -124,7 +124,7 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        queryAll(points, tree, n, n, k, result);
+        cuQueryAll(points, tree, n, n, k, result);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);

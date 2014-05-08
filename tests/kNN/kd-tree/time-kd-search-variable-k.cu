@@ -131,11 +131,11 @@ int main(int argc, char const *argv[])
 
         if (variable_k)
         {
-            queryAll(points, tree, no_of_runs, n, k, result);
+            cuQueryAll(points, tree, no_of_runs, n, k, result);
         }
         else
         {
-            queryAll(points, tree, n, n, k, result);
+            cuQueryAll(points, tree, n, n, k, result);
         }
 
         checkCudaErrors(cudaEventRecord(stop, 0));

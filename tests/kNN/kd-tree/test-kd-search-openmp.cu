@@ -296,40 +296,40 @@ TEST(kd_search_openmp, correctness_with_10000_points_file)
     };
 };
 
-// TEST(kd_search_openmp, queryAll_correctness_with_10000_points_file)
-// {
-//     int n, i, k = 1;
+TEST(kd_search_openmp, mp_query_all_correctness_with_10000_points_file)
+{
+    int n, i, k = 1;
 
-//     for (n = 1000; n <= 10000; n += 1000)
-//     {
-//         struct Point *points = (struct Point *) malloc(n  * sizeof(struct Point));
-//         struct Node *tree = (struct Node *) malloc(n  * sizeof(struct Node));
+    for (n = 1000; n <= 10000; n += 1000)
+    {
+        struct Point *points = (struct Point *) malloc(n  * sizeof(struct Point));
+        struct Node *tree = (struct Node *) malloc(n  * sizeof(struct Node));
 
-//         srand(time(NULL));
+        srand(time(NULL));
 
-//         readPoints("../tests/data/10000_points.data", n, points);
+        readPoints("../tests/data/10000_points.data", n, points);
 
-//         cudaDeviceReset();
-//         build_kd_tree(points, n, tree);
+        cudaDeviceReset();
+        build_kd_tree(points, n, tree);
 
-//         // printTree(tree, 0, n / 2);
+        // printTree(tree, 0, n / 2);
 
-//         int *result = (int *) malloc(n * k * sizeof(int));
+        int *result = (int *) malloc(n * k * sizeof(int));
 
+        cuQueryAll(points, tree, n, n, 1, result);
 
-//         queryAll(points, tree, n, n, 1, result);
-//         for (i = 0; i < n; ++i)
-//         {
-//             ASSERT_EQ(points[i].p[0], tree[result[i]].p[0]) << "Failed at i = " << i << " with n = " << n ;
-//             ASSERT_EQ(points[i].p[1], tree[result[i]].p[1]) << "Failed at i = " << i << " with n = " << n;
-//             ASSERT_EQ(points[i].p[2], tree[result[i]].p[2]) << "Failed at i = " << i << " with n = " << n;
-//         }
+        for (i = 0; i < n; ++i)
+        {
+            ASSERT_EQ(points[i].p[0], tree[result[i]].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[result[i]].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[result[i]].p[2]) << "Failed at i = " << i << " with n = " << n;
+        }
 
-//         free(tree);
-//         free(result);
-//         free(points);
-//     };
-// };
+        free(tree);
+        free(result);
+        free(points);
+    };
+};
 
 TEST(kd_search_openmp, knn_wikipedia_example)
 {
@@ -368,7 +368,7 @@ TEST(kd_search_openmp, knn_wikipedia_example)
     free(tree);
 }
 
-TEST(kd_search_openmp, query_all_wikipedia_example)
+TEST(kd_search_openmp, mp_query_all_wikipedia_example)
 {
     int n = 6, k = 1;
     struct Point *points = (struct Point *) malloc(n * sizeof(struct Point));
@@ -435,11 +435,11 @@ TEST(kd_search_openmp, knn_timing)
     };
 };
 
-TEST(kd_search_openmp, query_all_timing)
+TEST(kd_search_openmp, mp_query_all_timing)
 {
     int n, k = 1;
 
-    for (n = 1000000; n <= 1000000; n += 1000)
+    for (n = 100000; n <= 100000; n += 1000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(struct Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(struct Node));
