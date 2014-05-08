@@ -175,6 +175,13 @@ __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, in
     }
 }
 
+int getFreeBytesOnGpu()
+{
+    cudaDeviceProp deviceProp;
+    cudaGetDeviceProperties(&deviceProp, 0);
+    return deviceProp.totalGlobalMem;
+}
+
 template <int max_k> __global__
 void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
