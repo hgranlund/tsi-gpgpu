@@ -130,3 +130,41 @@ void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &thread
     blocks = max(1, blocks);
     // printf("block = %d, threads = %d, n = %d, p =%d\n", blocks, threads, n, p );
 }
+
+
+void cpuQuickSelect(struct Point *points, int n, int dir)
+{
+#define SWAP(a, b) { tmp = points[a]; points[a] = points[b]; points[b] = tmp; }
+
+    struct Point tmp;
+
+    float pivot;
+
+    int pos,
+        left,
+        right,
+        i,
+        m;
+
+    m = n >> 1;   // same as n/2;
+    left = 0;
+    right = n - 1;
+
+    while (left < right)
+    {
+        pivot = points[m].p[dir];
+        SWAP(m, right);
+        for (i = pos = left; i < right; i++)
+        {
+            if (points[i].p[dir] < pivot)
+            {
+                SWAP(i, pos);
+                pos++;
+            }
+        }
+        SWAP(right, pos);
+        if (pos == m) break;
+        if (pos < m) left = pos + 1;
+        else right = pos - 1;
+    }
+}
