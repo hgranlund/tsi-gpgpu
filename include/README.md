@@ -12,7 +12,7 @@ Contains definitions of the different point struct data-types used by the knn gp
 Members
 -------
 
-#### [void build_kd_tree(struct Point *points, int n, struct Node *tree)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-tree-build.cu)
+#### [void buildKdTree(struct Point *points, int n, struct Node *tree)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-tree-build.cu)
 
 Accepts a list of n PointS. Builds a balanced kd-tree from these points on the GPU, and writes this tree to the Point list tree.
 

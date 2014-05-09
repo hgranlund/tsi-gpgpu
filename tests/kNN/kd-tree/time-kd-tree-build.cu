@@ -100,14 +100,14 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        build_kd_tree(points, n, points_out);
+        buildKdTree(points, n, points_out);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&elapsed_time, start, stop);
 
-        printf("build_kd_tree_naive,  Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
+        printf("buildKdTree_naive,  Time = %.5f ms, Size = %u Elements, NumDevsUsed = %d\n",
                elapsed_time, n, 1);
 
         free(points);

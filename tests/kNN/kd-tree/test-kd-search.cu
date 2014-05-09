@@ -232,7 +232,7 @@ TEST(kd_search, correctness_with_k)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(points, n, tree);
+    buildKdTree(points, n, tree);
 
     cudaDeviceReset();
     cuKNN(points[4], tree, n, k, result, s_stack_ptr, k_stack_ptr);
@@ -262,7 +262,7 @@ TEST(kd_search, correctness_with_10000_points_file)
         readPoints("../tests/data/10000_points.data", n, points);
 
         cudaDeviceReset();
-        build_kd_tree(points, n, tree);
+        buildKdTree(points, n, tree);
 
         // printTree(tree, 0, n / 2);
 
@@ -310,7 +310,7 @@ TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
         readPoints("../tests/data/10000_points.data", n, points);
 
         cudaDeviceReset();
-        build_kd_tree(points, n, tree);
+        buildKdTree(points, n, tree);
 
         // printTree(tree, 0, n / 2);
 
@@ -347,7 +347,7 @@ TEST(kd_search, knn_wikipedia_example)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(points, n, tree);
+    buildKdTree(points, n, tree);
 
 
     ASSERT_EQ(true, isExpectedPoint(tree, n, k, 2, 3, 0, 2, 3, 0));
@@ -383,7 +383,7 @@ TEST(kd_search, cu_query_all_wikipedia_example)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
-    build_kd_tree(points, n, tree);
+    buildKdTree(points, n, tree);
     cuQueryAll(points, tree, n, n, 1, result);
 
     ASSERT_EQ(result[0], 0);
@@ -417,7 +417,7 @@ TEST(kd_search, knn_timing)
         readPoints("../tests/data/10000_points.data", n, points);
 
         cudaDeviceReset();
-        build_kd_tree(points, n, tree);
+        buildKdTree(points, n, tree);
 
         int i,
             test_runs = n;
@@ -435,7 +435,7 @@ TEST(kd_search, knn_timing)
         {
             cuKNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
         }
-        
+
         cudaStopTiming(start, stop, elapsed_time);
         printCudaTiming(elapsed_time, bytes, n);
 
@@ -459,7 +459,7 @@ TEST(kd_search, query_all_timing)
         readPoints("../tests/data/10000_points.data", n, points);
 
         cudaDeviceReset();
-        build_kd_tree(points, n, tree);
+        buildKdTree(points, n, tree);
 
         int test_runs = n;
         int *result = (int *) malloc(test_runs * k * sizeof(int));

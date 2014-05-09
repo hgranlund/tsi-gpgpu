@@ -3,7 +3,7 @@
 #include <point.h>
 #include <stack.h>
 
-void build_kd_tree(struct Point *points, int n, struct Node *points_out);
+void buildKdTree(struct Point *points, int n, struct Node *points_out);
 void getThreadAndBlockCountMulRadix(int n, int p, int &blocks, int &threads);
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads);
 

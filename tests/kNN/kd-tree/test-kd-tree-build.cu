@@ -42,7 +42,7 @@ TEST(kd_tree_build, correctness_diagonal)
         expected_points[i] = t2;
     }
 
-    build_kd_tree(points, n , points_out);
+    buildKdTree(points, n , points_out);
 
     // cuPrintTree(points_out, 0, n / 2);
     ASSERT_KD_TREE(points_out, n);
@@ -72,7 +72,7 @@ TEST(kd_tree_build, correctness)
 
         }
 
-        build_kd_tree(points, n , points_out);
+        buildKdTree(points, n , points_out);
         // cuPrintTree(points_out, 0, n / 2);
 
         ASSERT_KD_TREE(points_out, n);
@@ -101,7 +101,7 @@ TEST(kd_tree_build, timing)
         cudaEvent_t start, stop;
 
         cudaStartTiming(start, stop, elapsed_time);
-        build_kd_tree(points, n, points_out);
+        buildKdTree(points, n, points_out);
         cudaStopTiming(start, stop, elapsed_time);
         printCudaTiming(elapsed_time, bytes, n);
 
@@ -126,7 +126,7 @@ TEST(kd_tree_build, wikipedia_example)
     points[4].p[0] = 8, points[4].p[1] = 1, points[4].p[2] = 0;
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
-    build_kd_tree(points, n, points_out);
+    buildKdTree(points, n, points_out);
 
     points_correct[0].p[0] = 2, points_correct[0].p[1] = 3, points_correct[0].p[2] = 0;
     points_correct[1].p[0] = 5, points_correct[1].p[1] = 4, points_correct[1].p[2] = 0;

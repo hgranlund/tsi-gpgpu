@@ -110,7 +110,7 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        build_kd_tree(points, n, tree);
+        buildKdTree(points, n, tree);
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);

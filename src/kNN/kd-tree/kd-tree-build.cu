@@ -163,7 +163,7 @@ void singleRadixSelectAndPartition(struct Point *d_points, struct Point *d_swap,
     }
 }
 
-void build_kd_tree(struct Point *h_points, int n, struct Node *h_points_out)
+void buildKdTree(struct Point *h_points, int n, struct Node *h_points_out)
 {
     struct Point *d_points, *d_swap;
     struct Node *d_points_out;

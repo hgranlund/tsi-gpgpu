@@ -2,7 +2,7 @@
 #define _KERNELS_H_
 #include "point.h"
 
-void build_kd_tree(struct Point *points, int n, struct Node *tree);
+void buildKdTree(struct Point *points, int n, struct Node *tree);
 
 void cuQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result);
 void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result);
