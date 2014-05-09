@@ -182,16 +182,16 @@ int getFreeBytesOnGpu()
     return deviceProp.totalGlobalMem;
 }
 
-template <int max_k> __global__
+__global__
 void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
+        stack_size = log2((float)n_tree) * 2,
         block_step,
         block_offset;
 
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
-    struct SPoint s_stack_ptr[max_k * THREADS_PER_BLOCK_SEARCH];
-    struct SPoint *s_stack = s_stack_ptr + (threadIdx.x * max_k);
+    struct SPoint *s_stack_ptr = (struct SPoint *) malloc((stack_size) * sizeof(SPoint));
 
     cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
@@ -200,11 +200,12 @@ void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tr
 
     while (tid < block_step)
     {
-        cuKNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack, k_stack_ptr);
+        cuKNN(query_points[tid], tree, n_tree, k, result + (tid * k), s_stack_ptr, k_stack_ptr);
         tid += blockDim.x;
     }
 
     free(k_stack_ptr);
+    free(s_stack_ptr);
 }
 
 void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
@@ -238,7 +239,7 @@ int getQueriesInStep(int n_qp, int k)
 
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
-    int *d_result, numBlocks, numThreads, queries_in_step, queries_done;
+    int *d_result, numBlocks, numThreads, queries_in_step, queries_done, stack_size;
     struct Node *d_tree;
     struct Point *d_query_points;
 
@@ -261,7 +262,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
         checkCudaErrors(cudaMemcpy(d_query_points, h_query_points, queries_in_step * sizeof(Point), cudaMemcpyHostToDevice));
 
         getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
-        dQueryAll<20> <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_result);
+        dQueryAll <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_result);
 
         checkCudaErrors(cudaMemcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost));
 
