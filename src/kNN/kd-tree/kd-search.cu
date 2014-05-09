@@ -216,25 +216,61 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
     // printf("blocks = %d, threads = %d, n= %d\n", blocks, threads, n);
 }
 
+int getQueriesInStep(int n_qp, int k)
+{
+    int queries_in_step, needed_bytes_per_query, needed_bytes_total, free_bytes;
+
+    needed_bytes_total = n_qp * k * sizeof(int) + n_qp * sizeof(Point);
+    needed_bytes_per_query = k * sizeof(int) + sizeof(Point);
+    free_bytes = getFreeBytesOnGpu();
+
+    if (free_bytes < needed_bytes_total)
+    {
+        queries_in_step = free_bytes / needed_bytes_per_query;
+        queries_in_step += n_qp % queries_in_step;
+    }
+    else
+    {
+        queries_in_step = n_qp;
+    }
+    return queries_in_step;
+}
+
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
-    int *d_result, numBlocks, numThreads;
+    int *d_result, numBlocks, numThreads, queries_in_step, queries_done;
     struct Node *d_tree;
     struct Point *d_query_points;
 
-    checkCudaErrors(cudaMalloc(&d_result, n_qp * k  * sizeof(int)));
-    checkCudaErrors(cudaMalloc(&d_query_points, n_qp * sizeof(Point)));
     checkCudaErrors(cudaMalloc(&d_tree, n_tree * sizeof(Node)));
-
-    checkCudaErrors(cudaMemcpy(d_query_points, h_query_points, n_qp * sizeof(Point), cudaMemcpyHostToDevice));
     checkCudaErrors(cudaMemcpy(d_tree, h_tree, n_tree * sizeof(Node), cudaMemcpyHostToDevice));
 
-    getThreadAndBlockCountForQueryAll(n_qp, numBlocks, numThreads);
+    queries_in_step = getQueriesInStep(n_qp, k);
+    queries_done = 0;
 
-    dQueryAll<20> <<< numBlocks, numThreads>>>(d_query_points, d_tree, n_qp, n_tree, k, d_result);
+    checkCudaErrors(cudaMalloc(&d_result, queries_in_step * k  * sizeof(int)));
+    checkCudaErrors(cudaMalloc(&d_query_points, queries_in_step * sizeof(Point)));
 
-    checkCudaErrors(cudaMemcpy(h_result, d_result, n_qp * k * sizeof(int), cudaMemcpyDeviceToHost));
-    checkCudaErrors(cudaFree(d_tree));
+    while (queries_done < n_qp)
+    {
+        if (queries_done + queries_in_step > n_qp)
+        {
+            queries_in_step = n_qp - queries_done;
+        }
+
+        checkCudaErrors(cudaMemcpy(d_query_points, h_query_points, queries_in_step * sizeof(Point), cudaMemcpyHostToDevice));
+
+        getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
+        dQueryAll<20> <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_result);
+
+        checkCudaErrors(cudaMemcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost));
+
+        h_query_points += queries_in_step;
+        h_result += queries_in_step;
+        queries_done += queries_in_step;
+    }
+
     checkCudaErrors(cudaFree(d_query_points));
     checkCudaErrors(cudaFree(d_result));
+    checkCudaErrors(cudaFree(d_tree));
 }
