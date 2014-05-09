@@ -162,6 +162,17 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
     }
 }
 
+__device__ int fastIntegerLog2(int x)
+{
+    int y = 0;
+    while (x > 2)
+    {
+        y++;
+        x >>= 1;
+    }
+    return y;
+}
+
 __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, int &block_offset)
 {
     int rest = n % gridDim.x;
@@ -186,7 +197,7 @@ __global__
 void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
-        stack_size = log2((float)n_tree) * 2,
+        stack_size = fastIntegerLog2(n_tree) * 2,
         block_step,
         block_offset;
 
@@ -239,7 +250,7 @@ int getQueriesInStep(int n_qp, int k)
 
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
-    int *d_result, numBlocks, numThreads, queries_in_step, queries_done, stack_size;
+    int *d_result, numBlocks, numThreads, queries_in_step, queries_done;
     struct Node *d_tree;
     struct Point *d_query_points;
 
