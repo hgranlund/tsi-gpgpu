@@ -10,7 +10,7 @@
 void quickSelectAndPartition(struct Point *d_points, int *d_steps, int n, int p, int dir);
 void quickSelectShared(struct Point *points, int *steps, int p, int dir, int size, int numBlocks, int numThreads);
 void getThreadAndBlockCountForQuickSelect(int n, int p, int &blocks, int &threads);
-
+void cpuQuickSelect(struct Point *points, int n, int dir);
 
 #endif
 

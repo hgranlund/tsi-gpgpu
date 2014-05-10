@@ -8,6 +8,7 @@
 
 #include "helper_cuda.h"
 
+
 int nextPowerOf2_(int x)
 {
     --x;
@@ -18,6 +19,13 @@ int nextPowerOf2_(int x)
     x |= x >> 16;
     return ++x;
 }
+
+
+void UpDim(int *dim)
+{
+    *dim = (*dim + 1) % 3;
+}
+
 
 void getThreadAndBlockCountForBuild(int n, int &blocks, int &threads)
 {
@@ -101,11 +109,15 @@ int store_locations(struct Node *tree, int lower, int upper, int n)
     return r;
 }
 
+__device__ __host__
+void pointConvert(struct Node &p1, struct Point &p2)
+{
+    p1.p[0] = p2.p[0], p1.p[1] = p2.p[1], p1.p[2] = p2.p[2];
+}
+
 __global__
 void convertPoints(struct Point *points_small, int n, struct Node *points)
 {
-    struct Point point_s;
-
     int local_n,
         block_offset,
         tid = threadIdx.x;
@@ -117,12 +129,7 @@ void convertPoints(struct Point *points_small, int n, struct Node *points)
 
     while (tid < local_n)
     {
-        struct Node point;
-        point_s = points_small[tid];
-        point.p[0] = point_s.p[0];
-        point.p[1] = point_s.p[1];
-        point.p[2] = point_s.p[2];
-        points[tid] = point;
+        pointConvert(points[tid], points_small[tid]);
         tid += blockDim.x;
     }
 }
@@ -163,10 +170,22 @@ void singleRadixSelectAndPartition(struct Point *d_points, struct Point *d_swap,
     }
 }
 
-void buildKdTree(struct Point *h_points, int n, struct Node *h_points_out)
+size_t getFreeBytesOnGpu_()
+{
+    size_t free_byte, total_byte ;
+    cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+    return free_byte;
+}
+
+size_t getNeededBytes(int number_of_leafs, int n)
+{
+    return (number_of_leafs * 2 * sizeof(int)) + (2 * n * sizeof(int)) + (2 * n * sizeof(Point));
+}
+
+void cuBuildKdTree(struct Point *h_points, int n, int dim, struct Node *tree)
 {
     struct Point *d_points, *d_swap;
-    struct Node *d_points_out;
+    struct Node *d_tree;
     int *d_partition,
         block_num, thread_num,
         *d_steps, *h_steps_old, *h_steps_new,
@@ -196,8 +215,9 @@ void buildKdTree(struct Point *h_points, int n, struct Node *h_points_out)
     checkCudaErrors(
         cudaMemcpy(d_points, h_points, n * sizeof(Point), cudaMemcpyHostToDevice));
 
-    radixSelectAndPartition(d_points, d_swap, d_partition, n, i % 3);
+    radixSelectAndPartition(d_points, d_swap, d_partition, n, dim);
 
+    UpDim(&dim);
     i++;
     while (i < (h - 1) )
     {
@@ -208,23 +228,24 @@ void buildKdTree(struct Point *h_points, int n, struct Node *h_points_out)
 
         if (step >= 9000000)
         {
-            singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, i % 3);
+            singleRadixSelectAndPartition(d_points, d_swap, d_partition, h_steps_new, p, dim);
         }
         else if (step > 3000)
         {
-            multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, step, p, i % 3);
+            multiRadixSelectAndPartition(d_points, d_swap, d_partition, d_steps, step, p, dim);
         }
         else if (step > 3)
         {
-            quickSelectAndPartition(d_points, d_steps, step, p, i % 3);
+            quickSelectAndPartition(d_points, d_steps, step, p, dim);
         }
         else
         {
             getThreadAndBlockCountForBuild(n, block_num, thread_num);
-            balanceLeafs <<< block_num, thread_num >>> (d_points, d_steps, p, i % 3);
+            balanceLeafs <<< block_num, thread_num >>> (d_points, d_steps, p, dim);
         }
         swap_pointer(&h_steps_new, &h_steps_old);
         i++;
+        UpDim(&dim);
     }
 
     checkCudaErrors(cudaFree(d_swap));
@@ -233,16 +254,47 @@ void buildKdTree(struct Point *h_points, int n, struct Node *h_points_out)
     free(h_steps_new);
     free(h_steps_old);
 
-    checkCudaErrors(cudaMalloc(&d_points_out, n * sizeof(Node)));
+    checkCudaErrors(cudaMalloc(&d_tree, n * sizeof(Node)));
 
     getThreadAndBlockCountForBuild(n, block_num, thread_num);
-    convertPoints <<< block_num, thread_num >>> (d_points, n, d_points_out);
+    convertPoints <<< block_num, thread_num >>> (d_points, n, d_tree);
 
-    checkCudaErrors(cudaMemcpy(h_points_out, d_points_out, n * sizeof(Node), cudaMemcpyDeviceToHost));
-
-    store_locations(h_points_out, 0, n, n);
+    checkCudaErrors(cudaMemcpy(tree, d_tree, n * sizeof(Node), cudaMemcpyDeviceToHost));
 
     checkCudaErrors(cudaFree(d_points));
+    checkCudaErrors(cudaFree(d_tree));
+}
+
+void buildKdTreeStep(struct Point *h_points, int n, int dim, struct Node *tree)
+{
+    if (n <= 0) return;
+
+    size_t free_bytes, needed_bytes;
+    int m = n >> 1, number_of_leafs = (n + 1) / 2;
+
+    free_bytes = getFreeBytesOnGpu_();
+    needed_bytes = getNeededBytes(number_of_leafs, n);
+
+    if (free_bytes > needed_bytes)
+    {
+        cuBuildKdTree(h_points, n, dim, tree);
+    }
+    else
+    {
+        cpuQuickSelect(h_points, n, dim);
+        pointConvert(tree[m], h_points[m]);
+
+        UpDim(&dim);
+
+        buildKdTreeStep(h_points, m, dim, tree);
+        buildKdTreeStep(h_points + m + 1, n - m - 1, dim, tree + m + 1);
+    }
 }
 
 
+void buildKdTree(struct Point *h_points, int n, struct Node *tree)
+{
+    int dim = 0;
+    buildKdTreeStep(h_points, n, dim, tree);
+    store_locations(tree, 0, n, n);
+}

@@ -193,11 +193,11 @@ __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, in
     }
 }
 
-int getFreeBytesOnGpu()
+size_t getFreeBytesOnGpu()
 {
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, 0);
-    return deviceProp.totalGlobalMem;
+    size_t free_byte, total_byte ;
+    cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+    return free_byte;
 }
 
 __global__

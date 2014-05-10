@@ -3,24 +3,24 @@
 
 struct Distance
 {
-    unsigned int index;
+    int index;
     float value;
 
-    __device__  Distance &operator=(volatile Distance &a)
+    __device__ __host__  Distance &operator=(volatile Distance &a)
     {
         index = a.index;
         value = a.value;
         return *this;
     }
 
-    __device__  volatile Distance &operator=(Distance &a)
+    __device__ __host__  volatile Distance &operator=(Distance &a)
     {
         index = a.index;
         value = a.value;
         return *this;
     }
 
-    __device__ volatile Distance &operator=(volatile Distance &a) volatile
+    __device__ __host__ volatile Distance &operator=(volatile Distance &a) volatile
     {
         index = a.index;
         value = a.value;

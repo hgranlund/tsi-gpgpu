@@ -377,6 +377,9 @@ TEST(kd_search_openmp, mp_query_all_wikipedia_example)
 
     points[0].p[0] = 2, points[0].p[1] = 3, points[0].p[2] = 0;
     points[1].p[0] = 5, points[1].p[1] = 4, points[1].p[2] = 0;
+    points[2].p[0] = 9, points[2].p[1] = 6, points[2].p[2] = 0;
+    points[3].p[0] = 4, points[3].p[1] = 7, points[3].p[2] = 0;
+    points[4].p[0] = 8, points[4].p[1] = 1, points[4].p[2] = 0;
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     cudaDeviceReset();
