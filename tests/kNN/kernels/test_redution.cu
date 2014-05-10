@@ -24,7 +24,7 @@ TEST(min_reduce, correcness)
     {
         h_dist = (Distance *) malloc(n * sizeof(Distance));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
         for (i = 0 ; i < n; i++)
         {
             h_dist[i].value = (float) n - i - 1;
@@ -53,7 +53,7 @@ TEST(min_reduce, timing)
     Distance *d_dist,
              *h_dist = (Distance *) malloc(n * sizeof(Distance));
 
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     for (i = 0; i < n; i++)
     {

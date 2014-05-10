@@ -439,7 +439,7 @@ void  run_iteration(int ref_nb, int k, int iterations)
     ind    = (int *)   malloc(query_nb * k * sizeof(float));
 
     // Init
-    srand(time(NULL));
+    srand((int)time(NULL));
     for (i = 0 ; i < ref_nb   * dim ; i++)
     {
         ref[i]    = (float)rand() / (float)RAND_MAX;

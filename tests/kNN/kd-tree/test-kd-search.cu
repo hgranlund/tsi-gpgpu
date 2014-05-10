@@ -257,7 +257,7 @@ TEST(kd_search, correctness_with_10000_points_file)
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
@@ -305,7 +305,7 @@ TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
@@ -412,7 +412,7 @@ TEST(kd_search, knn_timing)
 
         int *result = (int *) malloc(k * sizeof(int));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 

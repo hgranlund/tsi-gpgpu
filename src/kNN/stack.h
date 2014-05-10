@@ -8,7 +8,7 @@ struct SPoint
 {
     int index;
     int dim;
-    int dx;
+    float dx;
     int other;
 };
 

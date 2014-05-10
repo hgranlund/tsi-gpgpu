@@ -161,7 +161,7 @@ void readPoints(const char *file_path, int n, kd_node_t *points)
         fread(&points[i].x, sizeof(float), 3, file);
         for (int j = 0; j < 3; ++j)
         {
-            points[i].x[j] = round(points[i].x[j] / 100000000.0);
+            points[i].x[j] = (float) round(points[i].x[j] / 100000000.0);
         }
     }
 
@@ -179,7 +179,7 @@ TEST(search_rosetta, timing)
 
     float best_dist;
 
-    srand(time(0));
+    srand((int)time(0));
 
     for (n = 10000; n <= 10000; n += 1000)
 {

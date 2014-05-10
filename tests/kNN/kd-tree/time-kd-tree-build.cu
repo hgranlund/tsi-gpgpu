@@ -40,12 +40,12 @@ void readPoints(const char *file_path, int n, struct Point *points)
 void populatePoints(struct Point *points, int n)
 {
     int i;
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     for (i = 0; i < n; ++i)
     {
         struct Point t;
-        t.p[0] = rand(), t.p[1] = rand(), t.p[2] = rand();
+        t.p[0] = (float) rand(), t.p[1] = (float) rand(), t.p[2] = (float) rand();
         points[i] = t;
     }
 }

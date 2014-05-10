@@ -6,12 +6,12 @@ void populatePoints(struct Node *points, int n)
 {
     int i;
     float temp;
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     for (i = 0; i < n; ++i)
     {
         struct Node t;
-        temp = n - i - 1;
+        temp = (float) n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
 
@@ -23,12 +23,12 @@ void populatePointSs(struct Point *points, int n)
 {
     int i;
     float temp;
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     for (i = 0; i < n; ++i)
     {
         struct Point t;
-        temp = n - i - 1;
+        temp = (float) n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
 
@@ -36,12 +36,12 @@ void populatePointSs(struct Point *points, int n)
     }
 }
 
-#define rand1() (rand() / (double)RAND_MAX)
+#define rand1() (float)(rand() / (double)RAND_MAX)
 
 void populatePointSRosetta(struct Point *points, int n)
 {
     int i;
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     for (i = 0; i < n; ++i)
     {
@@ -67,7 +67,7 @@ void cudaStopTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time)
     cudaEventElapsedTime(&elapsed_time, start, stop);
 }
 
-void printCudaTiming(float elapsed_time, float bytes, int n)
+void printCudaTiming(float elapsed_time, int bytes, int n)
 {
     double throughput = 1.0e-9 * ((double)bytes) / (elapsed_time * 1e-3);
 
@@ -156,7 +156,7 @@ void readPoints(const char *file_path, int n, struct Point *points)
         fread(&points[i].p, sizeof(float), 3, file);
         for (int j = 0; j < 3; ++j)
         {
-            points[i].p[j] = round(points[i].p[j] / 100000000.0);
+            points[i].p[j] = (float) round(points[i].p[j] / 100000000.0);
         }
     }
 

@@ -306,7 +306,7 @@ int main(void)
     ind    = (int *)   malloc(query_nb * k * sizeof(float));
 
     // Init
-    srand(time(NULL));
+    srand((int)time(NULL));
     for (i = 0 ; i < ref_nb   * dim ; i++) ref[i]    = (float)rand() / (float)RAND_MAX;
     for (i = 0 ; i < query_nb * dim ; i++) query[i]  = (float)rand() / (float)RAND_MAX;
 

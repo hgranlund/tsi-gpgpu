@@ -15,7 +15,7 @@ void populatePointSRosetta(struct Point *points, int n);
 
 void cudaStartTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
 void cudaStopTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
-void printCudaTiming(float elapsed_time, float bytes, int n);
+void printCudaTiming(float elapsed_time, int bytes, int n);
 
 long startTiming();
 long endTiming(long start_time);
