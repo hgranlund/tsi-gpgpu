@@ -103,8 +103,8 @@ void cuChildren(struct Point qp, struct Node current, float dx, int &target, int
 }
 
 __device__ __host__
-void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
-           struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
+void cuOptionsKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
+           struct SPoint *stack_ptr, struct KPoint *k_stack_ptr, int start_index, float start_dist)
 {
     int  dim = 2, target;
     float current_dist, dx, dx2;
@@ -115,8 +115,8 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
     struct KPoint *k_stack = k_stack_ptr,
                            worst_best;
 
-    current.index = n / 2;
-    worst_best.dist = FLT_MAX;
+    current.index = start_index;
+    worst_best.dist = start_dist;
 
     cuInitStack(&stack);
     cuInitKStack(&k_stack, k);
@@ -160,6 +160,13 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
     {
         result[i] = k_stack[i].index;
     }
+}
+
+__device__ __host__
+void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
+           struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
+{
+    cuOptionsKNN(qp, tree, n, k, result, stack_ptr, k_stack_ptr, n / 2, FLT_MAX);
 }
 
 __device__ int fastIntegerLog2(int x)
@@ -286,3 +293,4 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     checkCudaErrors(cudaFree(d_result));
     checkCudaErrors(cudaFree(d_tree));
 }
+
