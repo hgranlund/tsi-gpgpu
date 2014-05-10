@@ -170,16 +170,16 @@ void singleRadixSelectAndPartition(struct Point *d_points, struct Point *d_swap,
     }
 }
 
-int getFreeBytesOnGpu_()
+size_t getFreeBytesOnGpu_()
 {
-    cudaDeviceProp deviceProp;
-    cudaGetDeviceProperties(&deviceProp, 0);
-    return deviceProp.totalGlobalMem;
+    size_t free_byte, total_byte ;
+    cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
+    return free_byte;
 }
 
-int getNeededBytes(int number_of_leafs, int n)
+size_t getNeededBytes(int number_of_leafs, int n)
 {
-    return (number_of_leafs * 2 * sizeof(int)) + (n * sizeof(int)) + (2 * n * sizeof(Point));
+    return (number_of_leafs * 2 * sizeof(int)) + (2 * n * sizeof(int)) + (2 * n * sizeof(Point));
 }
 
 void cuBuildKdTree(struct Point *h_points, int n, int dim, struct Node *tree)
@@ -269,7 +269,8 @@ void buildKdTreeStep(struct Point *h_points, int n, int dim, struct Node *tree)
 {
     if (n <= 0) return;
 
-    int free_bytes, needed_bytes, m = n >> 1, number_of_leafs = (n + 1) / 2;
+    size_t free_bytes, needed_bytes;
+    int m = n >> 1, number_of_leafs = (n + 1) / 2;
 
     free_bytes = getFreeBytesOnGpu_();
     needed_bytes = getNeededBytes(number_of_leafs, n);
