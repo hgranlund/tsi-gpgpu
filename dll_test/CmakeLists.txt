@@ -77,45 +77,27 @@ cuda_add_library(hello ${LIB_TYPE}
   OPTIONS ${GENCODE} ${VERBOSE_PTXAS}
   )
 
-
-# GENERATE_EXPORT_HEADER( hello
-#              BASE_NAME hello
-#              EXPORT_MACRO_NAME hello_EXPORT
-#              EXPORT_FILE_NAME hello_Export.h
-#              STATIC_DEFINE hello_BUILT_AS_STATIC
-# )
-
-
-
 generate_export_header(hello)
-install(TARGETS hello DESTINATION lib)
-install(FILES
- hello.h
- hello.cu
- ${PROJECT_BINARY_DIR}/hello_export.h DESTINATION include
-)
 
-install(EXPORT hello
+install(FILES hello.h hello.cu
+  ${PROJECT_BINARY_DIR}/dll_test/hello_export.h
+  DESTINATION include
+  )
+
+install(TARGETS hello
+  DESTINATION lib
+  EXPORT hello-targets
+  )
+
+install(EXPORT hello-targets
   DESTINATION lib
   )
-# install(FILES hello.h
-#   DESTINATION include
-#   )
 
-# install(TARGETS hello
-#   DESTINATION lib
-#   EXPORT hello-targets
-#   )
+add_executable(hello_world
+  hello_world.c
+)
 
-# install(EXPORT hello-targets
-#   DESTINATION lib
-#   )
-
-  # add_executable(hello_world
-  #   hello_world.c
-  # )
-
-  # target_link_libraries(hello_world hello)
-  # add_custom_target(hello-world hello_world)
+  target_link_libraries(hello_world hello)
+  add_custom_target(hello-world hello_world)
 
 
