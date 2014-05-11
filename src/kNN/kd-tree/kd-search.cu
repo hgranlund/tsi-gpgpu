@@ -107,7 +107,7 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
            struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
 {
     int  dim = 2, target;
-    float current_dist, dx, dx2;
+    float current_dist;
 
     struct Node current_point;
     struct SPoint *stack = stack_ptr,
@@ -128,10 +128,7 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
             current = cuPop(&stack);
             dim = current.dim;
 
-            dx = current.dx;
-            dx2 = dx * dx;
-
-            current.index = (dx2 < worst_best.dist) ? current.other : -1;
+            current.index = (current.dx * current.dx < worst_best.dist) ? current.other : -1;
         }
         else
         {
