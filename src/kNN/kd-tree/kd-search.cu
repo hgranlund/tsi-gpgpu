@@ -293,4 +293,3 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     checkCudaErrors(cudaFree(d_result));
     checkCudaErrors(cudaFree(d_tree));
 }
-
