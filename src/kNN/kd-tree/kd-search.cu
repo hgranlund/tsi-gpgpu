@@ -187,7 +187,7 @@ size_t getFreeBytesOnGpu()
 {
     size_t free_byte, total_byte ;
     cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
-    return free_byte;
+    return free_byte - 64;
 }
 
 __global__
@@ -229,14 +229,14 @@ int getQueriesInStep(int n_qp, int k)
 {
     int queries_in_step, needed_bytes_per_query, needed_bytes_total, free_bytes;
 
-    needed_bytes_total = n_qp * k * sizeof(int) + n_qp * sizeof(Point);
+    needed_bytes_total = n_qp * (k * sizeof(int) +  sizeof(Point));
     needed_bytes_per_query = k * sizeof(int) + sizeof(Point);
     free_bytes = getFreeBytesOnGpu();
 
     if (free_bytes < needed_bytes_total)
     {
         queries_in_step = free_bytes / needed_bytes_per_query;
-        queries_in_step += n_qp % queries_in_step;
+        queries_in_step -= n_qp % queries_in_step;
     }
     else
     {
