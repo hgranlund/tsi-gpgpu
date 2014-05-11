@@ -48,11 +48,11 @@ TEST(kd_search_openmp, isEmpty)
 
     value1.index = 10;
 
-    ASSERT_TRUE(isEmpty(stack));
+    ASSERT_EQ(1, isEmpty(stack));
 
     stack[0] = value1;
     stack++;
-    ASSERT_FALSE(isEmpty(stack));
+    ASSERT_EQ(0, isEmpty(stack));
 
     free(stack_ptr);
 }
@@ -257,7 +257,7 @@ TEST(kd_search_openmp, correctness_with_10000_points_file)
         struct Point *points = (struct Point *) malloc(n  * sizeof(struct Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(struct Node));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
@@ -305,7 +305,7 @@ TEST(kd_search_openmp, mp_query_all_correctness_with_10000_points_file)
         struct Point *points = (struct Point *) malloc(n  * sizeof(struct Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(struct Node));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 
@@ -413,7 +413,7 @@ TEST(kd_search_openmp, knn_timing)
 
         int *result = (int *) malloc(k * sizeof(int));
 
-        srand(time(NULL));
+        srand((int)time(NULL));
 
         readPoints("../tests/data/10000_points.data", n, points);
 

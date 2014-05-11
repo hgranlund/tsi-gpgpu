@@ -27,16 +27,16 @@ TEST(kd_tree_build, correctness_diagonal)
     struct Node *points_out = (struct Node *) malloc(n  * sizeof(Node));
     struct Node *expected_points = (struct Node *) malloc(n * sizeof(Node));
 
-    srand(time(NULL));
+    srand((int)time(NULL));
 
     for (i = 0; i < n; ++i)
     {
         struct Node t2;
         struct Point t;
-        temp = n - i - 1;
+        temp = (float) n - i - 1;
 
         t.p[0] = temp, t.p[1] = temp, t.p[2] = temp;
-        t2.p[0] = i, t2.p[1] = i, t2.p[2] = i;
+        t2.p[0] = (float)i, t2.p[1] = (float)i, t2.p[2] = (float)i;
 
         points[i] = t;
         expected_points[i] = t2;

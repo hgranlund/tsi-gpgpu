@@ -193,7 +193,7 @@ void cuBuildKdTree(struct Point *h_points, int n, int dim, struct Node *tree)
         i = 0,
         p = 1,
         number_of_leafs = (n + 1) / 2,
-        h = ceil(log2((float)n + 1));
+        h = (int)ceil(log2((float)n + 1));
 
     h_steps_new = (int *)malloc(number_of_leafs * 2 * sizeof(int));
     h_steps_old = (int *)malloc(number_of_leafs * 2 * sizeof(int));

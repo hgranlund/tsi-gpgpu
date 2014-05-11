@@ -73,6 +73,7 @@ endif (CUDA_VERBOSE_PTXAS)
 # Testing
 ################################
 if (BUILD_TESTS)
+
   add_subdirectory(lib/gtest-1.7.0)
   enable_testing()
 
@@ -105,7 +106,7 @@ if (BUILD_TESTS)
     ${test_files}
   )
 
-  target_link_libraries(runUnitTests gtest gtest_main )
+  target_link_libraries(runUnitTests gtest gtest_main)
   target_link_libraries(runUnitTests knn_gpgpu)
 
   add_test(run_test runUnitTests)
