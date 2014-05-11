@@ -259,7 +259,7 @@ __device__ void cuRadixSelect(struct Point *data, struct Point *data_copy, int n
         bit = 0,
         last = 2,
         u = n,
-        m_u = n >> 1,
+        m_u = ceil((float)n / 2),
         tid = threadIdx.x;
 
     fillArray_(partition, last, n);

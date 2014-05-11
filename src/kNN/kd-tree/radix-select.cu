@@ -311,7 +311,7 @@ void radixSelectAndPartition(struct Point *points, struct Point *swap, int *part
         cut,
         l = 0,
         u = n,
-        m_u = n >> 1,
+        m_u = (int)ceil((float)n / 2),
         bit = 0,
         last = 2,
         *h_zeros_count_block,
