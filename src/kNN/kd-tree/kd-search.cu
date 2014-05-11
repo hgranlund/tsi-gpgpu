@@ -187,7 +187,7 @@ size_t getFreeBytesOnGpu()
 {
     size_t free_byte, total_byte ;
     cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
-    return free_byte - 64;
+    return free_byte - 1024;
 }
 size_t getNeededBytes(int n_qp, int k, int n, int thread_num, int block_num)
 {
@@ -243,7 +243,7 @@ int getQueriesInStep(int n_qp, int k, int n)
 
     if (free_bytes < needed_bytes_total)
     {
-        return getQueriesInStep(n_qp / 2, k, n);
+        return getQueriesInStep((n_qp * 9) / 10, k, n);
     }
     else
     {

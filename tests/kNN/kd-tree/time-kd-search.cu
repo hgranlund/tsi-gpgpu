@@ -61,13 +61,23 @@ int main(int argc, char const *argv[])
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
-        printf("Running kd-search-all with n = %d\n", nu);
+        printf("Running kd-search-all with n = %d and k = %d\n", nu , k);
+
     }
     else if (argc == 3)
     {
         nu = ni = atoi(argv[1]);
-        from_file = 1;
-        printf("Running kd-search-all from file '%s' with n = %d\n", argv[2], nu);
+        if (atoi(argv[2]))
+        {
+            k = atoi(argv[2]);
+            printf("Running kd-search-all with n = %d and k = %d\n", nu , k);
+        }
+        else
+        {
+            from_file = 1;
+            printf("Running kd-search-all from file '%s' with n = %d and k = %d\n", argv[2], nu, k);
+
+        }
     }
     else if (argc == 4)
     {
@@ -86,7 +96,7 @@ int main(int argc, char const *argv[])
     }
     else
     {
-        printf("Running kd-search-all with n = %d\n", nu);
+        printf("Running kd-search-all with n = %d and k = %d\n", nu, k);
     }
 
     for (n = nu; n <= ni ; n += step)
