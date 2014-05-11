@@ -189,6 +189,12 @@ size_t getFreeBytesOnGpu()
     cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
     return free_byte - 64;
 }
+size_t getNeededBytes(int n_qp, int k, int thread_num, int block_num)
+{
+    return n_qp * (k * sizeof(int) +  sizeof(Point)) +
+           (thread_num * block_num *
+            ( (k + 1) * sizeof(KPoint) + (60 * sizeof(SPoint))));
+}
 
 __global__
 void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
@@ -227,22 +233,22 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
 
 int getQueriesInStep(int n_qp, int k)
 {
-    int queries_in_step, needed_bytes_per_query, needed_bytes_total, free_bytes;
+    int numBlocks, numThreads;
+    size_t needed_bytes_total, free_bytes;
 
-    needed_bytes_total = n_qp * (k * sizeof(int) +  sizeof(Point));
-    needed_bytes_per_query = k * sizeof(int) + sizeof(Point);
     free_bytes = getFreeBytesOnGpu();
+
+    getThreadAndBlockCountForQueryAll(n_qp, numThreads, numBlocks);
+    needed_bytes_total = getNeededBytes(n_qp, k, numThreads, numBlocks);
 
     if (free_bytes < needed_bytes_total)
     {
-        queries_in_step = free_bytes / needed_bytes_per_query;
-        queries_in_step -= n_qp % queries_in_step;
+        return getQueriesInStep(n_qp / 2, k);
     }
     else
     {
-        queries_in_step = n_qp;
+        return n_qp;
     }
-    return queries_in_step;
 }
 
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
