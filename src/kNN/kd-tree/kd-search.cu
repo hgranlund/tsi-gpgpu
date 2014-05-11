@@ -159,7 +159,7 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k, int *result,
     }
 }
 
-__device__ int fastIntegerLog2(int x)
+__device__ __host__ int fastIntegerLog2(int x)
 {
     int y = 0;
     while (x > 2)
@@ -189,11 +189,11 @@ size_t getFreeBytesOnGpu()
     cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
     return free_byte - 64;
 }
-size_t getNeededBytes(int n_qp, int k, int thread_num, int block_num)
+size_t getNeededBytes(int n_qp, int k, int n, int thread_num, int block_num)
 {
     return n_qp * (k * sizeof(int) +  sizeof(Point)) +
            (thread_num * block_num *
-            ( (k + 1) * sizeof(KPoint) + (60 * sizeof(SPoint))));
+            ( (k + 1) * sizeof(KPoint) + (fastIntegerLog2(n) * 2 * sizeof(SPoint))));
 }
 
 __global__
@@ -231,7 +231,7 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
     // printf("blocks = %d, threads = %d, n= %d\n", blocks, threads, n);
 }
 
-int getQueriesInStep(int n_qp, int k)
+int getQueriesInStep(int n_qp, int k, int n)
 {
     int numBlocks, numThreads;
     size_t needed_bytes_total, free_bytes;
@@ -239,11 +239,11 @@ int getQueriesInStep(int n_qp, int k)
     free_bytes = getFreeBytesOnGpu();
 
     getThreadAndBlockCountForQueryAll(n_qp, numThreads, numBlocks);
-    needed_bytes_total = getNeededBytes(n_qp, k, numThreads, numBlocks);
+    needed_bytes_total = getNeededBytes(n_qp, k, n, numThreads, numBlocks);
 
     if (free_bytes < needed_bytes_total)
     {
-        return getQueriesInStep(n_qp / 2, k);
+        return getQueriesInStep(n_qp / 2, k, n);
     }
     else
     {
@@ -260,7 +260,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     checkCudaErrors(cudaMalloc(&d_tree, n_tree * sizeof(Node)));
     checkCudaErrors(cudaMemcpy(d_tree, h_tree, n_tree * sizeof(Node), cudaMemcpyHostToDevice));
 
-    queries_in_step = getQueriesInStep(n_qp, k);
+    queries_in_step = getQueriesInStep(n_qp, k, n_tree);
     queries_done = 0;
 
     checkCudaErrors(cudaMalloc(&d_result, queries_in_step * k  * sizeof(int)));
