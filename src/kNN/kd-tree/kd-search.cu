@@ -273,7 +273,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
 
     checkCudaErrors(
-        cudaDeviceSetLimit(cudaLimitMallocHeapSize, getNeededHeapSize(n_tree, k, numThreads, numBlocks)));
+        cudaDeviceSetLimit(cudaLimitMallocHeapSize, getNeededHeapSize(n_tree, k, numThreads, numBlocks) + 1024));
 
     checkCudaErrors(cudaMalloc(&d_result, queries_in_step * k  * sizeof(int)));
     checkCudaErrors(cudaMalloc(&d_query_points, queries_in_step * sizeof(Point)));
@@ -292,7 +292,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
         checkCudaErrors(cudaMemcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost));
 
         h_query_points += queries_in_step;
-        h_result += queries_in_step;
+        h_result += (queries_in_step * k);
         queries_done += queries_in_step;
     }
 
