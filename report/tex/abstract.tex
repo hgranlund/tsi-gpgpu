@@ -15,10 +15,8 @@ Norwegian University of Science and Technology
 \end{center}
 \section*{Abstract}
 
-% The goal of this report, is to investigate the possible benefits of using general purpose software tools as a part of KBE development.
+The goal of this thesis, is to investigate the possible benefits of using general-purpose computing on graphics processing units (GPGPU), in order to speed up the execution of calculations in engineering applications.
 
-% The report focuses mainly on two cases. The first case, is the possibility of extending the AML modeling framework, by interfacing with another general purpose language. By finding strategies for doing this, we are able to build a working prototype integration of the AML framework into the Sublime Text 2 editor.
+The thesis focuses mainly on speeding up processing of laser scan point clouds in software developed by TechnoSoft Inc, by reducing the time needed to perform a k-nearest neighbors search for every points in the point cloud, for k significantly smaller than N.
 
-% The second part, explores general software tools more freely, as the possibility of building KBE models from the general purpose programming language Python is explored. This strategy gives easy integration with general software tools, and we are able to explore their benefits without the need to integrate the tool into an existing KBE development system.
-
-% Finally, the authors conclude that extending a KBE systems with modules form general software tools is beneficial, but enabling the KBE developer to extend the AML modeling framework, would be more efficient if some changes where made to AML.
+First, a brute force based approach, based on the work by Vincent Garcia, is refined and evaluated for this application. Although a large speedup is gained by using this approach, the overall performance is to low to be used on the problem sizes required by TechnoSoft Inc. Second, a kd-tree based approach is investigated, and the inherent difficulties of parallelizing this tree based algorithm is addressed. Finally, it is shown that the GPGPU based algorithms developed in this thesis can be used to speed up a k-nearest neighbors search in a large point cloud.
