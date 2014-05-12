@@ -1,0 +1,785 @@
+%!TEX root = ../main.tex
+
+\section{The quest for a fast KNN search} % (fold)
+\label{sec:the_quest_for_a_fast_KNN_search}
+
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the [release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v14-release-notes) for the most recent version of this project.
+
+Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
+
+In order to make the document more readable, we have included short descriptions of the algorithms used, a short reference to theoretical time complexity. We then go on to list our current results, problematic areas and possible improvements.
+
+The following papers, available in the resources folder, forms the literary basis for our current work.
+
+Related to the brute force approach:
+* _Improving the k-Nearest Neighbor Algorithm with CUDA - Graham Nolan_
+* _Fast k Nearest Neighbor Search using GPU - Garcia et al._
+* _K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al._
+
+Related to the k-d tree based approach:
+* _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._
+
+\subsection{Brute force based effort} % (fold)
+\label{sub:brute_force_based_effort}
+
+\subsubsection{Garcia's base algorithm} % (fold)
+\label{ssub:garcias_base_algorithme}
+
+Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
+
+1. Calculate the distance between all reference points and query points.
+2. Sort the distances and pick the k smallest distances.
+
+Garcias implementation supports any number of dimensions, reference points and query points (or up to ~65000, number of blocks in the GPU). Due to this feature the algorithm use a lot of extra computation power when only one query point and a small dimensions is selected.
+
+Time complexity:
+
+Steps:
+
+1. O(n). Every reference point must be evaluated once. Since all calculations are independent, we have a large potential for parallelizing.
+2. Insertion sort: O(n^2).
+% subsubsection garcias_base_algorithme (end)
+
+\subsubsection{Our reimplementation} % (fold)
+\label{ssub:our_reimplementation}
+
+Bitonic-sort:
+
+Graham Nolan discusses the possibility of improving Garcia's algorithm by reimplementing step two with a bitonic sort. His source code has not been available to us, but he states that the run-time improvements was significant. As well as choosing bitonic sort for the sorting stage of our algorithm, our implementation supports up to 15 000 000 points before memory errors occur, and we have limited the number of dimensions to three.
+
+Time complexity:
+
+Steps:
+
+1. O(n).
+2. Bitonic sort: worst case = O(n*log²(n)), average time ( parallel) = O(log²(n)).
+
+Results:
+
+Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
+
+![knn-brute-force-vs-serial-k-d-tree](./images/knn-brute-force-vs-serial-k-d-tree.png)
+
+We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
+
+Test with n =8 388 608:
+
+* Memory transfer:  21.1 ms.
+* Calculate all distances: 2.5 ms.
+* Bitonic sort:  176 ms.
+* Total: 200 ms.
+
+Min-Reduce:
+
+An other possibility to improve step 2 is to use a reduce operation to get the smallest distances. This can be done k times to get the k smallest values.
+
+Time complexity:
+
+Steps:
+
+1. O(n).
+2. Min-reduce: k* log²(n)).
+
+Memory optimalisation:
+
+We have done some memory optimization based on a [presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf) from Nvidia.
+
+The optimizations include:
+
+* Shared memory utilization.
+* Sequential Addressing.
+* Complete for-loop Unrolling.
+
+![Comparison between knn-brute-force-reduce with and without memory optimizations (k=10).](./images/knn-brute-force-reduce-memory-opt.png)
+
+Results:
+
+Test results of n = 8 388 608 with no memory optimization:
+
+*  Memory transfer:  21.1 ms.
+*  Calculate all distances: 2.5 ms
+*  One min-reduce step : 4.8 ms.
+*  Total time: (23.7 + k*4.8) ms.
+
+Test results of n = 8 388 608 with memory optimization:
+
+*  Memory transfer:  21.1 ms.
+*  Calculate all distances: 2.5 ms
+*  One min-reduce step : 1.7 ms.
+*  Total time: (23.7 + k*1.7) ms.
+
+![Comparison between bitonic and reduce (k=10).](./images/BitonicVSreduce.png)
+
+fig: Brute-force - k = 10
+
+Possible improvements:
+
+* Memory improvements. Use shared memory and texture memory.
+* Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log²(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
+* Replace bitonic sort with min reduce. O(k*log²(n)).
+% subsubsection our_reimplementation (end)
+
+% subsection brute_force_based_effort (end)
+
+
+k-d tree based effort
+=====================
+
+A k-d tree can be thought of as a binary search tree for graphical data. A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
+
+![2d-k-d-tree](./images/Kdtree_2d.png)
+
+In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
+
+Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from [Wikipedia](http://en.wikipedia.org/wiki/K-d_tree))
+
+![corresponding-binary-tree](./images/Tree_0001.png)
+
+Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log² n) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log² n) time.
+
+Interested readers is encouraged to look at the paper "Multidimensional binary search trees used for associative searching" by Jon Louis Bentley, where kd-trees first was described.
+
+
+The serial base algorithm
+-------------------------
+
+1. Build a balanced k-d tree from the point cloud.
+2. Query the tree for different sets of neighbors.
+
+#### Time complexity
+
+Steps:
+
+1. O(n log² n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
+2. Approximately O(log² n), but dependent on size of k.
+
+#### Results
+
+![serial-k-d-tree-breakdown](./images/serial-k-d-tree-breakdown.png)
+
+As expected, almost all the time is spent building the tree. Querying for the closest neighbor in the largest tree took less than 0.0015 ms, but 9 seconds is a long time to wait for the tree to build.
+
+The paper _Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al._ offers interesting, although slightly complex, ideas to an efficient parallelization of k-d tree construction. I order to save time, a good amount of time was spent searching for, and trying out, different open source implementations based on this paper. This search was unsuccessful. All the implementations we managed to find was problematic due to lack of updates, often not updated since 2011, and still running on CUDA 4.1, lack of documentation, lack of generalization or dubious source code.
+
+A more uplifting find was several references to _Real-Time KD-Tree Construction on Graphics Hardware_ in material published by Nvidia, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
+
+
+Our reimplementation
+--------------------
+
+Finding a way to represent the kd-tree boils down to representing a binary tree. This can be done in several ways, but we had some criteria for our representation:
+
+* The kd-tree should be memory-efficient, at best explicitly storing only the actual point coordinates. This since we want to store the largest possible amount of points on the smaller memory of the GPU.
+* The kd-tree representation should be easy to split, distribute and join, since we want to build it on several independent processes.
+
+After a bit of research and trial and error, we choose to represent the kd-tree as a array of structs, representing points, with an x, y and z coordinate stored in an short array. In order to turn this array into a binary tree, the following scheme was derived. Given an array, the root node of that array is the midmost element (the leftmost of the two, given an even number of elements). To find the left child of the root, you simply find the midmost element of the left sub-array, and likewise for the right child. This representation have some advantages and drawbacks.
+
+Advantages:
+
+* Can represent binary trees where not all leaf-nodes are present. This is the minimal requirement for representing perfectly balanced kd-trees.
+* Joining or splitting subtrees is as simple as appending or splitting arrays.
+* Minimal memory overhead, kd-trees can even be built in-place on the array.
+
+Drawbacks:
+
+* Cannot represent imperfectly balanced kd-trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
+* Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree. In order to eliminate this drawback, a index cache is computed before the search is performed.
+
+Given this representation of the kd-tree, the base kd-tree building algorithm can be expanded to the following:
+
+Steps:
+
+1. Find the exact median (of the current split dimension) in this sub-array, and swap it to the midmost place.
+2. Go through all elements in the list, and swap elements, such that all elements lower than the median is placed to the left, and all elements higher than the median is placed to the right.
+3. Repeat for the new sub-arrays, until the entire tree is built.
+
+#### Results
+
+_The serial kd-tree build times was similar or better than the base algorithm, so it is not discussed here_
+
+![awg-query-time-old-vs-new](./images/awg-query-time-old-vs-new.png)
+
+The graph shows that our serial implementation of search in this data structure, given a pre-calculated index cache, is as fast, or slightly faster than the base algorithm. The possibility of improving the search even more, by storing all calculated distances in a distance cache was also explored, but we can see from the graph that the overhead associated with this operation did outweigh the benefits.
+
+Some instability is apparent in the graph, but this is probably due to the author running other programs in the background when performing the test.
+
+![n-query-time-old-vs-new](./images/n-query-time-old-vs-new.png)
+
+The trend is exaggerated when considering N searches. Searching with an index cache is overall fastest, and gives a total search time of ~17 s for 14 million searches in a point cloud of 14 million.
+
+
+#### Possible improvements
+
+* Run several queries in parallel. Easy to implement, as parallelization is trivial due to independent queries, but is dependent on efficient transfer and storage of the kd-tree on the GPU.
+* Explore performance on a variable number of k.
+
+
+Parallel improvements
+---------------------
+
+As we noted in the previous section, the kd-tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize this operation. In order to do this, we have to look a bit closer at the different steps of the kd-tree build algorithm.
+
+Steps:
+
+1. Find the median of the points along a specified axis. This median point becomes the value of the current node.
+2. Sort all points with lower values than the median to the left of the median, and all the points with higher values than the median to the right.
+3. Perform this algorithm recursively on the left and right set of nodes.
+
+Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. The parallel algorithm for finding the median can be used to speed up the early iterations, where we do not have the possibility of calculating several sub-trees in parallel, as well as speeding up the calculation on lather calculations, by utilizing the large number of concurrent threads available in each parallel process.
+
+Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. Given a sorted list you can find the median directly, by simply looking at the midmost element of the array. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. We also have the inherent downside of sorting a list in order to find the median, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting.
+
+The existing O(n) algorithms for finding the median is mostly based on a more generic problem, namely selection or [kth order statistic algorithms](http://en.wikipedia.org/wiki/Selection_algorithm). Quick select and radix select to two of the best known selection algorithms in serial. They have both an average time complexity of O(n), witch makes them a good candidates. The difference between then is the constant time penalty. The radix sort have a more exact time complexity of O(bn), where b is the number of bits in each number. While the penalty for quick select is based on n, and if bad pivot elements are chosen the worst case performance is O(n²). We choose to start implementing radix sort based on the results from [*Radix Selection Algorithm for the kth Order Statistic*](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/radix_select.pdf). Based on the constant time penalties radix sort would also be the best candidate for large number of elements (n).
+
+The radix select is based on a bitwise partitioning, much like radix sort. In each step, elements are partitioned in two subgroups based on the current bit. Then the subgroup that contains the median is determined, and the search continue in that subgroup until the median is found.
+
+![An illustration of radix selectionn](./images/Radix_select.png)
+
+
+It is hard to use all the parallel power of cuda in this algorithm. The reason is that the problem is divided in three different types; partition one huge list, partition some middle sized list and partition many small lists. This is the reason why we have chosen to use three different implementation of k'th order statistic. The constant time penalties of the two algorithms we have chosen give us a clear indication the radix select is best on large lists while quick select is best on small lists.
+
+#### Results
+
+![gpu-vs-cpu-build-time](./images/gpu-vs-cpu-build-time.png)
+
+We see that the parallel implementation performs better than the base serial implementation, building a tree of 14 million points in just over 5 seconds, compared to just under 10 required by the serial algorithm. Still we regard this as a quite rough implementation, in need of more tuning to really bring out the speed potential. The potential for parallelizing the workload for the first and last iterations have not been fully developed. This is due to the implementation forcing one version of the radix select algorithm being to work on all problem sizes. This is not optimal for dividing cuda resources, and as a result, we get high penalties when the problem size reaches "unsuitable" values.
+
+We also see a couple of large "jumps" in the graph. This happens when the number of elements passes a power of two and the height of the resulting kd-tree increase. The height increase hits the implementation at its weakest.
+
+Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at "unsuitable" problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
+
+
+#### Memory usage
+
+To analyses the space complexity of the kd-tree build and search algorithm, we have made an theoretical calculation of both algorithms GPU memory consumption, and tested it against results from a GeForce 560ti and a Nvidia grid K520 (amazon web service delved).
+
+It is important to note that the only hard memory limitation is related to building the tree, as a search for N query-points can be performed in several operations. If you e.g. run into memory limitations when searching for 10^8 query-points, you can simply perform two searches on 5^8 query-points to get around the limitation. Loading the pre-built kd-tree on the GPU for searching, and performing one query for a low value of k, will always consume less memory than building the actual kd-tree.
+
+**Kd-tree-build**
+
+The memory consumption for the kd-tree build is only depended on the number of points (n) and the theoretical consumption rate grows linearly as O(36n) ⊂ O(n).
+
+![Memory usage of kd-tree-build](./images/memory-usage-build.png)
+
+We see that the estimation fit the real consumption almost perfectly, and with this memory model, we can easily estimate the GPU memory requirements for different problem sizes.
+
+Given that a customer wants to perform a knn-search on a point cloud of 100 million, he or she would need a GPU with at least 3.6 Gb of spare memory. Under we have tabulated what maximum problem sizes you would expect to be able to run on a selection of Nvidia graphics cards:
+
+| Nvidia GPU   | Available memory | Maximum problem size |
+| ------------ |:----------------:| --------------------:|
+| GTX TITAN    | 6144 MB          | 1.79E+08             |
+| GTX 780      | 3072 MB          | 8.95E+07             |
+| GTX 770      | 2048 MB          | 5.97E+07             |
+| Quadro K6000 | 12288 MB         | 3.58E+08             |
+| Quadro K5000 | 4096 MB          | 1.19E+08             |
+| Quadro K4000 | 3072 MB          | 8.95E+07             |
+| Tesla K40    | 12288 MB         | 3.58E+08             |
+| Tesla K20    | 5120 MB          | 1.49E+08             |
+
+These numbers should be read as rough estimates, as each card is expected to have internal processes requiring an unspecified constant amount of the available memory, therefor lovering the maximum problem size possible to run on these cards in practice. It is also worth to mention that when buying a GPU for GPGPU tasks, other performance characteristics is equally, or more, important. 
+
+**Kd-search**
+
+The kd-search is used to query every point against each other. It has a theoretical memory consumption rate at O((40+4k)n) ⊂ O(kn). The consumption is therefore depended on the number of points (n) and the number of neighbors (k).
+
+![Memory usage of kd-search](./images/memory-usage-kd-search.png)
+
+Also in this case our estimation fit the real consumption with a high degree of accuracy.
+
+
+#### Further work
+
+* Look at memory optimization.
+* Improve utiliti methods like: accumulateindex, minReduce.
+* Forloop Unrolling.
+
+
+V1.4 Release notes
+------------------
+
+Version 1.4 introduces the possibility of a variable k when searching. Testing the impact of varying the size of k was performed with a fixed number of 1000 repeated single queries. The timing results are shown in the following graph.
+
+![build_query_aws](./images/v14_variable_k.png)
+
+As expected, increasing k seems to increases the runtime with a constant factor. How this will affect searches in bigger trees and with a larger number of query-points should be explored next.
+
+Timing tests of the build time and query time for n queries and k = 1 was performed on a GeForce GTX 560 and at Amazon Web Services (AWS). For the GTX card we get the following graph.
+
+![build_query_aws](./images/v14_build_query_gtx.png)
+
+Querying for n points still takes a lot of time, but the time increase related to the number of points seems to be lower than the build time. This trend is more prominent when we look at the results from our tests on AWS, graphed below.
+
+![build_query_aws](./images/v14_build_query_aws.png)
+
+Here we see that the runtime for the tree building algorithm catches up with the search time, and surpasses it around 50 million points. This is an interesting result.
+
+From this graph we can see that on the AWS GPU, we are able, for 90 million points, to build the tree and query for the closest point, k = 1, in a total of ~30s + ~26s = ~56s < one minute.
+
+Source data for all graphs can be found in [this spreadsheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing).
+
+
+
+V1.3 Release notes
+------------------
+
+Version 1.3 introduces a couple of new features. Firstly the tree-building algorithm has been updated to also cache the location of the different children of each node in the tree. A small bug related to partition of the point-cloud list was also ironed out. This gives a tree building algorithm whit the following runtime results, comparable with the previous versions of this implementation:
+
+![construction_v13_gtx_560](./images/construction_v13_gtx_560.png)
+
+After a surprising amount of fiddling, querying for a large number of query-points was finally parallelized in version 1.3. This gave improved performance when querying many times in the same point cloud. 14 million queries in a point cloud of 14 million points can now be done on average in ~8 seconds. Compared to the estimated ~17 seconds needed by the serial implementation.
+
+![n_queries_v13_gtx_560](./images/n_queries_v13_gtx_560.png)
+
+Unfortunately, this early parallelization gave us quite unstable results. The data in the graph is based on ten timing runs, where the average, minimum and maximum values are collected in three series. As we can see, there is quite a big spread between the best and worst results. Looking at the raw data points for the ten series confirms that this is not a problem caused by a small number of outliers:
+
+![scatter_n_queries_v13_gtx_560](./images/scatter_n_queries_v13_gtx_560.png)
+
+Some instability would be expected, as the amount of pruning that can be achieved when searching for points in the kd-tree is dependent on the value you search for, but this amount of spread was unexpected. This behavior should be investigated further, as it seems to be indicating some kind of implementation error.
+
+Combining the results from the search and the tree-building, gives the following runtime for a sequence of building and N queries:
+
+![constructionand_n_queries_v13_gtx_560](./images/constructionand_n_queries_v13_gtx_560.png)
+
+
+\subsection{Interfacing with the AML modeling framework} % (fold)
+\label{sub:interfacing_with_the_aml_modeling_framework}
+In order to be able to extend the AML modeling framework, without writing every extension from the ground up, we need to understand how we can interact with AML from other applications. In this section we will look at how to control AML from other applications. We will first discuss control through the console, and then through the use of sub-processes in Python.
+
+\subsubsection{Interfacing with AML from the console} % (fold)
+\label{ssub:interfacing_with_aml_from_the_console}
+Using the console is a simple but powerful way to control a computer. Not only can the user give complex instructions in a short and concise manner, these instructions can be automated through batch-scripting, the resulting batch-files can be executed from other programs. Commands and results can even be streamed from one program to another. Although not the norm for consumer applications, a solid command line interface is the standard for GSD tools.
+
+In this section we will compare the AML command line interface with the command line interface of comparable general purpose programming languages. We will identify similarities and features suitable for improving the AML command line experience.
+
+We started our investigation by searching for documentation on using AML as a command line tool. This topic is not covered in the AML basic training \citep{aml_ref} and we where unable to get hold of such documentation from Technosoft. This was unfortunate, as we had to base our investigation on previous work done by Olivier \citep{olivier}, reverse engineering of the existing start-up batch-files supplied with AML, as well as a good bit of experimentation.
+
+To investigate AML as a command line tool, we choose two simple tasks, launching and interacting with the interpreter from the command line, as well as running a previously written program, and displaying the results in the command line. This would be compared with the procedures for accomplishing the same tasks with Common Lisp (in the form of the CLISP implementation) and Python.
+
+Common Lisp and Python are good languages to compare AML against, as both features an interpreter, and relies heavily in this feature for development. Common Lisp is also interesting, because it shares the same syntax as AML. Python does not share the syntax, but is also implemented by using the C programming language. Let's start out by looking at how the two tasks are preformed by the CLISP and Python interpreter.
+
+Depending on the installation and underlying operating system, you start the interpreters in any directory by simply typing \texttt{clisp} or \texttt{python} into the command line. On Windows systems, you sometimes have to to specify the path to the interpreter executable file in the environment variables to make the executable reachable from any directory. This is dependent on the installer, as some might set this variable as a part of the installation process.
+
+Interacting with the interpreter is then as simple as writing commands in the command line, and executing them with return. Examples of launch and use of Python and CLISP is shown in Listing~\ref{lst:multiLinePython} and Listing~\ref{lst:multiLineClisp}.
+
+\begin{python}[caption={Use of the Python interpreter},label={lst:multiLinePython}]
+teodoran@HAL:~$ python
+Python 2.7.4 (default, Sep 26 2013, 03:20:26)
+[GCC 4.7.3] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> def greetProfessor(name):
+...     print("Good day professor " + name)
+...
+>>> greetProfessor("Ole-Ivar")
+Good day professor Ole-Ivar
+\end{python}
+
+\begin{clisp}[caption={Use of the  the Clisp interpreter},label={lst:multiLineClisp}]
+teodoran@HAL:~$ clisp
+
+Welcome to GNU CLISP 2.49 (2010-07-07) <http://clisp.cons.org/>
+
+(Copyright statements omitted)
+
+Type :h and hit Enter for context help.
+
+[1]> (defun greet-teacher-assistant (name)
+(format t ``I promise I'll deliver the assignment soon ~s!'' name))
+GREET-TEACHER-ASSISTANT
+[2]> (greet-teacher-assistant ``Jens'')
+I promise I'll deliver the assignment soon ``Jens''!
+NIL
+\end{clisp}
+
+In the case of a malformed statement, both interpreters return the error message and stack trace directly into the command line. CLISP even supports injection of new code, instead of the erroneous code, through the use of restarts.
+
+To start AML in the console, a minimal environment has to be set up. This is sometimes performed by a included batch script. A version of this script, describing the required setup, is shown in Listing~\ref{lst:amlStartup}
+
+\begin{bash}[caption={AML5-startup-win32.bat},label={lst:amlStartup}]
+ECHO OFF
+
+SETLOCAL
+
+set "AML_TRAINING_ROOT=%CD%\"
+set "AML_STARTUP_DIR=%AML_TRAINING_ROOT%AML-Startups\AML-Startup-Win32\"
+set "AML_DIR=%AML_TRAINING_ROOT%AML\AML5_Win32\"
+
+cd %AML_STARTUP_DIR%
+"%AML_DIR%AML.exe" "%AML_DIR%aml.img"
+
+ENDLOCAL
+\end{bash}
+
+The startup script initiates a few variables needed by the AML process. Then it launches AML.exe with the AML.img file.
+
+This gives us an running AML interpreter, that functions much in the same way as the CLISP and Python interpreter. Errors also gives rise to a pop-up dialog, where the user can choose to debug or abort. Choosing the debug option, prints the stack trace to the console.
+
+Using a pop-up dialog to display debug information might have its benefits in a GUI setting, but as a part of a command line interface, it can cause some troubles. If the user where to use the program remotely with a networking interface without graphical forwarding, like ssh without X11 forwarding, the open dialog would cause the AML interpreter to hang indefinitely.
+
+Using a interpreter in this fashion is a quite common occurrence in the general software world. You might have a centralized testing or deployment server set up, where accessing and running code remotely would be beneficial. It also makes batch-scripting with AML more prone to fatal errors, as the script has no way to know if something went wrong with the AML process.
+
+Over to the task of running previously written programs. With CLISP or Python, this is performed by executing the program with the program piped through standard in. This code can be piped directly from a source file, or from the output of another program. Listing~\ref{lst:executingPython} and Listing~\ref{lst:executingClisp} shows how this is done for Python and CLISP respectively.
+
+\begin{bash}[caption={Executing Python},label={lst:executingPython}]
+teodoran@HAL:~$ python print-ta.py
+Teacher assistant
+\end{bash}
+
+\begin{bash}[caption={Executing Clisp},label={lst:executingClisp}]
+teodoran@HAL:~$ clisp print-professor.lisp
+"Professor"
+\end{bash}
+
+Running previously written AML-programs is a bit more laborious. You can load and compile systems on startup by editing the logical.pth file or you can load or compile you system with commands directly in the AML interpreter.
+
+The problem with the available options for running previously written programs with AML, is that it makes it harder to automate tasks with batch scripts, since the batch-process cannot interact with the interpreter after it is launched. This makes executing AML programs seemingly unnecessary hard, and during our experimentations, we have not been able to perform this task.
+% subsubsection interfacing_with_aml_from_the_console (end)
+
+\subsubsection{Running AML from another application} % (fold)
+\label{ssub:running_aml_from_another_application}
+One way of handling programming language interoperability, is to let one language execute code in the other, by using subprocesses. A classic example is an application interfacing with a relational database, through execution of SQL-statements. This is by no means the only way to handle programming language interoperability. Another way is using languages that can be compiled into the same executable code, .Net being the famous example of this approach, and it is an approach that makes one language interface with a very different one. In this sections we will investigate the possibilities for controlling the AML framework through subprocesses in another language.
+
+
+The case used for this investigation will be a REPL application (Read Eval Print Loop), written in Python, that implements the full functionality of the AML interpreter. The user should be able to launch the Python application, and use it as he or she would use the AML interpreter.
+
+This is conceptually a simple problem. You query the user for input, evaluate the input through the AML-subprocess, and then print the result to the command line, before looping the sequence all over again. Pseudo-code for such an application is shown in Listing~\ref{lst:replPseudoCode}.
+
+\begin{python}[caption={Pseudo-code for a AML REPL application},label={lst:replPseudoCode}]
+while true:
+    print(evalWithAMLSubProcess(readLine()))
+\end{python}
+
+Naive translation of Listing~\ref{lst:replPseudoCode} into Python code, using the Popen class to handle the subprocess, did not work, and displayed an interesting bug. The program prints out the loading statements, but hangs indefinitely when the user should be prompted for the first input. Why was this happening?
+
+Although we cannot be absolutely certain of what has gone wrong in the previous example, since we do not have access to the AML source code, the problem shows symptoms of a known problem relating unbuffered, line buffered and fully-buffered output. In the draft for the ISO C standard N1124, we can read the following:
+
+\begin{quote}
+When a stream is unbuffered, characters are intended to appear from the source or at the destination as soon as possible. Otherwise characters may be accumulated and transmitted to or from the host environment as a block. When a stream is fully buffered, characters are intended to be transmitted to or from the host environment as a block when a buffer is filled. When a stream is line buffered, characters are intended to be transmitted to or from the host environment as a block when a new-line character is encountered. \cite{N1124}
+\end{quote}
+
+At program startup, three text streams are predefined and need not be opened explicitly: standard input (for reading conventional input), standard output (for writing conventional output), and standard error (for writing diagnostic output). As initially opened, the standard error stream is not fully buffered; the standard input and standard output streams are fully buffered if and only if the stream can be determined not to refer to an interactive device.
+
+This applies to our problem. It is known that AML is implemented in C, and it is fair to assume that it uses the C standard IO library (stdio) to preform IO operations. This would not be a problem if the standard out stream was unbuffered or line buffered, since the results would have been sent for every character or line. The main problem is that the stdio library only sees that it is connected to a pipe in our program, and will therefore conclude that it is not connected to a interactive device, therefor going into a fully buffered mode. The result is that our Python program waits indefinitely for the result from the AML process.
+
+To test this theory we ran the same example, using Python with an option to force line-buffered IO. This worked as intended.
+
+One way to try to circumvent this problem, is by reading and writing to the AML process in two threads. Listing~\ref{lst:replThreadedPopen} shows one way op accomplishing this.
+
+\begin{python}[caption={Python AML REPL with two threads},label={lst:replThreadedPopen}]
+import subprocess
+import sys
+from threading import Thread
+
+process = subprocess.Popen(['AML5-startup-Win32.bat'], shell=False, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
+def print_stdout():
+        while process.poll() is None:
+                output = process.stdout.readline()
+                sys.stdout.write(output)
+
+t = Thread(target=print_stdout, args=())
+t.start()
+
+while True:
+        input = sys.stdin.readline()
+        process.stdin.write(input)
+        process.stdin.flush()
+\end{python}
+
+This will accomplish our task, but has the unfortunate side effect of having us manage the communication between two different threads.
+
+Another way of accomplishing the task, is to use a pseudo-TTY. This is a program that emulates the command line environment, making the stdio library believe it is communicating with an interactive device. Developing an application that uses a pseudo-TTY requires a lot of development, or the use of a framework for pseudo-TTY work, as this is a quite complex task. Due to the difficulties in finding a suitable pseudo-TTY library for the Windows 8 operating system, the test was performed on Ubuntu 13.04, with CLISP emulating AML, by running in block-buffered mode. This test was successful.
+
+\pythonstyle
+\begin{lstlisting}[caption={Python CLISP REPL with pseudo-TTY},label={lst:replPseudoTty}]
+
+import pexpect
+
+c = pexpect.spawn('clisp')
+c.expect('\[\d+]>')
+print c.before.strip()
+
+def evalArg(arg):
+    c.sendline(arg)
+    c.expect('\[\d+]>')
+    return c.before.replace(arg, '', 1).strip().replace('\n', '', 1)
+
+done = False
+while not done:
+    expression = raw_input('> ')
+
+    if expression == 'exit':
+        done = True
+        c.sendline('(exit)')
+        c.expect(pexpect.EOF)
+        print c.before.replace('(exit)', '', 1)
+    else:
+        print evalArg(expression)
+\end{lstlisting}
+
+The benefit of this approach is the possibility of getting real interaction between the AML process and our own program, but this interaction comes with an sizable overhead and increase of complexity.
+% subsubsection running_aml_from_another_application (end)
+% subsection interfacing_with_the_aml_modeling_framework (end)
+
+
+\subsection{Extending the development environment} % (fold)
+\label{sub:extending_the_development_environment}
+
+\subsubsection{The importance of development environment choice} % (fold)
+\label{ssub:the_importance_of_development_enviroment_choice}
+When developing applications in the world of general software development, you have the choice of selecting from a wide array of tools. You'll more often than not start out by determining what kind of programming language, development framework, development methodology, project organization tools, testing framework, continuous integration tool, and so forth, is most suited for the task at hand, and maybe more important, compatible with the knowledge in your team.
+
+An important point to consider for the programmer, is the choice of development environment. Development environment is a term with different definitions, but we will define it as the software-tools used by the programmer to develop the new application, which is not part of the code-base.
+
+\begin{mydef}
+Development environment: The software-tools used by the programmer to develop the new application, which is not part of the code-base.
+
+Software frameworks is omitted from this definition. Although software frameworks can be considered a tool for the software engineer, it becomes a part of the developed application.
+\end{mydef}
+
+The development environment forms the tools used by the software engineer to perform his or her craft. Important parts of this environment is the code editor, source control tools, project planning tools, and so on. You could even argue that the chosen operating system is a part of the development environment.
+
+An woodworking analogy would be the tool chest. The nail and wood is not part of the development environment, as it is destined to become a part of the final product. The hammer used for hammering the nails, and the saw used for cutting the wood is a part of the development environment, and can differ from tool chest to tool chest.
+
+A motivation for making this division, is that the choice of development environment is often partially determined by the individual programmer, and can often differ within the same development project. These choices is also a factor that'll remain constant for a programmer between projects. An simple example: a programmer can use Emacs to work on both a web-development project in Python and a email-client in C++.
+
+One of the most important tools of the development environment is the code editor. This is the tool that enables the software engineer to write code, and although we can find no statistical study, it is safe to assume that a large amount of the software engineers workday is spent using the code editor to write code. Therefore have we chosen to focus our work on the code-editor part of the AML development environment.
+
+Almost no other tool is at such a whim of the taste of the programmer as the code editing tool. The therm “Editor war” is well known, and so is Richard Stallman humorous “Church of Emacs” \citep{stallman}. Although there has been made endless non-constructive arguments over which editor or IDE reign supreme, we will not be discussing this. Instead we will put forth some arguments for why editor diversity is beneficial for development in AML.
+
+\begin{itemize}
+  \item Editor choice gives new KBE developers the option of choosing the editor that most closely resembles a editor they are familiar with, in effect reducing the training time.
+
+  \item A choice of editor, makes AML less dependent on one editor technology. If the dominant editor style where to change in the future, AML would be more ready to support such a change. This is indeed a case of today, where programmers is moving from simple text-editors to integrated development frameworks (IDE's).
+
+  \item Exposing AML to different development environments gives the AML-developer access to the different features of the different development environments associated with each editor.
+
+  \item Choice is freedom for the developer. A trait that is usually cherished by today's software developers.
+\end{itemize}
+
+There is an argument to be made against supporting multiple editors for AML, in that it it steals valuable development resource from the core functions of AML. This is a big concern, because a KBE-vendor should be able to focus on delivering the best tools for KBE-development, not code-editing. But is it possible to have the best of both worlds? Can the relationship between the AML-development environment and the code editor be structured in such a way that it is easy to maintain for the vendor, yet enables the developer to use his favorite editor of choice? This is indeed the case with general software development today, where most programming systems can be used with any number of development environments. Our hypothesis will therefore be that this is possible for AML development as well.
+
+\begin{myrq}
+\label{rq:structure_aml}
+    It is possible to structure the relationship between the AML-development system and the code editing tool, in such a way, that it is possible to use other editors than XEmacs, with a minimum of development and maintenance.
+\end{myrq}
+
+We will also investigate the new features integrating another code editor gives to the AML development environment.
+
+\begin{myrq}
+\label{rq:another_editor}
+    Can another editor, give access to other development environment features, not readily available in XEmacs.
+\end{myrq}
+
+We will investigate these questions by trying to integrate the AML development framework with the Sublime Text 2 editor, and we will briefly review the work made by Oluf Tonning \cite{oluf} on integrating AML with Eclipse and Olivier Doucet \cite{olivier} on integrating AML into the .Net framework.
+% subsubsection the_importance_of_development_enviroment_choice (end)
+
+\subsubsection{Features of an AML editor} % (fold)
+\label{ssub:features_of_an_aml_editor}
+Let's start our investigation by looking at the most important features of the current XEmacs integration, and try to organize the features by importance to the programmer. We will then try to divide our findings into features that should be part of the AML integration and features that are related to the editor choice.
+
+
+
+\begin{description}
+    \item[AML console:] At the center of the XEmacs is the AML console. The console allows the developer to interact with the running AML process through a REPL interface in one of the emacs buffers. The developer is, amongst other, able to compile and run code, interact with the compiled models and send commands to the AML system.
+
+    \item[Launch of AML GUI:] This can be performed directly in the AML console by using the \texttt{(aml)} command, but GUI elements for performing this is also present.
+
+    \item[AML Documentation:] GUI elements give direct access to the AML manual by opening the manual in the default web browser.
+
+    \item[AML syntax highlighting:] The XEmacs integration features Lisp-style syntax highlighting, as well as highlighting of some AML-specific expressions.
+
+    \item[AML code completion:] Code completion can be performed through XEmacs extensive macro system, but no default completions are included. Dynamic abbreviation, completion of words previously written in any open buffer, is supported and can be accessed by pressing {M - /}.
+
+    \item[AML code navigation:] The XEmacs integration features ILISP-like code navigation (a well known emacs major mode for editing Lisp, \cite{cliki}, superseded by SLIME, the Superior Lisp Interaction Mode for Emacs). Most notable is the possibility to search for definitions of functions from anywhere in the project.
+
+    \item[AML code formatting:] Auto-formatting of sections of code in standard Lisp style is supported, although on a side note, lines with lone right parentheses is encouraged in the AML documentation. This is in direct conflict with general Lisp style guides, as documented by both the GNU Emacs Lisp coding conventions, \cite{gnu} and the Google style guide for Common Lisp, \cite{google}.
+\end{description}
+
+We can categorize these features into two groups. The first group is the features strictly unique to the AML development framework. The second is features that is more general in nature, and could be implemented by using existing editor functionality or plug-ins from the general software development community.
+
+The AML console, launch of the AML GUI and the AML documentation is features which are unique to AML, but the syntax highlighting, code completion, navigation and formatting are features that closely resembles general editor features for Lisp-like languages. We note that launch of the AML GUI is a sub function of the AML console. If the AML console is implemented, will launch of the AML GUI be possible.
+
+Access to the AML documentation is of also of a lower importance. Opening a local web page is something a developer would be able to do, even if there was no explicit GUI functionality for doing so in the editor. Geir Iversen \cite{geir} could also inform us that this is the preferred way to use the AML manual at Aker Solutions KBeDesign.
+
+This implies that a basic integration of AML into any editor consists of two parts:
+
+\begin{enumerate}
+    \item Integrating the AML console into the chosen editor.
+    \item Configure relevant existing Lisp-editing tools and plug-ins to work with AML.
+\end{enumerate}
+
+This strategy already has its merits. Oluf Tonning \cite{oluf} used this strategy to successfully integrate the AML development framework into the Eclipse IDE. Although this integration never gained major use, due to the quality of the Lisp support in Eclipse \cite{geir}, it remains an important proof of concept.
+
+Based on the previous discussion, we can evaluate existing code-editing tools for AML integration suitability. We will include categories for console support, Lisp support, as well as general configurability, since this will be important in configuring the editor for a new language. We will also consider user-friendliness for beginner programmers, since \enquote{KBE development should not only be for natural born hackers} \cite{rocca}. The results of this evaluation can be found in Table \ref{tab:editorEval}.
+
+\begin{table}
+    \begin{center}
+        \begin{tabular}{| l | l | l | l | l |}
+            \hline
+            Editor/IDE & Console support & Lisp support & Configurability & Beginner friendly \\ \hline
+            Visual Studio & Yes & Low & Medium & Medium \\ \hline
+            Eclipse & Yes & Medium & Medium & Medium \\ \hline
+            Emacs & Yes & High & High & Low \\ \hline
+            Vim & Yes & High & High & Low \\ \hline
+            Sublime Text & Yes & High & High & High \\ \hline
+        \end{tabular}
+    \end{center}
+    \caption{Editor/IDE evaluation}
+    \label{tab:editorEval}
+\end{table}
+
+Based on the evaluation and our familiarity with the editor, we chose to base further work on Sublime Text 2 (Sublime Text version 2).
+% subsubsection features_of_an_aml_editor (end)
+
+\subsubsection{Configuration of existing Lisp tools in Sublime} % (fold)
+\label{ssub:configuration_of_existing_lisp_tools_in_sublime}
+The first step was to configure existing Lisp support tools for use with AML. This is done through the existing package support in Sublime. A new folder was made for AML, and the existing configuration for Common Lisp was included. In addition code completion snippets for AML KBE classes was made. This gave the editor satisfactory syntax highlighting and, combined with the default dynamic abbreviation in Sublime, code completion features.
+
+The default editor provided good code navigation by default, except for the possibility of searching for function definitions. Some auto formatting features was also included by default, but these features was found to be insufficient.
+
+Sublime features an extensive library of open source, third party plug-ins. Installation and maintenance of these features is most easily organized through Sublime Package Control \citep{bond}.
+
+To enhance auto-formatting, the package Sublime Lispindent \citep{Friberg}, was installed. Testing revealed this plug-in to give good results by re-using the default configuration for Common Lisp as shown in Listing~\ref{lst:lispindentConfig}.
+
+%TODO fjerne syntax on the word self.
+\begin{lstlisting}[language=json, caption={Lispindent config},label={lst:lispindentConfig}]
+"aml": {
+    "detect": ".*\\.(aml)$",
+    "default_indent": "function",
+    "regex":        ["(catch|defvar|defclass|
+        defconstant|defcustom|defparameter|
+        defconst|define-condition|define-modify-macro|",
+        "defsetf|defun|defgeneric|define-setf-method|
+        define-self-expander|defmacro|defsubst|deftype|
+        defmethod|",
+        "defpackage|defstruct|dolist|dotimes|lambda|
+        let|let\\*|prog1|prog2|unless|when)$"]
+}
+\end{lstlisting}
+
+The indentation behavior of Lispindent can also be modified through regex parameter in the config file, although this was never desired in our tests.
+
+In order to enable search for function definitions, the package Find Function Definition \citep{Douglas}, was added. This enables the developer to highlight a function name, and search for the corresponding definition in the current project by pressing F8. The plug-in will display a list of files to open if multiple instances of possible definitions is found.
+
+This plug-in also required a minimal setup to work with AML, and the setup can be extended to include other syntactic elements, like classes.
+
+\begin{lstlisting}[language=json,caption={Find Function Definition Config},label={lst:findFuctionDefinitionConfig}]
+
+{
+    "definitions": /* where $NAME$ is the name of the function */
+    [
+        "function $NAME$",
+        "$NAME$: function",
+        "$NAME$:function",
+        "$NAME$ = function",
+        "$NAME$= function",
+        "$NAME$=function",
+        "def $NAME$(",
+        "(defun $NAMES$"
+    ]
+}
+\end{lstlisting}
+% subsubsection configuration_of_existing_lisp_tools_in_sublime (end)
+
+
+\subsubsection{Integration of the AML console} % (fold)
+\label{ssub:integration_of_the_aml_console}
+Based on the discussion under Section~\ref{ssub:running_aml_from_another_application}, we choose to base our console integration on the multi-threaded approach. The code for this integration is found in Appendix~\ref{sec:amlrepl}. A pseudo-TTY approach would be better, but the added complexity would mean that we would not be able to even remotely argue for the integration being easy to maintain and develop.
+
+A approach based on an AML-process in unbuffered or line buffered mode would have been even better, as there exist ready made tools for integrating such interpreters into Sublime \cite{bederski}.
+
+The problems with having to juggle two different threads became apparent when implementing the AMLRepl. In order for the main thread to be able to access the write out from STDOUT, the reading thread had to write the lines into a global variable. The main thread would the try to check at regular interval for new out-print in this global variable, and clearing it after writing the content to the text buffer.
+
+This is not the most elegant solution, and regularly requires the user to force an out-print of the global variable with the command Ctrl + Alt + w.
+
+Sending code to the AML interpreter was, on the other hand, an easy job. The open API of Sublime made it an breeze to get the wanted code from the text buffers.
+
+Some design choices where made in regards to the functionality of the REPL. One was to try to maintain as much of the default editing capabilities of the text-buffer containing AMLRepl. This meant that we would keep the default behavior of the return key. Instead we ended up using \texttt{Ctrl + Return} as our default evaluate expression key.
+
+Since the Lisp syntax is so easy to parse, we made the default evaluate expression function to look for the last complete Lisp expression in the current file. This behavior can be overridden, by first marking the desired statements to evaluate. Entire files can also be evaluated by pressing Ctrl + Alt + e.
+% subsubsection integration_of_the_aml_console_ (end)
+
+\subsubsection{Additional Configuration} % (fold)
+\label{ssub:additional_configuration}
+A couple of additional features was added, once the basic editing and REPL functionality was in place. The first one to be added was functions for launching the AML GUI. This was simply done by using the existing functions to make a function that always would send (AML) to the interpreter.
+
+Using the same approach launch of AUnit, the AML unit test framework, was integrated into Sublime. This required a bit more setup, since the logical.pth file has to include the AUnit paths, as shown in Listing~\ref{lst:aunitLogicalPth}.
+
+\begin{lstlisting}[caption={Aunit logical path},label={lst:aunitLogicalPth}]
+:aunit                "<full-path-to-sublime-text-folder> ...
+                    ... \Data\Packages\AMLRepl\AUnit\src\"
+:aunit-main-system    :aunit main\
+:aunit-core-system    :aunit core\
+:aunit-print-system   :aunit print\
+:aunit-gui-system     :aunit gui\
+\end{lstlisting}
+
+%TODO: edit (anuint) and(comple-system)
+The AUnit system can then be compiled and launched using the (compile-system ...) and (aunit) functions.
+
+We hoped to be able to display test results from AUnit directly in another text-buffer, as this would have given a more seamless integration. The developer would then have been able to edit, execute and test the AML code, using only the Sublime interface, and the AML GUI where graphical inspection was needed. This should have been possible, due to AUnit being developed with a command line mode \cite{aunit}. Unfortunately our version of AUnit had a bug in the command line functionality, and coupled with project time constraints, this was never realized.
+
+Finally the different functions of the integrations was made available through menu entries and the command palette, as well as being available directly from shortcuts.
+
+User configurable parameters was bundled together into suitable JSON configuration files, accessible from the settings menu. Readme-files, describing basic use and installation was also added.
+% subsubsection additional_configuration (end)
+
+\subsubsection{Notable differences between Sublime and XEmacs} % (fold)
+\label{ssub:notable_differences_between_sublime_and_xemacs}
+As stated in the introduction, we will not argue for one editor over another, as we believe that preference of one editor over another is largely due to taste and familiarity. Although the main benefit of integrating AML into Sublime is to give the developer several options to choose from, some notable features of Sublime should be mentioned.
+
+\begin{itemize}
+    \item AML console: At the center of the XEmacs is the AML console. The console allows the developer to interact with the running AML process through a REPL interface in one of the emacs buffers. The developer is, amongst other, able to compile and run code, interact with the compiled models and send commands to the AML system.
+
+    \item Sublime has a more modern GUI, with a tab system that closely matches modern tabbed applications, like web browsers. This is a interface that younger developers is more familiar with, and might make the editor learning process easier.
+
+    \item Sublime is customized by using the widely used general programming language Python. This will make customization of the editor easier for developers familiar with Python, as they do not have to learn the lesser known Emacs Lisp language.
+
+    \item The command palette, gives the developer access to all the options and commands available in Sublime, by utilizing fuzzy search. This makes it easy to find features and commands for the beginner, as well as lesser used features and commands for the experienced user.
+
+    \item Sublime has a more modern default key-binding, familiar from most other applications. One example is Ctrl-c for copy and Ctrl-v for paste.
+
+    \item Browsing and editing the project files and folders can easily be done in the left side bar of the editor.
+
+    \item Sublime has a large and active plug-in community. This gives the developer access to , easily installed to the Sublime package manager.
+
+    \item The minimap on the right side of the editor, gives the developer an instant overview of the open file. This is especially useful when editing large files.
+\end{itemize}
+% subsubsection notable_differences_between_sublime_and_xemacs (end)
+% subsection extending_the_development_environment (end)
+
+\subsection{Learning material} % (fold)
+\label{sub:learning_material}
+The learning material is often the first part of a programming system the developer experiences. For complex tools, like AML, it plays a large role in making the tool easy to use.
+
+When debugging an error, you do not have a good reference to the error messages. For most general software development tools, you can simply search for the error text to get a better explanation. This is also something that could be covered in the training documents.
+
+We have, in retrospect, evaluated our learning experience with AML. Technosoft delivers the AML Basic Training Manual \cite{aml_ref}. This manual is meant as a complete, beginners course to AML. The manual tries to cover the most important features of AML, mostly by following a case, concerning the aerodynamic surfaces of a missile. In addition, Technosoft delivers AML with a manual \cite{AML}. The manual is meant as an documentation of all the features available in AML, and although examples and explanation to the different language constructs are given, it's focus is on being a reference manual, not a training text.
+
+Our experience with the reference manual was that it has two major strong-points. The first is it being a web-page with an exhaustive index. Chapters on different subjects can be opened in different browser tabs, and terms can be searched for by using the browser command find on the index page. The organization of the different terms also feels natural, and makes it easy to find related terms to the terms you already know. The second strong-point is the examples. As well as efficiently displaying the usage of the language term, it is a great starting point for further exploration in the AML interpreter. In our opinion even more examples would have been a useful addition to the reference manual.
+
+The basic training manual left us with the impression that in the effort of trying to cover all aspects of AML, it does not manage to cover each section with enough depth. More intermediate and advances examples are not given not given enough space, and as a result, developing real world KBE-applications is a big step after finishing the manual. This we felt, was especially a problem when covering the topics relating to general use of a programming language with Lisp syntax.
+
+The most dominating programming languages today, Java, C\#, C++, and so on, uses C-derived syntax, quite different from the Lisp syntax of AML. Concepts as cons cells as the underlying data structure, functions as data, immutable variables, dynamic typing and macro programming is fundamental to Lisp programming, but does not play a big part in the C-derived languages. To gain a bigger understanding of these concepts, we turned to learning material for Common Lisp.
+
+Another factor in efficient training, is the possibility of getting several different explanations of the same topic. While you might not understand a given language concept with one explanation, several explanations from different point of view might help you to form an understanding. We used the following resources when learning to use AML.
+
+\begin{itemize}
+    \item Land on Lisp by Conrad Barski \cite{landoflisp}.
+
+    \item Practical Common Lisp by Peter Seibel \cite{practicalcommonlisp}.
+
+    \item On Lisp by Paul Graham \cite{Graham.1994}.
+
+    \item Common Lisp hyperspec \cite{www.lispworks.com}.
+\end{itemize}
+
+Our experience was that the lessons learned form working with Common Lisp, translated well into working with AML. The basic syntax was very similar, and most basic examples could be compiled as AML. Although small syntactic differences was still an annoyance when they arose.
+
+Looking at the learning material for general programming languages, we can find a lot of interactive tutorials. Some good examples are Codecademy \cite{codecademy}, Try Clojure \cite{tryclojure} and Learn Knockout.js \cite{learnknockoutjs}. Common for all the learning resources is that they bundle code editing, compilation and a step by step tutorial text into the same interface. The user is guided step by step through different tasks, first being explained the concept and then advancing when they supply the correct code to the given problem, or choose to be shown the solution.
+
+Such an interactive learning experience might be interesting to explore with AML, and should be able to implement in both the Sublime and Emacs editor.
+
+The most popular general software programming languages usually have active on-line communities. The communities discuss use of the language, improvements, solutions to common problems and is often a place for beginners to get answers and guidance. Some communities use on-line forums or maintain sites for questions and answers (QA sites). A very successful on-line community for programming language QA is the site Stack Overflow \cite{stackoverflow}. Technosoft curating such a forum or QA site, might be beneficial.
+% subsection learning_material (end)
+% section extending_aml (end)
