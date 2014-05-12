@@ -191,6 +191,11 @@ __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, in
     }
 }
 
+__device__ __host__ int getSStackSize(int n)
+{
+    return fastIntegerLog2(n) + 5;
+}
+
 size_t getFreeBytesOnGpu()
 {
     size_t free_byte, total_byte ;
@@ -200,20 +205,21 @@ size_t getFreeBytesOnGpu()
 
 size_t getNeededHeapSize(int n, int k, int thread_num, int block_num)
 {
-    return block_num * thread_num * ( (k + 1) * sizeof(KPoint) + (fastIntegerLog2(n) * 2 * sizeof(SPoint)));
+    return block_num * thread_num * ( (k + 1) * sizeof(KPoint) + (getSStackSize(n) * sizeof(SPoint)));
 }
 
 size_t getNeededBytesInSearch(int n_qp, int k, int n, int thread_num, int block_num)
 {
-    return n_qp * (k * sizeof(int) +  sizeof(Point)) +
+    return n_qp * (k * sizeof(int) +  sizeof(Point)) + block_num * thread_num +
            (getNeededHeapSize(n, k, thread_num, block_num));
 }
+
 
 __global__
 void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
     int tid = threadIdx.x,
-        stack_size = fastIntegerLog2(n_tree) * 2,
+        stack_size = getSStackSize(n_tree),
         block_step,
         block_offset;
 
@@ -281,7 +287,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
 
     checkCudaErrors(
-        cudaDeviceSetLimit(cudaLimitMallocHeapSize, getNeededHeapSize(n_tree, k, numThreads, numBlocks) + 1024));
+        cudaDeviceSetLimit(cudaLimitMallocHeapSize, getNeededHeapSize(n_tree, k, numThreads, numBlocks)));
 
     checkCudaErrors(cudaMalloc(&d_result, queries_in_step * k  * sizeof(int)));
     checkCudaErrors(cudaMalloc(&d_query_points, queries_in_step * sizeof(Point)));
