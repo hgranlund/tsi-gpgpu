@@ -22,7 +22,9 @@
 \section{The quest for a fast KNN search} % (fold)
 \label{sec:the_quest_for_a_fast_KNN_search}
 
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the [release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v14-release-notes) for the most recent version of this project.
+This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the 
+%[release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v14-release-notes) 
+for the most recent version of this project.
 
 Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
 
@@ -120,7 +122,9 @@ Steps:
 
 Memory optimalisation:
 
-We have done some memory optimization based on a [presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf) from Nvidia.
+We have done some memory optimization based on a 
+%[presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf) 
+from Nvidia.
 
 The optimizations include:
 
@@ -190,7 +194,8 @@ A k-d tree can be thought of as a binary search tree for graphical data. A few d
 
 In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
 
-Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from [Wikipedia](http://en.wikipedia.org/wiki/K-d_tree))
+Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from 
+%[Wikipedia](http://en.wikipedia.org/wiki/K-d_tree))
 
 \begin{figure}[ht!]
 \centering
@@ -321,7 +326,12 @@ Several strategies can be used to parallelize this code. We can perform the recu
 
 Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. Given a sorted list you can find the median directly, by simply looking at the midmost element of the array. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. We also have the inherent downside of sorting a list in order to find the median, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting.
 
-The existing O(n) algorithms for finding the median is mostly based on a more generic problem, namely selection or [kth order statistic algorithms](http://en.wikipedia.org/wiki/Selection_algorithm). Quick select and radix select to two of the best known selection algorithms in serial. They have both an average time complexity of O(n), witch makes them a good candidates. The difference between then is the constant time penalty. The radix sort have a more exact time complexity of O(bn), where b is the number of bits in each number. While the penalty for quick select is based on n, and if bad pivot elements are chosen the worst case performance is O(n²). We choose to start implementing radix sort based on the results from [*Radix Selection Algorithm for the kth Order Statistic*](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/radix_select.pdf). Based on the constant time penalties radix sort would also be the best candidate for large number of elements (n).
+The existing O(n) algorithms for finding the median is mostly based on a more generic problem, namely selection or 
+%[kth order statistic algorithms](http://en.wikipedia.org/wiki/Selection_algorithm). 
+Quick select and radix select to two of the best known selection algorithms in serial. They have both an average time complexity of O(n), witch makes them a good candidates. The difference between then is the constant time penalty. The radix sort have a more exact time complexity of O(bn), where b is the number of bits in each number. While the penalty for quick select is based on n, and if bad pivot elements are chosen the worst case performance is O(n²). We choose to start implementing radix sort based on the results from 
+%[*Radix Selection Algorithm for the kth
+% Order Statistic*](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/radix_select.pdf)
+. Based on the constant time penalties radix sort would also be the best candidate for large number of elements (n).
 
 The radix select is based on a bitwise partitioning, much like radix sort. In each step, elements are partitioned in two subgroups based on the current bit. Then the subgroup that contains the median is determined, and the search continue in that subgroup until the median is found.
 
@@ -451,7 +461,8 @@ Here we see that the runtime for the tree building algorithm catches up with the
 
 From this graph we can see that on the AWS GPU, we are able, for 90 million points, to build the tree and query for the closest point, k = 1, in a total of ~30s + ~26s = ~56s < one minute.
 
-Source data for all graphs can be found in [this spreadsheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing).
+Source data for all graphs can be found in 
+%[this spreadsheet](https://docs.google.com/spreadsheets/d/1I-qxnPa2FuYs7ePQC7d9v0GVHoYlr4CY6QdJbbNUlYo/edit?usp=sharing).
 
 % subsubsection v14_release_notes (end)
 
