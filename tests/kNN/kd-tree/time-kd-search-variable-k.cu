@@ -65,7 +65,7 @@ int main(int argc, char const *argv[])
     if (argc == 2)
     {
         nu = ni = atoi(argv[1]);
-        printf("Running kd-search-all with n = %d\n", nu);
+        printf("Running kd-search-all with n = %d, k = %d\n", nu, k);
     }
     else if (argc == 3)
     {
@@ -107,6 +107,7 @@ int main(int argc, char const *argv[])
         else
         {
             populatePoints(points, n);
+			printf("*Alok - Finished Reading Points\n");
         }
 
         cudaEvent_t start, stop;
@@ -116,6 +117,7 @@ int main(int argc, char const *argv[])
         checkCudaErrors(cudaEventRecord(start, 0));
 
         buildKdTree(points, n, tree);
+		printf("*Alok - Finished Building Tree\n");
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);
@@ -135,7 +137,9 @@ int main(int argc, char const *argv[])
         }
         else
         {
+			printf("*Alok - Querying all...\n");
             cuQueryAll(points, tree, n, n, k, result);
+			printf("*Alok - Querying all done\n");
         }
 
         checkCudaErrors(cudaEventRecord(stop, 0));
