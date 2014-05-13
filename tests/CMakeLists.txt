@@ -96,6 +96,7 @@ if (BUILD_TESTS)
     kNN/brute_force/test-knn-brute-force-bitonic.cu
 
     kNN/kd-tree/test-cu-kd-search.cu
+    kNN/kd-tree/test-kd-search.cu
     kNN/kd-tree/test-kd-search-openmp.cu
     kNN/kd-tree/test-kd-tree-build.cu
     kNN/kd-tree/test-search-rosetta.cu

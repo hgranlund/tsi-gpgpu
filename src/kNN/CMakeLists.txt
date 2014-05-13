@@ -21,6 +21,7 @@ kd-tree/radix-select.cuh
 kd-tree/quick-select.cuh
 kd-tree/sum-reduction.cuh
 kd-tree/kd-tree-build.cuh
+kd-tree/kd-search.cuh
 kd-tree/cu-kd-search.cuh
 )
 
@@ -34,6 +35,7 @@ kd-tree/multiple-radix-select.cu
 kd-tree/radix-select.cu
 kd-tree/quick-select.cu
 kd-tree/kd-tree-build.cu
+kd-tree/kd-search.cu
 kd-tree/cu-kd-search.cu
 )
 
