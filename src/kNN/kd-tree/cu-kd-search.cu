@@ -3,7 +3,7 @@
 #include <float.h>
 
 #include <helper_cuda.h>
-#include <kd-search.cuh>
+#include <cu-kd-search.cuh>
 #include "kd-tree-build.cuh"
 
 __device__ __host__

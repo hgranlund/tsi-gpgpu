@@ -1,5 +1,5 @@
-#ifndef _KD_SEARCH_
-#define _KD_SEARCH_
+#ifndef _CU_KD_SEARCH_
+#define _CU_KD_SEARCH_
 #include <point.h>
 #include <stack.h>
 

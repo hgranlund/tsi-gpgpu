@@ -3,7 +3,7 @@
 
 #include <test-common.cuh>
 
-#include <kd-search.cuh>
+#include <cu-kd-search.cuh>
 #include <knn_gpgpu.h>
 
 bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
