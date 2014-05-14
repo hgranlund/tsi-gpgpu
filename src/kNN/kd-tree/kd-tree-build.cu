@@ -177,8 +177,9 @@ size_t getFreeBytesOnGpu_()
     return free_byte;
 }
 
-size_t getNeededBytes(int number_of_leafs, int n)
+size_t getNeededBytes(int n)
 {
+    int number_of_leafs = (n + 1) / 2;
     return (number_of_leafs * 2 * sizeof(int)) + (2 * n * sizeof(int)) + (2 * n * sizeof(Point));
 }
 
@@ -270,10 +271,10 @@ void buildKdTreeStep(struct Point *h_points, int n, int dim, struct Node *tree)
     if (n <= 0) return;
 
     size_t free_bytes, needed_bytes;
-    int m = n >> 1, number_of_leafs = (n + 1) / 2;
+    int m = n >> 1;
 
     free_bytes = getFreeBytesOnGpu_();
-    needed_bytes = getNeededBytes(number_of_leafs, n);
+    needed_bytes = getNeededBytes(n);
 
     if (free_bytes > needed_bytes)
     {
