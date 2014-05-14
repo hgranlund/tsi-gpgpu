@@ -17,9 +17,9 @@ bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float
 
     query_point.p[0] = qx, query_point.p[1] = qy, query_point.p[2] = qz;
 
-    cuKNN(query_point, tree, n, k, result, s_stack_ptr, k_stack_ptr);
+    cuKNN(query_point, tree, n, k, s_stack_ptr, k_stack_ptr);
 
-    float actual = tree[result[0]].p[0] + tree[result[0]].p[1] + tree[result[0]].p[2];
+    float actual = tree[k_stack_ptr[1].index].p[0] + tree[k_stack_ptr[1].index].p[1] + tree[k_stack_ptr[1].index].p[2];
     float expected = ex + ey + ez;
 
     // printf(">> WP tree\nsearching for (%3.1f, %3.1f, %3.1f)\n"
@@ -235,11 +235,11 @@ TEST(kd_search, correctness_with_k)
     buildKdTree(points, n, tree);
 
     cudaDeviceReset();
-    cuKNN(points[4], tree, n, k, result, s_stack_ptr, k_stack_ptr);
+    cuKNN(points[4], tree, n, k, s_stack_ptr, k_stack_ptr);
 
-    ASSERT_EQ(4, result[0]);
-    ASSERT_EQ(3, result[1]);
-    ASSERT_EQ(1, result[2]);
+    ASSERT_EQ(4, k_stack_ptr[1].index);
+    ASSERT_EQ(3, k_stack_ptr[2].index);
+    ASSERT_EQ(1, k_stack_ptr[3].index);
 
     free(points);
     free(tree);
@@ -277,15 +277,15 @@ TEST(kd_search, correctness_with_10000_points_file)
         for (i = 0; i < test_runs; ++i)
         {
             cudaDeviceReset();
-            cuKNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
+            cuKNN(points[i], tree, n, k, stack_ptr, k_stack_ptr);
 
             // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
             //        tree[i].p[0], tree[i].p[1], tree[i].p[2],
             //        tree[result[0]].p[0], tree[result[0]].p[1], tree[result[0]].p[2]);
 
-            ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points[i].p[1], tree[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
-            ASSERT_EQ(points[i].p[2], tree[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[0], tree[k_stack_ptr[1].index].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[k_stack_ptr[1].index].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[k_stack_ptr[1].index].p[2]) << "Failed at i = " << i << " with n = " << n;
         }
 
         free(tree);
@@ -442,7 +442,7 @@ TEST(kd_search, knn_timing)
         long start_time = startTiming();
         for (i = 0; i < test_runs; ++i)
         {
-            cuKNN(points[i], tree, n, k, result, stack_ptr, k_stack_ptr);
+            cuKNN(points[i], tree, n, k, stack_ptr, k_stack_ptr);
         }
 
         cudaStopTiming(start, stop, elapsed_time);
