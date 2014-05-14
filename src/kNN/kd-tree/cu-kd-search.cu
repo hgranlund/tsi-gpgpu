@@ -257,6 +257,8 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
 
 int getQueriesInStep(int n_qp, int k, int n)
 {
+    if (n_qp < 50) return -1;
+
     int numBlocks, numThreads;
     size_t needed_bytes_total, free_bytes;
 
@@ -265,14 +267,9 @@ int getQueriesInStep(int n_qp, int k, int n)
     getThreadAndBlockCountForQueryAll(n_qp, numThreads, numBlocks);
     needed_bytes_total = getNeededBytesInSearch(n_qp, k, n, numThreads, numBlocks);
 
-    if (free_bytes < needed_bytes_total)
-    {
-        return getQueriesInStep((n_qp * 9) / 10, k, n);
-    }
-    else
-    {
-        return n_qp;
-    }
+    if (free_bytes > needed_bytes_total) return n_qp;
+
+    return getQueriesInStep((n_qp * 4) / 5, k, n);
 }
 
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
@@ -292,6 +289,12 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
 
     queries_in_step = getQueriesInStep(n_qp, k, n_tree);
     queries_done = 0;
+
+    if (queries_in_step <= 0)
+    {
+        printf("There is not enough memory to perform this queries on cuda.\n");
+        return;
+    }
 
     getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
 
