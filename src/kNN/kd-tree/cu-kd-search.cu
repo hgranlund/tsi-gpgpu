@@ -153,11 +153,6 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k,
             current.index = target;
         }
     }
-
-    // for (int i = 0; i < k; ++i)
-    // {
-    //     result[i] = k_stack[i].index;
-    // }
 }
 
 __device__ __host__
@@ -246,13 +241,11 @@ void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tr
         block_step,
         block_offset;
 
-    // struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(KPoint));
     struct SPoint *s_stack_ptr = (struct SPoint *) malloc((stack_size) * sizeof(SPoint));
 
     cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
     query_points += block_offset;
-    // result += block_offset * k;
     k_stack_ptr += block_offset * (k + 1);
 
     while (tid < block_step)
