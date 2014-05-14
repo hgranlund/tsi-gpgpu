@@ -257,7 +257,6 @@ void getThreadAndBlockCountForQueryAll(int n, int &blocks, int &threads)
 
 int getQueriesInStep(int n_qp, int k, int n)
 {
-    if (n_qp < 50) return -1;
 
     int numBlocks, numThreads;
     size_t needed_bytes_total, free_bytes;
@@ -268,6 +267,7 @@ int getQueriesInStep(int n_qp, int k, int n)
     needed_bytes_total = getNeededBytesInSearch(n_qp, k, n, numThreads, numBlocks);
 
     if (free_bytes > needed_bytes_total) return n_qp;
+    if (n_qp < 50) return -1;
 
     return getQueriesInStep((n_qp * 4) / 5, k, n);
 }
