@@ -50,7 +50,6 @@ struct SPoint cuPeek(struct SPoint *stack)
     return *(stack - 1);
 }
 
-
 __device__ __host__
 void cuInitKStack(struct KPoint **k_stack, int n)
 {
@@ -105,16 +104,14 @@ void cuChildren(struct Point qp, struct Node current, float dx, int &target, int
 
 __device__ __host__
 void cuKNN(struct Point qp, struct Node *tree, int n, int k,
-           struct SPoint *stack_ptr, struct KPoint *k_stack_ptr)
+           struct SPoint *stack, struct KPoint *k_stack)
 {
     int  dim = 2, target;
     float current_dist;
 
     struct Node current_point;
-    struct SPoint *stack = stack_ptr,
-                           current;
-    struct KPoint *k_stack = k_stack_ptr,
-                           worst_best;
+    struct SPoint current;
+    struct KPoint worst_best;
 
     current.index = n / 2;
     worst_best.dist = FLT_MAX;
@@ -123,7 +120,7 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k,
     cuInitKStack(&k_stack, k);
 
     while (!cuIsEmpty(stack) || current.index != -1)
-{
+    {
         if (current.index == -1 && !cuIsEmpty(stack))
         {
             current = cuPop(&stack);
