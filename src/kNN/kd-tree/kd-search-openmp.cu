@@ -164,10 +164,11 @@ void kNN(struct Point qp, struct Node *tree, int n, int k, int *result,
 
 void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
+    int stack_size = log2((float)n_tree) + 5;
     #pragma omp parallel
     {
         int th_id = omp_get_thread_num();
-        struct SPoint *stack_ptr = (struct SPoint *) malloc(30 * sizeof(struct SPoint));
+        struct SPoint *stack_ptr = (struct SPoint *) malloc(stack_size * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(struct KPoint));
 
         while (th_id < n_qp)
