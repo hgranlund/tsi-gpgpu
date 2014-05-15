@@ -19,10 +19,8 @@ float cuDist(struct Point qp, struct Node point)
 __device__ __host__
 void cuInitStack(struct SPoint **stack)
 {
-    struct SPoint temp;
-    temp.index = -1;
-    temp.dim = -1;
-    cuPush(stack, temp);
+    (*stack)[0].index = -1;
+    (*stack)++;
 }
 
 __device__ __host__
@@ -65,8 +63,8 @@ __device__ __host__
 void cuInsert(struct KPoint *k_stack, struct KPoint k_point, int n)
 {
     int i = n - 1;
-
     struct KPoint swap = k_stack[i - 1];
+
     while (swap.dist > k_point.dist)
     {
         k_stack[i--] = swap;
@@ -203,11 +201,10 @@ size_t getNeededBytesInSearch(int n_qp, int k, int n, int thread_num, int block_
 
 void populateTrivialResult(int n_qp, int k, int n_tree, int *result)
 {
-    int i , j;
     #pragma omp parallel for
-    for (i = 0; i < n_qp; ++i)
+    for (int i = 0; i < n_qp; ++i)
     {
-        for (j = 0; j < k; ++j)
+        for (int j = 0; j < k; ++j)
         {
             result[i * k + j] = j % n_tree;
         }
