@@ -129,6 +129,13 @@ int main(int argc, char const *argv[])
 
         cudaDeviceReset();
 
+        for (int i = 0; i < n; ++i)
+        {
+            points[i].p[0] = tree[i].p[0];
+            points[i].p[1] = tree[i].p[1];
+            points[i].p[2] = tree[i].p[2];
+        }
+
         float elapsed_time_search = 0;
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
