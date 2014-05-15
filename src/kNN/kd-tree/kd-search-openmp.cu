@@ -164,11 +164,11 @@ void kNN(struct Point qp, struct Node *tree, int n, int k, int *result,
 
 void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)
 {
-
+    int stack_size = log2((float)n_tree) + 5;
     #pragma omp parallel
     {
         int th_id = omp_get_thread_num();
-        struct SPoint *stack_ptr = (struct SPoint *) malloc(30 * sizeof(struct SPoint));
+        struct SPoint *stack_ptr = (struct SPoint *) malloc(stack_size * sizeof(struct SPoint));
         struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(struct KPoint));
 
         while (th_id < n_qp)
@@ -180,29 +180,4 @@ void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_t
         free(stack_ptr);
         free(k_stack_ptr);
     }
-
 }
-
-// void timingDetails()
-// {
-//     printf("if_time = %f ms, else_time = %f ms, knn_time = %f ms\n\n",
-//            if_time * 1000,
-//            else_time * 1000,
-//            knn_time * 1000);
-
-//     if_time = 0;
-//     else_time = 0;
-//     knn_time = 0;
-//     // double t = t_time();
-//     // else_time += t_time() - t;
-// }
-// double t_time()
-// {
-//     struct timeval tmpTime;
-//     gettimeofday(&tmpTime, NULL);
-//     return tmpTime.tv_sec + tmpTime.tv_usec / 1.0e6;
-// }
-
-// double if_time = 0,
-//        else_time = 0,
-//        knn_time = 0;

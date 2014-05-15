@@ -55,11 +55,12 @@ void populatePoints(struct Point *points, int n)
 
 int main(int argc, char const *argv[])
 {
-    int n, nu, ni = 1024,
-               step = 250000,
-               k = 1;
+    int n, n_qp, nu, ni = 1024,
+                     step = 250000,
+                     k = 1;
     bool from_file = 0;
     n = nu = ni;
+    n_qp = -1;
 
     if (argc == 2)
     {
@@ -94,6 +95,15 @@ int main(int argc, char const *argv[])
         step = atoi(argv[3]);
         k = atoi(argv[4]);
         printf("Running kd-search-all from n = %d to n = %d with step = %d and k = %d\n", nu, ni, step, k);
+    }
+    else if (argc == 6)
+    {
+        nu = atoi(argv[1]);
+        ni = atoi(argv[2]);
+        step = atoi(argv[3]);
+        k = atoi(argv[4]);
+        n_qp = atoi(argv[5]);
+        printf("Running kd-search-all from n = %d to n = %d with step = %d and k = %d n_qp = %d\n", nu, ni, step, k, n_qp);
     }
     else
     {
@@ -132,7 +142,14 @@ int main(int argc, char const *argv[])
 
         const double start_time = omp_get_wtime();
 
-        mpQueryAll(points, tree, n, n, k, result);
+        if (n_qp > -1)
+        {
+            mpQueryAll(points, tree, n_qp, n, k, result);
+        }
+        else
+        {
+            mpQueryAll(points, tree, n, n, k, result);
+        }
 
         const double elapsed_time_search = (omp_get_wtime() - start_time) * 1000;
 
