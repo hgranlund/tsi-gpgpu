@@ -266,6 +266,17 @@ int getQueriesInStep(int n_qp, int k, int n)
     return getQueriesInStep((n_qp * 4) / 5, k, n);
 }
 
+int nextPowerOf2___(int x)
+{
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return ++x;
+}
+
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
     int numBlocks, numThreads, queries_in_step, queries_done, stack_size;
@@ -293,6 +304,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
 
     queries_done = 0;
     stack_size = getSStackSize(n_tree);
+    queries_in_step = nextPowerOf2___(queries_in_step) >> 1;
     getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
 
 
