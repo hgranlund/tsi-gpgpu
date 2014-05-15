@@ -207,6 +207,7 @@ size_t getNeededBytesInSearch(int n_qp, int k, int n, int thread_num, int block_
 void populateTrivialResult(int n_qp, int k, int n_tree, int *result)
 {
     int i , j;
+    #pragma omp parallel for
     for (i = 0; i < n_qp; ++i)
     {
         for (j = 0; j < k; ++j)
@@ -324,6 +325,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
 
         checkCudaErrors(cudaMemcpy(h_k_stack, d_k_stack, queries_in_step * (k + 1) * sizeof(KPoint), cudaMemcpyDeviceToHost));
 
+        # pragma omp parallel for
         for (int i = 0; i < queries_in_step ; ++i)
         {
             for (int j = 0; j < k; ++j)
