@@ -22,10 +22,8 @@ float dist(struct Point qp, struct Node point)
 
 void initStack(struct SPoint **stack)
 {
-    struct SPoint temp;
-    temp.index = -1;
-    temp.dim = -1;
-    push(stack, temp);
+    (*stack)[0].index = -1;
+    (*stack)++;
 }
 
 int isEmpty(struct SPoint *stack)
@@ -64,15 +62,14 @@ void initKStack(struct KPoint **k_stack, int n)
 void insert(struct KPoint *k_stack, struct KPoint k_point, int n)
 {
     int i = n - 1;
-    struct KPoint swap;
-    k_stack[n - 1].index = k_point.index;
-    k_stack[n - 1].dist = k_point.dist;
+    struct KPoint swap = k_stack[i - 1];
 
-    while (k_stack[i].dist < k_stack[i - 1].dist)
+    while (swap.dist > k_point.dist)
     {
-        swap = k_stack[i], k_stack[i] = k_stack[i - 1], k_stack[i - 1] = swap;
-        i--;
+        k_stack[i--] = swap;
+        swap = k_stack[i - 1];
     }
+    k_stack[i] = k_point;
 }
 
 struct KPoint look(struct KPoint *k_stack, int n)
