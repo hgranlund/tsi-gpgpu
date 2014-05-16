@@ -144,11 +144,11 @@ int main(int argc, char const *argv[])
 
         if (n_qp > -1)
         {
-            cuQueryAll(points, tree, n_qp, n, k, result);
+            mpQueryAll(points, tree, n_qp, n, k, result);
         }
         else
         {
-            cuQueryAll(points, tree, n, n, k, result);
+            mpQueryAll(points, tree, n, n, k, result);
         }
 
         const double elapsed_time_search = (omp_get_wtime() - start_time) * 1000;
