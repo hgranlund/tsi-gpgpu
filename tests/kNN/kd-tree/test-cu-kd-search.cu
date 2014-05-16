@@ -6,6 +6,70 @@
 #include <cu-kd-search.cuh>
 #include <knn_gpgpu.h>
 
+
+float dist_test(struct Point qp, struct Node point)
+{
+    float dx = qp.p[0] - point.p[0],
+          dy = qp.p[1] - point.p[1],
+          dz = qp.p[2] - point.p[2];
+
+    return (dx * dx) + (dy * dy) + (dz * dz);
+}
+
+void quickSortKStack(struct KPoint *k_stack, int n)
+{
+    if (n < 2)
+        return;
+    struct KPoint p = k_stack[n / 2];
+    struct KPoint *l = k_stack;
+    struct KPoint *r = k_stack + n - 1;
+    while (l <= r)
+    {
+        if ((*l).dist < (p).dist)
+        {
+            l++;
+            continue;
+        }
+        if ((*r).dist > p.dist)
+        {
+            r--;
+            continue; // we need to check the condition (l <= r) every time we change the value of l or r
+        }
+        struct KPoint t = *l;
+        *l++ = *r;
+        *r-- = t;
+    }
+    quickSortKStack(k_stack, r - k_stack + 1);
+    quickSortKStack(l, k_stack + n - l);
+}
+void quickSortResult(int *result, struct Node *tree, struct Point qp, int n)
+{
+    if (n < 2)
+        return;
+    int p = result[n / 2];
+    int *l = result;
+    int *r = result + n - 1;
+    while (l <= r)
+    {
+        if (dist_test(qp, tree[(*l)])  < dist_test(qp, tree[p]))
+        {
+            l++;
+            continue;
+        }
+        if (dist_test(qp, tree[*r]) > dist_test(qp, tree[p]))
+        {
+            r--;
+            continue; // we need to check the condition (l <= r) every time we change the value of l or r
+        }
+        int t = *l;
+        *l++ = *r;
+        *r-- = t;
+    }
+    quickSortResult(result, tree, qp, r - result + 1);
+    quickSortResult(l, tree, qp, result + n - l);
+}
+
+
 bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float qz, float ex, float ey, float ez)
 {
     struct Point query_point;
@@ -131,8 +195,8 @@ TEST(kd_search, initKStack)
 
     cuInitKStack(&k_stack, 50);
 
-    ASSERT_EQ(-1, k_stack[-1].dist);
-    ASSERT_EQ(FLT_MAX, k_stack[0].dist);
+    ASSERT_EQ(-1, k_stack[0].dist);
+    ASSERT_EQ(FLT_MAX, k_stack[1].dist);
     ASSERT_EQ(FLT_MAX, k_stack[49].dist);
 
     free(k_stack_ptr);
@@ -152,21 +216,19 @@ TEST(kd_search, insert)
     c.dist = 3;
     d.dist = 0;
 
+    ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
+
     cuInsert(k_stack, a, n);
     ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
-    ASSERT_EQ(a.dist, k_stack[0].dist);
 
     cuInsert(k_stack, b, n);
-    ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
-    ASSERT_EQ(b.dist, k_stack[1].dist);
-
     cuInsert(k_stack, c, n);
     ASSERT_EQ(c.dist, cuLook(k_stack, n).dist);
-    ASSERT_EQ(c.dist, k_stack[2].dist);
 
     cuInsert(k_stack, d, n);
     ASSERT_EQ(b.dist, cuLook(k_stack, n).dist);
-    ASSERT_EQ(d.dist, k_stack[0].dist);
+    cuInsert(k_stack, d, n);
+    ASSERT_EQ(a.dist, cuLook(k_stack, n).dist);
 
     free(k_stack_ptr);
 }
@@ -185,11 +247,9 @@ TEST(kd_search, insert_k_is_one)
 
     cuInsert(k_stack, a, n);
     ASSERT_EQ(a.dist, cuLook(k_stack, n).dist);
-    ASSERT_EQ(a.dist, k_stack[0].dist);
 
     cuInsert(k_stack, b, n);
     ASSERT_EQ(b.dist, cuLook(k_stack, n).dist);
-    ASSERT_EQ(b.dist, k_stack[0].dist);
 
     free(k_stack_ptr);
 }
@@ -237,9 +297,9 @@ TEST(kd_search, correctness_with_k)
     cudaDeviceReset();
     cuKNN(points[4], tree, n, k, s_stack_ptr, k_stack_ptr);
 
-    ASSERT_EQ(4, k_stack_ptr[1].index);
+    ASSERT_EQ(4, k_stack_ptr[3].index);
     ASSERT_EQ(3, k_stack_ptr[2].index);
-    ASSERT_EQ(1, k_stack_ptr[3].index);
+    ASSERT_EQ(1, k_stack_ptr[1].index);
 
     free(points);
     free(tree);
@@ -283,6 +343,7 @@ TEST(kd_search, correctness_with_10000_points_file)
             //        tree[i].p[0], tree[i].p[1], tree[i].p[2],
             //        tree[result[0]].p[0], tree[result[0]].p[1], tree[result[0]].p[2]);
 
+            quickSortKStack(k_stack_ptr + 1, k);
             ASSERT_EQ(points[i].p[0], tree[k_stack_ptr[1].index].p[0]) << "Failed at i = " << i << " with n = " << n ;
             ASSERT_EQ(points[i].p[1], tree[k_stack_ptr[1].index].p[1]) << "Failed at i = " << i << " with n = " << n;
             ASSERT_EQ(points[i].p[2], tree[k_stack_ptr[1].index].p[2]) << "Failed at i = " << i << " with n = " << n;
@@ -298,9 +359,9 @@ TEST(kd_search, correctness_with_10000_points_file)
 
 TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
 {
-    int n, i, k = 50;
+    int n, i, k = 1;
 
-    for (n = 1000; n <= 100000; n += 100000)
+    for (n = 10; n <= 10; n += 100000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
@@ -323,14 +384,26 @@ TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
 
         int *result = (int *) malloc(n * k * sizeof(int));
 
-        cuQueryAll(points, tree, n, n, k, result);
-        for (i = 0; i < n; ++i)
+        cuQueryAll(points, tree, 1, n, k, result);
+        for (i = 0; i < 1; ++i)
         {
-            ASSERT_GT(result[i * k], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
-            ASSERT_LT(result[i * k], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points[i].p[0], tree[result[i * k]].p[0]) << "Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points[i].p[1], tree[result[i * k]].p[1]) << "Failed at i = " << i << " with n = " << n;
-            ASSERT_EQ(points[i].p[2], tree[result[i * k]].p[2]) << "Failed at i = " << i << " with n = " << n;
+            result += (i * k);
+            // for (int j = 0; j < k; ++j)
+            // {
+            //     printf("%d, ", result[j]);
+            // }
+            // printf("\n");
+            quickSortResult(result + (i * k), tree, points[i], k);
+            // for (int j = 0; j < k; ++j)
+            // {
+            //     printf("%d, ", result[j]);
+            // }
+            // printf("\n");
+            ASSERT_GT(result[0], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
+            ASSERT_LT(result[0], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
         }
 
         free(tree);
@@ -407,11 +480,11 @@ TEST(kd_search, cu_query_all_wikipedia_example)
     free(result);
 }
 
-TEST(kd_search, knn_timing)
+TEST(kd_search, knn_timing_per_Query)
 {
-    int n, k = 1;
+    int n, k = 100;
 
-    for (n = 10000; n <= 10000; n += 10000)
+    for (n = 1000000; n <= 1000000; n += 10000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
@@ -429,7 +502,7 @@ TEST(kd_search, knn_timing)
         buildKdTree(points, n, tree);
 
         int i,
-            test_runs = n;
+            test_runs = 1000;
 
         cudaDeviceReset();
 
@@ -446,7 +519,7 @@ TEST(kd_search, knn_timing)
         }
 
         cudaStopTiming(start, stop, elapsed_time);
-        printCudaTiming(elapsed_time, bytes, n);
+        printCudaTiming(elapsed_time / test_runs, bytes, n);
 
         free(tree);
         free(result);
