@@ -1,4 +1,4 @@
-%!TEX root = ../main.tex
+%!TEX root = ./main.tex
 \section{Background}
 
 \subsection{Introduction to the real world problem} % (fold)
@@ -16,5 +16,9 @@
 
 \subsection{A short introduction to GPU programming and CUDA} % (fold)
 \label{sub:a_short_introduction_to_gpu_programming_and_cuda}
+
+Moore's law has been a gift to all programmers the past 50 years. The law predicts that performance of integrated circlets would double every two years.Resulting in automatically faster algorithms without any work. However, since the so called Power Wall in 2002, the world has been changing. The performance boost  in processors, and verification of Moore's law, is no longer limited to a single processor core, but to multiple cores. As a result, all programs and algorithms has to be rewritten to follow the multi-core evolution.
+
+Since the Power Wall a lot of work have been done regarding parallel programming tools, like OpenMP, CUDA, MPI and OpenCl. These tool have a varied types of supported architectures. OpenMP supports a shared memory architecture, where all cores have access to the same memory. It is an implementation of multi threading whereby a master thread divide the workload to different forked slave threads. MPI, Message Passing Interface, is a library specification for message passing and is proposed as a standard by a broadly based committee of vendors, implementors and users `'.
 
 % subsection a_short_introduction_to_gpu_programming_and_cuda (end)
