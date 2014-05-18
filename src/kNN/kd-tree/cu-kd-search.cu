@@ -191,7 +191,7 @@ __device__ void cuCalculateBlockOffsetAndNoOfQueries(int n, int &n_per_block, in
 
 __device__ __host__ int getSStackSize(int n)
 {
-    return fastIntegerLog2(n) + 5;
+    return fastIntegerLog2(n) + 2;
 }
 
 size_t getFreeBytesOnGpu()
