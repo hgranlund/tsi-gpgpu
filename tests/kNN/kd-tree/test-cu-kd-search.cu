@@ -83,7 +83,7 @@ bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float
 
     cuKNN(query_point, tree, n, k, s_stack_ptr, k_stack_ptr);
 
-    float actual = tree[k_stack_ptr[1].index].p[0] + tree[k_stack_ptr[1].index].p[1] + tree[k_stack_ptr[1].index].p[2];
+    float actual = tree[k_stack_ptr[0].index].p[0] + tree[k_stack_ptr[0].index].p[1] + tree[k_stack_ptr[0].index].p[2];
     float expected = ex + ey + ez;
 
     // printf(">> WP tree\nsearching for (%3.1f, %3.1f, %3.1f)\n"
@@ -193,11 +193,14 @@ TEST(kd_search, initKStack)
     struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
-    cuInitKStack(&k_stack, 50);
+    int k = 50;
 
-    ASSERT_EQ(-1, k_stack[0].dist);
-    ASSERT_EQ(FLT_MAX, k_stack[1].dist);
-    ASSERT_EQ(FLT_MAX, k_stack[49].dist);
+    cuInitKStack(&k_stack, k);
+
+    for (int i = 1; i <= k; ++i)
+    {
+        ASSERT_EQ(FLT_MAX, k_stack[i].dist);
+    }
 
     free(k_stack_ptr);
 }
@@ -297,9 +300,9 @@ TEST(kd_search, correctness_with_k)
     cudaDeviceReset();
     cuKNN(points[4], tree, n, k, s_stack_ptr, k_stack_ptr);
 
-    ASSERT_EQ(4, k_stack_ptr[3].index);
-    ASSERT_EQ(3, k_stack_ptr[2].index);
-    ASSERT_EQ(1, k_stack_ptr[1].index);
+    ASSERT_EQ(4, k_stack_ptr[2].index);
+    ASSERT_EQ(3, k_stack_ptr[1].index);
+    ASSERT_EQ(1, k_stack_ptr[0].index);
 
     free(points);
     free(tree);
@@ -344,9 +347,9 @@ TEST(kd_search, correctness_with_10000_points_file)
             //        tree[result[0]].p[0], tree[result[0]].p[1], tree[result[0]].p[2]);
 
             quickSortKStack(k_stack_ptr + 1, k);
-            ASSERT_EQ(points[i].p[0], tree[k_stack_ptr[1].index].p[0]) << "Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points[i].p[1], tree[k_stack_ptr[1].index].p[1]) << "Failed at i = " << i << " with n = " << n;
-            ASSERT_EQ(points[i].p[2], tree[k_stack_ptr[1].index].p[2]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[0], tree[k_stack_ptr[0].index].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[k_stack_ptr[0].index].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[k_stack_ptr[0].index].p[2]) << "Failed at i = " << i << " with n = " << n;
         }
 
         free(tree);
@@ -359,9 +362,9 @@ TEST(kd_search, correctness_with_10000_points_file)
 
 TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
 {
-    int n, i, k = 1;
+    int n, i, k = 6;
 
-    for (n = 10; n <= 10; n += 100000)
+    for (n = 20; n <= 20; n += 100000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
@@ -388,17 +391,17 @@ TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
         for (i = 0; i < 1; ++i)
         {
             result += (i * k);
-            // for (int j = 0; j < k; ++j)
-            // {
-            //     printf("%d, ", result[j]);
-            // }
-            // printf("\n");
+            for (int j = 0; j < k; ++j)
+            {
+                printf("%d, ", result[j]);
+            }
+            printf("\n");
             quickSortResult(result + (i * k), tree, points[i], k);
-            // for (int j = 0; j < k; ++j)
-            // {
-            //     printf("%d, ", result[j]);
-            // }
-            // printf("\n");
+            for (int j = 0; j < k; ++j)
+            {
+                printf("%d, ", result[j]);
+            }
+            printf("\n");
             ASSERT_GT(result[0], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
             ASSERT_LT(result[0], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
             ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;

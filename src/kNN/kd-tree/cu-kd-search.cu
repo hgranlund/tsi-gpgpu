@@ -51,8 +51,7 @@ struct SPoint cuPeek(struct SPoint *stack)
 __device__ __host__
 void cuInitKStack(struct KPoint **k_stack, int n)
 {
-    (*k_stack)[0].dist = -1;
-    // (*k_stack)++;
+    (*k_stack)--;
     for (int i = 1; i <= n; ++i)
     {
         (*k_stack)[i].dist = FLT_MAX;
@@ -64,21 +63,12 @@ __device__ __host__
 void cuInsert(struct KPoint *k_stack, struct KPoint k_point, int n)
 {
     int child, now;
-    // printf("insert start: ");
-    // for (int i = 0; i <= n; ++i)
-    // {
-    //     printf("%d %3f,  ", k_stack[i].index, k_stack[i].dist );
-    // }
-    // printf("\n");
-    // printf("k_pint = %d, %f\n", k_point.index, k_point.dist);
     for (now = 1; now * 2 <= n ; now = child)
     {
         child = now * 2;
-        if (child >= n) break;
+        if (child <= n && k_stack[child + 1].dist > k_stack[child].dist )  child++;
 
-        if (k_stack[child + 1].dist > k_stack[child].dist )  child++;
-
-        if (k_point.dist < k_stack[child].dist)
+        if (child <= n && k_point.dist < k_stack[child].dist)
         {
             k_stack[now] = k_stack[child];
         }
@@ -88,12 +78,6 @@ void cuInsert(struct KPoint *k_stack, struct KPoint k_point, int n)
         }
     }
     k_stack[now] = k_point;
-    // printf("insert comlete: ");
-    // for (int i = 0; i <= n; ++i)
-    // {
-    //     printf("%d %3f,  ", k_stack[i].index, k_stack[i].dist );
-    // }
-    // printf("\n");
 }
 
 
@@ -219,7 +203,7 @@ size_t getSStackSizeInBytes(int n, int thread_num, int block_num)
 size_t getNeededBytesInSearch(int n_qp, int k, int n, int thread_num, int block_num)
 {
     return n_qp * (k * sizeof(int) +  sizeof(Point)) +
-           (n_qp * (k + 1) * sizeof(KPoint))  +
+           (n_qp * k * sizeof(KPoint))  +
            (getSStackSizeInBytes(n, thread_num, block_num));
 }
 
@@ -247,18 +231,13 @@ void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tr
     cuCalculateBlockOffsetAndNoOfQueries(n_qp, block_step, block_offset);
 
     query_points += block_offset;
-    k_stack_ptr += block_offset * (k + 1);
+    k_stack_ptr += block_offset * k;
     s_stack_ptr += (blockIdx.x * blockDim.x * stack_size );
     s_stack_ptr += (threadIdx.x * stack_size);
 
     while (tid < block_step)
     {
-        cuKNN(query_points[tid], tree, n_tree, k, s_stack_ptr, k_stack_ptr + (tid * (k + 1)));
-        // for (int i = 0; i < k; ++i)
-        // {
-        //     printf("%d %3f,  ", k_stack_ptr[(tid * (k + 1) + i + 1)]);
-        // }
-        // printf("\n");
+        cuKNN(query_points[tid], tree, n_tree, k, s_stack_ptr, k_stack_ptr + (tid * k));
         tid += blockDim.x;
     }
 }
@@ -331,8 +310,8 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
 
 
-    h_k_stack = (KPoint *) malloc(queries_in_step * (k + 1) * sizeof(KPoint));
-    checkCudaErrors(cudaMalloc(&d_k_stack, queries_in_step * (k + 1)  * sizeof(KPoint)));
+    h_k_stack = (KPoint *) malloc(queries_in_step * k * sizeof(KPoint));
+    checkCudaErrors(cudaMalloc(&d_k_stack, queries_in_step * k  * sizeof(KPoint)));
     checkCudaErrors(cudaMalloc(&d_stack, numThreads * numBlocks * stack_size * sizeof(SPoint)));
     checkCudaErrors(cudaMalloc(&d_query_points, queries_in_step * sizeof(Point)));
 
@@ -342,31 +321,20 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
         {
             queries_in_step = n_qp - queries_done;
         }
-        // printf("queris in stap *= %d, n_qp = %d \n", queries_in_step , n_qp);
         checkCudaErrors(cudaMemcpy(d_query_points, h_query_points, queries_in_step * sizeof(Point), cudaMemcpyHostToDevice));
 
         dQueryAll <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_k_stack, d_stack);
 
-        checkCudaErrors(cudaMemcpy(h_k_stack, d_k_stack, queries_in_step * (k + 1) * sizeof(KPoint), cudaMemcpyDeviceToHost));
+        checkCudaErrors(cudaMemcpy(h_k_stack, d_k_stack, queries_in_step * k * sizeof(KPoint), cudaMemcpyDeviceToHost));
 
-        // # pragma omp parallel for
+        # pragma omp parallel for
         for (int i = 0; i < queries_in_step ; ++i)
         {
             for (int j = 0; j < k; ++j)
             {
-                h_result[i * k + j] = h_k_stack[i * (k + 1) + 1].index;
+                h_result[i * k + j] = h_k_stack[i * k + j].index;
             }
         }
-
-        // for (int i = 0; i < queries_in_step ; ++i)
-        // {
-        //     for (int j = 0; j < k; ++j)
-        //     {
-        //         printf("%d  %3.0f, ", h_k_stack[i * (k + 1) + 1].index, h_k_stack[i * (k + 1) + 1].dist);
-        //     }
-        //     printf("\n");
-        // }
-
 
         h_query_points += queries_in_step;
         h_result += (queries_in_step * k);
