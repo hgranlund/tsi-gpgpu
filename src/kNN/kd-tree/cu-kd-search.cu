@@ -62,15 +62,22 @@ void cuInitKStack(struct KPoint **k_stack, int n)
 __device__ __host__
 void cuInsert(struct KPoint *k_stack, struct KPoint k_point, int n)
 {
-    int child, now;
-    for (now = 1; now * 2 <= n ; now = child)
+    int i_child, now;
+    struct KPoint child, child_tmp_2;
+    for (now = 1; now * 2 <= n ; now = i_child)
     {
-        child = now * 2;
-        if (child <= n && k_stack[child + 1].dist > k_stack[child].dist )  child++;
-
-        if (child <= n && k_point.dist < k_stack[child].dist)
+        i_child = now * 2;
+        child = k_stack[i_child];
+        child_tmp_2 = k_stack[i_child + 1];
+        if (i_child <= n && child_tmp_2.dist > child.dist )
         {
-            k_stack[now] = k_stack[child];
+            i_child++;
+            child = child_tmp_2;
+        }
+
+        if (i_child <= n && k_point.dist < child.dist)
+        {
+            k_stack[now] = child;
         }
         else
         {
