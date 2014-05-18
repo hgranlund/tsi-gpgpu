@@ -127,6 +127,7 @@ TEST(kd_tree_build, wikipedia_example)
     points[5].p[0] = 7, points[5].p[1] = 2, points[5].p[2] = 0;
 
     buildKdTree(points, n, points_out);
+    // cuPrintTree(points_out, 0, n / 2);
 
     points_correct[0].p[0] = 2, points_correct[0].p[1] = 3, points_correct[0].p[2] = 0;
     points_correct[1].p[0] = 5, points_correct[1].p[1] = 4, points_correct[1].p[2] = 0;
@@ -134,6 +135,8 @@ TEST(kd_tree_build, wikipedia_example)
     points_correct[3].p[0] = 7, points_correct[3].p[1] = 2, points_correct[3].p[2] = 0;
     points_correct[4].p[0] = 8, points_correct[4].p[1] = 1, points_correct[4].p[2] = 0;
     points_correct[5].p[0] = 9, points_correct[5].p[1] = 6, points_correct[5].p[2] = 0;
+
+    ASSERT_KD_TREE(points_out, n);
 
     for (int i = 0; i < n; ++i)
     {

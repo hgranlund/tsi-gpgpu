@@ -8,7 +8,6 @@
 
 #include "helper_cuda.h"
 
-
 int nextPowerOf2_(int x)
 {
     --x;
@@ -20,12 +19,10 @@ int nextPowerOf2_(int x)
     return ++x;
 }
 
-
-void UpDim(int *dim)
+void UpDim(int &dim)
 {
-    *dim = (*dim + 1) % 3;
+    dim = (dim + 1) % 3;
 }
-
 
 void getThreadAndBlockCountForBuild(int n, int &blocks, int &threads)
 {
@@ -113,6 +110,9 @@ __device__ __host__
 void pointConvert(struct Node &p1, struct Point &p2)
 {
     p1.p[0] = p2.p[0], p1.p[1] = p2.p[1], p1.p[2] = p2.p[2];
+#if KEEP_POINT_INDEX
+    p1.index_orig = p2.index_orig;
+#endif
 }
 
 __global__
@@ -218,7 +218,7 @@ void cuBuildKdTree(struct Point *h_points, int n, int dim, struct Node *tree)
 
     radixSelectAndPartition(d_points, d_swap, d_partition, n, dim);
 
-    UpDim(&dim);
+    UpDim(dim);
     i++;
     while (i < (h - 1) )
     {
@@ -246,7 +246,7 @@ void cuBuildKdTree(struct Point *h_points, int n, int dim, struct Node *tree)
         }
         swap_pointer(&h_steps_new, &h_steps_old);
         i++;
-        UpDim(&dim);
+        UpDim(dim);
     }
 
     checkCudaErrors(cudaFree(d_swap));
@@ -285,7 +285,7 @@ void buildKdTreeStep(struct Point *h_points, int n, int dim, struct Node *tree)
         cpuQuickSelect(h_points, n, dim);
         pointConvert(tree[m], h_points[m]);
 
-        UpDim(&dim);
+        UpDim(dim);
 
         buildKdTreeStep(h_points, m, dim, tree);
         buildKdTreeStep(h_points + m + 1, n - m - 1, dim, tree + m + 1);
@@ -295,6 +295,7 @@ void buildKdTreeStep(struct Point *h_points, int n, int dim, struct Node *tree)
 
 void buildKdTree(struct Point *h_points, int n, struct Node *tree)
 {
+
     int dim = 0;
     buildKdTreeStep(h_points, n, dim, tree);
     store_locations(tree, 0, n, n);
