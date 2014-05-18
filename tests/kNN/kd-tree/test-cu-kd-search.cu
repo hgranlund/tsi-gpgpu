@@ -355,17 +355,7 @@ TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
         for (i = 0; i < 1; ++i)
         {
             result += (i * k);
-            for (int j = 0; j < k; ++j)
-            {
-                printf("%d, ", result[j]);
-            }
-            printf("\n");
             quickSortResult(result + (i * k), tree, points[i], k);
-            for (int j = 0; j < k; ++j)
-            {
-                printf("%d, ", result[j]);
-            }
-            printf("\n");
             ASSERT_GT(result[0], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
             ASSERT_LT(result[0], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
             ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
