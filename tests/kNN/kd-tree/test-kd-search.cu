@@ -4,6 +4,7 @@
 #include <test-common.cuh>
 
 #include <kd-search.cuh>
+
 #include <knn_gpgpu.h>
 
 
@@ -37,6 +38,7 @@ TEST(kd_search, query_all_correctness_with_10000_points_file)
 
         for (i = 0; i < n; ++i)
         {
+            quickSortResult(result + (i * k), tree, points[i], k);
             ASSERT_GT(result[i * k], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
             ASSERT_LT(result[i * k], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
             ASSERT_EQ(points[i].p[0], tree[result[i * k]].p[0]) << "Failed at i = " << i << " with n = " << n ;
