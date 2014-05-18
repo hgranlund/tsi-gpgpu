@@ -169,10 +169,9 @@ __device__ __host__
 int fastIntegerLog2(int x)
 {
     int y = 0;
-    while (x > 2)
+    while (x >>= 1)
     {
         y++;
-        x >>= 1;
     }
     return y;
 }

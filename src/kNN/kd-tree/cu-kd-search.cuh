@@ -17,6 +17,8 @@ __device__ __host__ void cuInitKStack(KPoint **k_stack, int n);
 __device__ __host__ void cuInsert(struct KPoint *k_stack, struct KPoint k_point, int n);
 __device__ __host__ struct KPoint cuLook(struct KPoint *k_stack);
 
+__device__ __host__ int fastIntegerLog2(int x);
+
 __device__ __host__ float cuDist(struct Point qp, struct Node point);
 __device__ __host__ void cuUpDim(int &dim);
 

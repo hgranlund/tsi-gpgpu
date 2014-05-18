@@ -66,6 +66,17 @@ bool isExpectedPoint(struct Node *tree, int n, int k,  float qx, float qy, float
     return false;
 }
 
+TEST(kd_search, fastIntegerLog2)
+{
+    int next_pow;
+
+    next_pow = fastIntegerLog2(100);
+    ASSERT_EQ(6, next_pow);
+
+    next_pow = fastIntegerLog2(10000);
+    ASSERT_EQ(13, next_pow);
+}
+
 TEST(kd_search, isEmpty)
 {
     struct SPoint *stack_ptr = (struct SPoint *) malloc(4 * sizeof(struct SPoint)),
