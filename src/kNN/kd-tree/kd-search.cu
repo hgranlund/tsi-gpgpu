@@ -19,7 +19,6 @@ size_t getRequierdSizeForQueryAll(int n_qp, int k, int n)
     return getTreeSize(n) + getNeededBytesInSearch(MIN_NUM_QUERY_POINTS, k, n, numThreads, numBlocks);
 }
 
-
 void maxHeapResultInsert(int *result, struct Node *tree, int point_index, struct Point qp, int k)
 {
     int child, now;
@@ -46,14 +45,11 @@ void maxHeapResultInsert(int *result, struct Node *tree, int point_index, struct
 
 void mergeResult(struct Node *tree, struct Point *query_points, int k, int n_qp, int root, int *result_right, int *result)
 {
-
-    int i_qp, i_k;
-    struct Point qp;
-    int *result_max_heap;
-
-    for (i_qp = 0; i_qp < n_qp; ++i_qp)
+    #pragma omp parallel for
+    for (int i_qp = 0; i_qp < n_qp; ++i_qp)
     {
-        result_max_heap = result + i_qp * k - 1;
+        int i_k;
+        int *result_max_heap = result + i_qp * k - 1;
         for (i_k = 0; i_k < k; ++i_k)
         {
             maxHeapResultInsert(result_max_heap, tree, result_right[i_qp * k + i_k], query_points[i_qp], k);
