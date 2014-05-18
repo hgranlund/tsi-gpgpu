@@ -46,40 +46,51 @@ struct SPoint peek(struct SPoint *stack)
     return *(stack - 1);
 }
 
-
 void initKStack(struct KPoint **k_stack, int n)
 {
-    int i;
-
-    (*k_stack)[0].dist = -1;
-    (*k_stack)++;
-    for (i = 0; i < n; ++i)
+    (*k_stack)--;
+    for (int i = 1; i <= n; ++i)
     {
         (*k_stack)[i].dist = FLT_MAX;
+        (*k_stack)[i].index = -1;
     }
 }
 
 void insert(struct KPoint *k_stack, struct KPoint k_point, int n)
 {
-    int i = n - 1;
-    struct KPoint swap = k_stack[i - 1];
-
-    while (swap.dist > k_point.dist)
+    int i_child, now;
+    struct KPoint child, child_tmp_2;
+    for (now = 1; now * 2 <= n ; now = i_child)
     {
-        k_stack[i--] = swap;
-        swap = k_stack[i - 1];
+        i_child = now * 2;
+        child = k_stack[i_child];
+        child_tmp_2 = k_stack[i_child + 1];
+        if (i_child <= n && child_tmp_2.dist > child.dist )
+        {
+            i_child++;
+            child = child_tmp_2;
+        }
+
+        if (i_child <= n && k_point.dist < child.dist)
+        {
+            k_stack[now] = child;
+        }
+        else
+        {
+            break;
+        }
     }
-    k_stack[i] = k_point;
+    k_stack[now] = k_point;
 }
 
-struct KPoint look(struct KPoint *k_stack, int n)
+struct KPoint look(struct KPoint *k_stack)
 {
-    return k_stack[n - 1];
+    return k_stack[1];
 }
 
-void upDim(int *dim)
+void upDim(int &dim)
 {
-    *dim = (*dim + 1) % 3;
+    dim = (dim + 1) % 3;
 }
 
 int target(struct Point qp, struct Node current, float dx)
@@ -112,11 +123,11 @@ void kNN(struct Point qp, struct Node *tree, int n, int k, int *result,
     struct KPoint *k_stack = k_stack_ptr,
                            worst_best;
 
-    current.index = n / 2;
-    worst_best.dist = FLT_MAX;
-
     initStack(&stack);
     initKStack(&k_stack, k);
+
+    worst_best = look(k_stack);
+    current.index = n / 2;
 
     while (!isEmpty(stack) || current.index != -1)
 {
@@ -140,10 +151,10 @@ void kNN(struct Point qp, struct Node *tree, int n, int k, int *result,
                 worst_best.dist = current_dist;
                 worst_best.index = current.index;
                 insert(k_stack, worst_best, k);
-                worst_best = look(k_stack, k);
+                worst_best = look(k_stack);
             }
 
-            upDim(&dim);
+            upDim(dim);
             current.dim = dim;
             current.dx = current_point.p[dim] - qp.p[dim];
             current.other = other(qp, current_point, current.dx);
@@ -153,6 +164,7 @@ void kNN(struct Point qp, struct Node *tree, int n, int k, int *result,
         }
     }
 
+    k_stack++;
     for (i = 0; i < k; ++i)
     {
         result[i] = k_stack[i].index;
@@ -166,7 +178,7 @@ void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_t
     {
         int th_id = omp_get_thread_num();
         struct SPoint *stack_ptr = (struct SPoint *) malloc(stack_size * sizeof(struct SPoint));
-        struct KPoint *k_stack_ptr = (struct KPoint *) malloc((k + 1) * sizeof(struct KPoint));
+        struct KPoint *k_stack_ptr = (struct KPoint *) malloc(k * sizeof(struct KPoint));
 
         while (th_id < n_qp)
         {
