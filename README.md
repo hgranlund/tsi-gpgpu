@@ -89,3 +89,80 @@ Installation notes for Ubuntu
     ...\tsi-gpu/build> make
 
 All executables will be in ```/build/bin``` and all libraries will be in ```/build/lib/```.
+
+
+Timing executables
+------------------
+
+The project comes with three timing test executables, time_kd_search, time_kd_search_openmp and time_kd_tree build. The following section describes how to use these executables for timing tests of the different library functions. Time_kd_tree build is documented in more detail as a reference for anyone not that familiar with a command line.
+
+
+#### Time_kd_search:
+
+Time_kd_search generates a kd-tree, queries for all the points in the tree, or a specified number of points, and then prints the timing results. The calculation is performed using the GPU, and the API function cuQueryAll. Under is a short summary of the different input options:
+
+    .\time_kd_search.exe <number-of-points>
+    .\time_kd_search.exe <number-of-points> <path to file>
+    .\time_kd_search.exe <start number-of-points> <end number-of-points> <step>
+    .\time_kd_search.exe <start number-of-points> <end number-of-points> <step> <number-of-k>
+    .\time_kd_search.exe <start number-of-points> <end number-of-points> <step> <number-of-query-points>
+
+
+#### Time_kd_search_openmp:
+
+Time_kd_search_openmp generates a kd-tree, queries for all the points in the tree, or a specified number of points, and then prints the timing results. The calculation is performed using the CPU, and the API function mpQueryAll. Under is a short summary of the different input options:
+
+    .\time_kd_search_openmp.exe <number-of-points>
+    .\time_kd_search_openmp.exe <number-of-points> <path to file>
+    .\time_kd_search_openmp.exe <start number-of-points> <end number-of-points> <step>
+    .\time_kd_search_openmp.exe <start number-of-points> <end number-of-points> <step> <number-of-k>
+    .\time_kd_search_openmp.exe <start number-of-points> <end number-of-points> <step> <number-of-query-points>
+
+
+#### Time_kd_tree_build:
+
+Time_kd_tree_build generates a kd-tree and prints the timing results. The input options are described below:
+
+__Build one tree of a give size:__
+
+    .\time_kd_tree_build.exe <number-of-points>
+
+So the command ```.\time_kd_tree_build.exe 100``` would bouild a kd-tree consisting of 100 random points and return the timing results for the build algorithm.
+
+__Build several trees of increasing size:__
+
+    .\time_kd_tree_build.exe <start number-of-points> <end number-of-points> <step>
+
+Start number-of-points specifies the smallest tree in the series, and end number-of-points specifies the upper bound on the series. The step value determines the increase in size between each tree in the series. Every tree is built using new random point values.
+
+So the command ```.\time_kd_tree_build.exe 100 300 150``` would build two trees, one of size 100, and one of size 250, and return the timing results for both build operations.
+
+__Build one tree from points specified in a binary file:__
+
+    .\time_kd_tree_build.exe <number-of-points> <path to file>
+
+Number-of-points specifies how many points the executable will read from the data-file. This number should be lower than the actual number of points contained in the data-file. Path to file is the path to the data-file containing the points.
+
+So the command ```.\time_kd_tree_build.exe 10000 \path-to-file\100_mill_points.data``` would build a kd-tree from the first 10 000 points specified in the data-file.
+
+
+#### File format
+
+The executables accepts binary files. The points should be written sequentially with x, y and z values. The methods for reading and writing points can be found at: [Github](https://github.com/hgranlund/tsi-gpgpu/blob/master/tests/kNN/kd-tree/time-kd-search.cu)
+
+
+Known errors
+------------
+
+#### ErrorLaunchTimeOut:
+
+**Reason:**
+
+If your GPU is used for both display as well as for CUDA, then the OS will send a timeout message that will terminate the kernel/program.
+
+**Solution:**
+
+To solve the error one have to make the GPU only work as a CUDA GPU. There are a couple of ways to to dis:
+
+1. (Good) Buy a separate GPU for CUDA computations.
+2. (Bad) Change the timeout value in regedit. HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers --> TdrLevel = "yourTimeoutValueInSeconds".
