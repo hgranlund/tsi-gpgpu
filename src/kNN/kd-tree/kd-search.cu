@@ -19,46 +19,46 @@ size_t getRequierdSizeForQueryAll(int n_qp, int k, int n)
     return getTreeSize(n) + getNeededBytesInSearch(MIN_NUM_QUERY_POINTS, k, n, numThreads, numBlocks);
 }
 
-void mergeResult(struct Node *tree, struct Point *query_points, int k, int n_qp, int root, int *h_result_right, int *h_result)
+
+void maxHeapResultInsert(int *result, struct Node *tree, int point_index, struct Point qp, int k)
+{
+    int child, now;
+    struct Node insert_node = tree[point_index];
+
+    if (cuDist(qp, insert_node) > cuDist(qp, tree[result[0]]) ) return;
+
+    for (now = 1; now * 2 <= k ; now = child)
+    {
+        child = now * 2;
+        if (child <= k && cuDist(qp, tree[result[child + 1]]) > cuDist(qp, tree[result[child]]) )  child++;
+
+        if (child <= k && cuDist(qp, insert_node) < cuDist(qp, tree[result[child]]))
+        {
+            result[now] = result[child];
+        }
+        else
+        {
+            break;
+        }
+    }
+    result[now] = point_index;
+}
+
+void mergeResult(struct Node *tree, struct Point *query_points, int k, int n_qp, int root, int *result_right, int *result)
 {
 
-    int i_qp, i_k, i_r, i_l, *merge_list_left, *merge_list_right;
+    int i_qp, i_k;
     struct Point qp;
-    merge_list_left = (int *) malloc(k * sizeof(int));
+    int *result_max_heap;
 
     for (i_qp = 0; i_qp < n_qp; ++i_qp)
     {
-        qp = query_points[i_qp];
-        merge_list_right = h_result_right + (k * i_qp);
+        result_max_heap = result + i_qp * k - 1;
         for (i_k = 0; i_k < k; ++i_k)
         {
-            merge_list_left[i_k] = h_result[i_qp * k + i_k];
-            h_result_right[i_qp * k + i_k] += (root + 1);
-        }
-        i_k = i_r = i_l = 0;
-        for (i_k = 0; i_k < k; ++i_k)
-        {
-            if (cuDist(qp, tree[merge_list_left[i_l]]) < cuDist(qp, tree[merge_list_right[i_r]]))
-            {
-                h_result[i_qp * k + i_k] = merge_list_left[i_l];
-                i_l++;
-            }
-            else
-            {
-                h_result[i_qp * k + i_k] = merge_list_right[i_r];
-                i_r++;
-            }
-        }
-        for (i_k = 0; i_k < k; ++i_k)
-        {
-            if (cuDist(qp, tree[root]) < cuDist(qp, tree[h_result[i_qp * k + i_k]]))
-            {
-                h_result[i_qp * k + i_k] = root;
-                break;
-            }
+            maxHeapResultInsert(result_max_heap, tree, result_right[i_qp * k + i_k], query_points[i_qp], k);
         }
     }
-    free(merge_list_left);
 }
 
 void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result, int switch_limit)
