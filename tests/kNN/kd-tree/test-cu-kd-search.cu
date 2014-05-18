@@ -326,9 +326,9 @@ TEST(kd_search, correctness_with_10000_points_file)
 
 TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
 {
-    int n, i, k = 6;
+    int n, i, k = 50;
 
-    for (n = 20; n <= 20; n += 100000)
+    for (n = 1000; n <= 10000; n += 100000)
     {
         struct Point *points = (struct Point *) malloc(n  * sizeof(Point));
         struct Node *tree = (struct Node *) malloc(n  * sizeof(Node));
@@ -351,16 +351,15 @@ TEST(kd_search, cu_query_all_correctness_with_10000_points_file)
 
         int *result = (int *) malloc(n * k * sizeof(int));
 
-        cuQueryAll(points, tree, 1, n, k, result);
-        for (i = 0; i < 1; ++i)
+        cuQueryAll(points, tree, n, n, k, result);
+        for (i = 0; i < n; ++i)
         {
-            result += (i * k);
             quickSortResult(result + (i * k), tree, points[i], k);
-            ASSERT_GT(result[0], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
-            ASSERT_LT(result[0], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
-            ASSERT_EQ(points[i].p[1], tree[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
-            ASSERT_EQ(points[i].p[2], tree[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_GT(result[i * k], -1) << "Result index is less then 0 \n Failed at i = " << i << " with n = " << n ;
+            ASSERT_LT(result[i * k], n) << "Result index is bigger then the length of the tree \n Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[0], tree[result[i * k]].p[0]) << "Failed at i = " << i << " with n = " << n ;
+            ASSERT_EQ(points[i].p[1], tree[result[i * k]].p[1]) << "Failed at i = " << i << " with n = " << n;
+            ASSERT_EQ(points[i].p[2], tree[result[i * k]].p[2]) << "Failed at i = " << i << " with n = " << n;
         }
 
         free(tree);
