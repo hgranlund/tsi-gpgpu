@@ -225,16 +225,16 @@ TEST(kd_search, upDim)
 {
     int dim = 0;
 
-    cuUpDim(&dim);
+    cuUpDim(dim);
     ASSERT_EQ(1, dim);
 
-    cuUpDim(&dim);
+    cuUpDim(dim);
     ASSERT_EQ(2, dim);
 
-    cuUpDim(&dim);
+    cuUpDim(dim);
     ASSERT_EQ(0, dim);
 
-    cuUpDim(&dim);
+    cuUpDim(dim);
     ASSERT_EQ(1, dim);
 }
 

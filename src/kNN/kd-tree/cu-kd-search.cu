@@ -95,9 +95,9 @@ struct KPoint cuLook(struct KPoint *k_stack, int n)
 }
 
 __device__ __host__
-void cuUpDim(int *dim)
+void cuUpDim(int &dim)
 {
-    *dim = (*dim + 1) % 3;
+    dim = (dim + 1) % 3;
 }
 
 __device__ __host__
@@ -154,7 +154,7 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k,
                 worst_best = cuLook(k_stack, k);
             }
 
-            cuUpDim(&dim);
+            cuUpDim(dim);
             current.dim = dim;
             current.dx = current_point.p[dim] - qp.p[dim];
             cuChildren(qp, current_point, current.dx, target, current.other);

@@ -18,7 +18,7 @@ __device__ __host__ void cuInsert(struct KPoint *k_stack, struct KPoint k_point,
 __device__ __host__ struct KPoint cuLook(struct KPoint *k_stack, int n);
 
 __device__ __host__ float cuDist(struct Point qp, struct Node point);
-__device__ __host__ void cuUpDim(int *dim);
+__device__ __host__ void cuUpDim(int &dim);
 
 __device__ __host__ void cuKNN(struct Point qp, struct Node *tree, int n, int k,
                                struct SPoint *stack_ptr, struct KPoint *k_stack_ptr);
