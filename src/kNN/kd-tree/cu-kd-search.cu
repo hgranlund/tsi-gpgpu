@@ -89,7 +89,7 @@ void cuInsert(struct KPoint *k_stack, struct KPoint k_point, int n)
 
 
 __device__ __host__
-struct KPoint cuLook(struct KPoint *k_stack, int n)
+struct KPoint cuLook(struct KPoint *k_stack)
 {
     return k_stack[1];
 }
@@ -127,10 +127,10 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k,
     struct KPoint worst_best;
 
     current.index = n / 2;
-    worst_best.dist = FLT_MAX;
 
     cuInitStack(&stack);
     cuInitKStack(&k_stack, k);
+    worst_best = cuLook(k_stack);
 
     while (!cuIsEmpty(stack) || current.index != -1)
     {
@@ -151,7 +151,7 @@ void cuKNN(struct Point qp, struct Node *tree, int n, int k,
                 worst_best.dist = current_dist;
                 worst_best.index = current.index;
                 cuInsert(k_stack, worst_best, k);
-                worst_best = cuLook(k_stack, k);
+                worst_best = cuLook(k_stack);
             }
 
             cuUpDim(dim);
@@ -272,7 +272,7 @@ int getQueriesInStep(int n_qp, int k, int n)
     if (free_bytes > needed_bytes_total) return n_qp;
     if (n_qp < 50) return -1;
 
-    return getQueriesInStep((n_qp * 4) / 5, k, n);
+    return getQueriesInStep((n_qp / 2), k, n);
 }
 
 int nextPowerOf2___(int x)

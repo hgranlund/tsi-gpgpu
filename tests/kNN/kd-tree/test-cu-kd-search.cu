@@ -183,19 +183,19 @@ TEST(kd_search, insert)
     c.dist = 3;
     d.dist = 0;
 
-    ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
+    ASSERT_EQ(FLT_MAX, cuLook(k_stack).dist);
 
     cuInsert(k_stack, a, n);
-    ASSERT_EQ(FLT_MAX, cuLook(k_stack, n).dist);
+    ASSERT_EQ(FLT_MAX, cuLook(k_stack).dist);
 
     cuInsert(k_stack, b, n);
     cuInsert(k_stack, c, n);
-    ASSERT_EQ(c.dist, cuLook(k_stack, n).dist);
+    ASSERT_EQ(c.dist, cuLook(k_stack).dist);
 
     cuInsert(k_stack, d, n);
-    ASSERT_EQ(b.dist, cuLook(k_stack, n).dist);
+    ASSERT_EQ(b.dist, cuLook(k_stack).dist);
     cuInsert(k_stack, d, n);
-    ASSERT_EQ(a.dist, cuLook(k_stack, n).dist);
+    ASSERT_EQ(a.dist, cuLook(k_stack).dist);
 
     free(k_stack_ptr);
 }
@@ -213,10 +213,10 @@ TEST(kd_search, insert_k_is_one)
     b.dist = 0;
 
     cuInsert(k_stack, a, n);
-    ASSERT_EQ(a.dist, cuLook(k_stack, n).dist);
+    ASSERT_EQ(a.dist, cuLook(k_stack).dist);
 
     cuInsert(k_stack, b, n);
-    ASSERT_EQ(b.dist, cuLook(k_stack, n).dist);
+    ASSERT_EQ(b.dist, cuLook(k_stack).dist);
 
     free(k_stack_ptr);
 }
