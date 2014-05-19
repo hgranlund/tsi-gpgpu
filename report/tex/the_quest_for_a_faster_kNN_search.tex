@@ -13,8 +13,72 @@
 
 % subsection investigation_of_a_brute_force_approach_based_on_garcia (end)
 
-\subsection{Application of KD-trees to the kNN problem} % (fold)
+% Possible RQ for the k-d tree section.
+\begin{myrq}
+\label{rq:structure_aml}
+    It is possible to use a k-d tree, to increase the performance of a large number of repeated, 3-d, low k queries in a large dataset.
+\end{myrq}
+
+\subsection{Application of k-d trees to the kNN problem} % (fold)
 \label{sub:application_of_kd_trees_to_the_knn_problem}
+
+A usual strategy, when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure especially suited for fast querying. When choosing this strategy, you are trading of the additional time penalty of building the data structure, for increased performance on each query, hopefully offsetting the build-time penalty. When considering the needs of TechnoSoft Inc, as described in section \ref{a_short_introduction_to_the_kNN_algorithm}, this strategy seems like a good fit.
+
+In this section, we will present the k-d tree data structure, and show how it can be used for operating on three-dimensional point cloud data. Then an investigation is performed, in order to determine the possible benefits of a parallel k-d tree based algorithm.
+
+
+\subsubsection{Using k-d trees for point cloud data} % (fold)
+\label{ssub:using_k_d_trees_for_point_cloud_data}
+
+A k-d tree can be thought of as a binary search tree in k dimensions. 
+
+A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/Kdtree_2d.png}
+
+\caption{2D KD-tree}
+\label{fig:kdtree_2d}
+\end{figure}
+
+In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
+
+Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from 
+%[Wikipedia](http://en.wikipedia.org/wiki/k-d_tree))
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/Tree_0001.png}
+
+\caption{corresponding-binary-tree}
+\label{fig:tree_0001}
+\end{figure}
+
+Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log2(n)) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log2(n)) time.
+
+Interested readers is encouraged to look at the paper Multidimensional binary search trees used for associative searching by Jon Louis Bentley, where k-d trees first was described.
+
+
+% subsubsection using_k_d_trees_for_point_cloud_data (end)
+
+
+
+\subsubsection{The serial base algorithm} % (fold)
+\label{ssub:the_serial_base_algorithm}
+
+\begin{enumerate}
+    \item Build a balanced k-d tree from the point cloud.
+    \item Query the tree for different sets of neighbors.
+\end{enumerate}
+
+Time complexity:
+
+Steps:
+\begin{enumerate}
+    \item O(n log2 n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
+    \item Approximately O(log2 n), but dependent on size of k.
+\end{enumerate}
 
 % subsection application_of_kd_trees_to_the_knn_problem (end)
 
@@ -202,7 +266,7 @@ A k-d tree can be thought of as a binary search tree for graphical data. A few d
 In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
 
 Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from 
-%[Wikipedia](http://en.wikipedia.org/wiki/K-d_tree))
+%[Wikipedia](http://en.wikipedia.org/wiki/k-d_tree))
 
 \begin{figure}[ht!]
 \centering
@@ -214,7 +278,7 @@ Given the previous splits and selection of nodes, the resulting binary tree woul
 
 Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log2(n)) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log2(n)) time.
 
-Interested readers is encouraged to look at the paper Multidimensional binary search trees used for associative searching by Jon Louis Bentley, where kd-trees first was described.
+Interested readers is encouraged to look at the paper Multidimensional binary search trees used for associative searching by Jon Louis Bentley, where k-d trees first was described.
 
 \subsubsection{The serial base algorithm} % (fold)
 \label{ssub:the_serial_base_algorithm}
@@ -263,14 +327,14 @@ After a bit of research and trial and error, we choose to represent the kd-tree 
 
 Advantages:
 \begin{itemize}
-    \item Can represent binary trees where not all leaf-nodes are present. This is the minimal requirement for representing perfectly balanced kd-trees.
+    \item Can represent binary trees where not all leaf-nodes are present. This is the minimal requirement for representing perfectly balanced k-d trees.
     \item Joining or splitting subtrees is as simple as appending or splitting arrays.
-    \item Minimal memory overhead, kd-trees can even be built in-place on the array.
+    \item Minimal memory overhead, k-d trees can even be built in-place on the array.
 \end{itemize}
 
 Drawbacks:
 \begin{itemize}
-    \item Cannot represent imperfectly balanced kd-trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
+    \item Cannot represent imperfectly balanced k-d trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
     \item Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree. In order to eliminate this drawback, a index cache is computed before the search is performed.
 \end{itemize}
 
