@@ -19,6 +19,27 @@
 
 Moore's law has been a gift to all programmers the past 50 years. The law predicts that performance of integrated circlets would double every two years.Resulting in automatically faster algorithms without any work. However, since the so called Power Wall in 2002, the world has been changing. The performance boost  in processors, and verification of Moore's law, is no longer limited to a single processor core, but to multiple cores. As a result, all programs and algorithms has to be rewritten to follow the multi-core evolution.
 
-Since the Power Wall a lot of work have been done regarding parallel programming tools, like OpenMP, CUDA, MPI and OpenCl. These tool have a varied types of supported architectures. OpenMP supports a shared memory architecture, where all cores have access to the same memory. It is an implementation of multi threading whereby a master thread divide the workload to different forked slave threads. MPI, Message Passing Interface, is a library specification for message passing and is proposed as a standard by a broadly based committee of vendors, implementors and users `'.
+
+Since the Power Wall a lot of work have been done regarding parallel programming tools, like OpenMP, CUDA, MPI and OpenCl. These tool have a varied types of supported architectures. OpenMP supports a shared memory architecture, where all cores have access to the same memory. It is an implementation of multi threading whereby a master thread divide the workload to different forked slave threads. MPI (Message Passing Interface) is a library specification for message passing, and is proposed as a standard by a broadly based committee of vendors, implementors and users. It is mostly used for communication between processors running in a distributed memory system, as most supercomputer clusters are designed today. MPI is therefore the most used parallel computer method used on supercomputer clusters today.
+% An application build on both OpenMp and MPI are called a hybrid. They are used on systems that use distributed memory across different nodes, where each node uses a shared memory architecture.  These applications use MPI to send data to each node and OpenMP on individually nodes.
+
+
+Although supercomputers are fast and can have thousands of cores, they are highly expensive and are not accessible for a normal consumers. Out of the current consumer level products, GPU's represent the most extreme in parallelized hardware. NVIDIA GeForce GTX, for example, can execute 23,040 threads in parallel, and in practice requires at least 15,000 threads to reach full performance \citep{karras2012}. The reason GPU's have such a massive amount of parallelized threads if that each thread is very lightweight. The benefit is that together they can achieve extremely high instruction throughput. This makes the GPU perfect for high performance computing.
+
+
+The GPU's extreme properties and the highly increasing interest in multi core systems have also made the GPGPU programming landscape rapidly evolve. General-purpose computing on graphics processing units (GPGPU) is the utilization of GPU in applications, to perform heavy computation, that is normally handled by the CPU. Several new programming approaches have appeared and a convergence to a standardized model has began. Two widely used approaches are Compute Unified Device Architecture (CUDA) and The Open Compute Language (OpenCL).
+
+
+OpenCl is a low-level framework for heterogeneous computing on for example CPU and GPU's. It includes a programming language, based on C99, for writing kernels. Kernels are methods that executes on the GPU. It also includes an API that are used to define and control the platform.
+
+In contrast to the open OpenCL, the dominant proprietary framework is CUDA. It is, as OpenCL, based on a programming language and a programming interface. Science CUDA is created by the vendor, it is developed in close proximity with the hardware.
+
+
+
+\subsubsection{The CUDA architecture} % (fold)
+\label{ssub:cuda}
+
+% subsubsection cuda (end)
+
 
 % subsection a_short_introduction_to_gpu_programming_and_cuda (end)
