@@ -1,7 +1,7 @@
 #ifndef _POINT_
 #define _POINT_
 
-#define KEEP_POINT_INDEX true
+#define KEEP_POINT_INDEX false
 
 // Main point struct used in finished kd-tree
 struct Node
