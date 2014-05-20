@@ -100,39 +100,6 @@ citecolor=black}
 
 %To inclode source code filed
 \usepackage{listings}
-\newcommand\pythonexternal[1]{{
-\pythonstyle
-\lstinputlisting{#1}}}
-
-% Python environment
-\lstnewenvironment{python}[1][]
-{
-\pythonstyle
-\lstset{#1}
-}
-{}
-
-% Python environment
-\lstnewenvironment{bash}[1][]
-{
-\pythonstyle
-\lstset{#1, language=bash}
-}
-{}
-
-% Clisp environment
-\lstnewenvironment{clisp}[1][]
-{
-\lstset{#1,language=Lisp}
-}
-{}
-
-% josn environment
-\lstnewenvironment{json}[1][]
-{
-\lstset{#1,language=json}
-}
-{}
 
 % Default fixed font does not support bold face
 \DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
@@ -169,7 +136,7 @@ showstringspaces=false            %
 \begin{document}
 
 \pagestyle{empty}
-\include{./titlepage}
+\include{titlepage}
 \newpage
 
 % A blank page to let the paper start on an odd-numbered page
@@ -184,16 +151,16 @@ showstringspaces=false            %
 %
 % \includepdf[fitpaper=true, pages={1,2}]{assignment.pdf}
 \newpage
-\include{./assignment}
+\include{assignment}
 % \newpage
 
 % The abstract page (included)
-\include{./abstract}
+\include{abstract}
 \newpage
 
 
 % The preface page (included)
-\include{./preface}
+\include{preface}
 \newpage
 
 % Prints nomenclature, to change the title of this edit
@@ -225,13 +192,13 @@ showstringspaces=false            %
 \include{the_quest_for_a_faster_kNN_search}
 \include{final_results_discussion_and_conclusion}
 % include content
-%\include{./test}
+%\include{test}
 
 % References
 % Add a ''References`` entry in TOC
 \addcontentsline{toc}{section}{References}
 \bibliographystyle{plain}
-\bibliography{./References.bib}
+\bibliography{References.bib}
 
 % Appendix, starts on an odd-numbered page
 \cleardoublepage
@@ -240,7 +207,7 @@ showstringspaces=false            %
 % start appendix
 \begin{appendices}
 \appendix
-\include{./appendix}
+\include{appendix}
 \end{appendices}
 
 \end{document}
