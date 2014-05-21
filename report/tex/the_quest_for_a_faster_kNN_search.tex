@@ -31,16 +31,15 @@ In this section, we will present the k-d tree data structure, and show how it ca
 \subsubsection{Using k-d trees for point cloud data} % (fold)
 \label{ssub:using_k_d_trees_for_point_cloud_data}
 
-A k-d tree can be thought of as a binary search tree in k dimensions. A binary search tree is constructed such that, for a given node, one of Its subtrees is consisting of elements smaller than the current node, and the other subtree is consisting of elements larger than the current node. The same strategy is applied when constructing a k-d tree, but we have to make a small modification in order to handle the k different dimensions.
+A k-d tree can be thought of as a binary search tree in k dimensions. A binary search tree is constructed such that, for a given node, one of Its child-subtrees is consisting of elements smaller than the current node, and the other child-subtree is consisting of elements larger than the current node. The same strategy is applied when constructing a k-d tree, but at each level we are sorting the child-subtree elements according to one selected dimension, called the discriminant for this level. This discriminant is cycled through the different dimensions, as we move down each level in the tree. A formal description of k-d trees can be found in the paper Multidimensional Binary Search Trees Used for Associative Searching by Jon Louis Bentley.
 
-We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. In a k-d tree it is guaranteed that 
+
+We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. The elements in the child-subtrees is then organized in such a way that all elements 
 
 We will call this dimensions the discriminant for the root level, and we will use the discriminant as the sorting criteria for 
 
 
-
-
-
+A k-d tree can be thought of as a binary search tree in k dimensions.
 
 A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
 
@@ -54,7 +53,7 @@ A few different variations exist, but we will focus our explanation around a 2D 
 
 In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
 
-Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from 
+Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under. (All illustrations gratuitously borrowed from
 %[Wikipedia](http://en.wikipedia.org/wiki/k-d_tree))
 
 \begin{figure}[ht!]
@@ -92,6 +91,11 @@ Steps:
 
 % subsection application_of_kd_trees_to_the_knn_problem (end)
 
+\subsection{Development of a parallel kd-tree build algorithm} % (fold)
+\label{sub:development_of_a_parallel_kd_tree_build_algorithm}
+
+\include{development_of_a_parallel_kd_tree_build_algorithm}
+% subsection development_of_a_parallel_kd_tree_build_algorithm (end)
 
 
 \subsection{Development of a parallel kd-tree search algorithm} % (fold)
