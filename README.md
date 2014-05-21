@@ -24,6 +24,7 @@ To get up and running, open the Visual Studio Command Prompt, or any other shell
 
     $> cd "to project root"\tsi-gpgpu
     ..\tsi-gpu> mkdir build $$ cd build
+    # cmake -G "Visual Studio 10.0" ..\
     ..\tsi-gpu\build> cmake -G "NMake Makefiles" ..\
     ..\tsi-gpu\build> nmake
     
