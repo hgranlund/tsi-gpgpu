@@ -21,12 +21,12 @@
 \usepackage[font=small,labelfont=bf]{caption}
 \usepackage{fancyhdr}
 \usepackage{times}
-%\usepackage[intoc]{nomencl}
-%\renewcommand{\nomname}{List of Abbreviations}
-%\makenomenclature
+\usepackage[intoc]{nomencl}
+\renewcommand{\nomname}{List of Abbreviations}
+\makenomenclature
 \usepackage{natbib}
 \usepackage{float}
-%\floatstyle{boxed}
+\floatstyle{boxed}
 \restylefloat{figure}
 
 % \usepackage[number=none]{glossary}
@@ -69,12 +69,14 @@
 % \theoremstyle{def}
 % \newtheorem{mydef}{Definition}
 
-%prettier references
-\usepackage{natbib}
 
 %to include pdf
 \usepackage{pdfpages}
 
+
+
+
+% from  old version
 
 % \documentclass[a4paper, english, 12pt, twoside, titlepage]{article} %two-sided
 % \usepackage{babel, fancyhdr, amsmath, amsfonts, amssymb, graphicx, float, enumerate, hyperref}
@@ -95,10 +97,10 @@
 % \makenomenclature
 % \renewcommand{\nomname}{List of abbreviations and definitions}
 
-% %used to get  figure, table and equation-numbers show the section they belong to, like ``Figure 2.1``
-% \numberwithin{figure}{section}
-% \numberwithin{table}{section}
-% \numberwithin{equation}{section}
+%used to get  figure, table and equation-numbers show the section they belong to, like ``Figure 2.1``
+\numberwithin{figure}{section}
+\numberwithin{table}{section}
+\numberwithin{equation}{section}
 
 % %nicer captionsv
 % \usepackage[font=small,format=plain,labelfont=bf,up,textfont=it,up]{caption}
@@ -138,31 +140,31 @@
 % urlcolor=black,
 % citecolor=black}
 
-% % this package makes url's breakable with hyperref (but loses the cyan boxes)
+% this package makes url's breakable with hyperref (but loses the cyan boxes)
 % \usepackage{breakurl}
-% \usepackage{multirow}
-% \usepackage{subfigure}
-% % Change margins for two-sided
+\usepackage{multirow}
+\usepackage{subfigure}
+% Change margins for two-sided
 % \oddsidemargin 1.0cm
 % \evensidemargin 0.0cm
 
 
-% %Style to definition and RQ's
-% \newtheoremstyle{def}% name
-%   {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space above
-%   {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space below
-%   {\slshape}% Body font
-%   {\parindent}%Indent amount (empty = no indent, \parindent = para indent)
-%   {\bfseries}%  Thm head font
-%   {.}%       Punctuation after thm head
-%   { }%      Space after thm head: " " = normal interword space;
-%         %       \newline = linebreak
-%   {}%       Thm head spec
+%Style to definition and RQ's
+\newtheoremstyle{def}% name
+  {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space above
+  {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space below
+  {\slshape}% Body font
+  {\parindent}%Indent amount (empty = no indent, \parindent = para indent)
+  {\bfseries}%  Thm head font
+  {.}%       Punctuation after thm head
+  { }%      Space after thm head: " " = normal interword space;
+        %       \newline = linebreak
+  {}%       Thm head spec
 
 
-% \theoremstyle{def}
-% % Define definition label
-% \newtheorem{mydef}{Definition}
+\theoremstyle{def}
+% Define definition label
+\newtheorem{mydef}{Definition}
 
 
 
