@@ -1,19 +1,9 @@
 
-How to splitt up the work in paralell tasks
 
 
 
 
-
-
-
-
-
-
-\subsubsection{Parallel improvements} % (fold)
-\label{ssub:parallel_improvements}
-
-As we noted in the previous section, the kd-tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize this operation. In order to do this, we have to look a bit closer at the different steps of the kd-tree build algorithm.
+As noted in the previous section, the kd-tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize this operation. In order to do this, we have to look a bit closer at the different steps of the kd-tree build algorithm.
 
 Steps:
 \begin{enumerate}
@@ -22,7 +12,15 @@ Steps:
     \item Perform this algorithm recursively on the left and right set of nodes.
 \end{enumerate}
 
-Several strategies can be used to parallelize this code. We can perform the recursive calls as a increasing number of different independent processes. We can also use a parallel algorithm for finding the median in each recursive call. Both strategies can be used in conjunction with each other. The parallel algorithm for finding the median can be used to speed up the early iterations, where we do not have the possibility of calculating several sub-trees in parallel, as well as speeding up the calculation on lather calculations, by utilizing the large number of concurrent threads available in each parallel process.
+If we analyze the algorithm \ref{alg:seriel_tree_build}, we can see that for each node in the k-d tree a median finding and a partition has to be made, step 1 and 2. We can call this recursive step a node task. This node task has to be done for all nodes starting at the root and successively go down the tree.
+
+First a good overall parallelization strategy has to be found. A good strategy manage to easily split the main task into small individual subtasks. From the serial recursive algorithm \ref{alg:seriel_tree_build}, we see that there are two recursive calls. This is logical, because we are building a binary tree.  The interesting observation is that a node task is only dependent on the parent node tasks. This means that each tree level are independent, which acts as a good start for our parallelization strategy.
+
+Some other small observation, in regard of a parallelization strategy, is that each node task in a tree level are independent. Hence, a nodes median and partition step is independent regarding other nodes in the current tree level. The data is also independent, as a result of how we represent the tree as an array. By data independent, it is meant that the data structure easily can be partitioned to each subtask. In our case will the tree array successively be partitioned into contentious sublists, one for each node task.
+
+From these observations, several strategies can be used to parallelize the k-d tree build algorithm. From the first observation a trivial strategy is to divide the tree levels into dependent tasks, where each node task in a tree level is a independent subtask. This gives us an power of two increasing number of parallel nodes tasks as we increase the tree level. The sublist size will decrease with a factor of two in each downward step. An other strategy is to parallelize each node test.
+
+Both strategies can be used in conjunction with each other. The parallel node task algorithm can be used to speed up the early iterations, where the amount of node task in a tree level is small. As well as further parallelize the subtasks in later tree level tasks.
 
 Different parallel algorithms for finding the median was considered. First we tried to reuse the implementation of bitonic sort. Given a sorted list you can find the median directly, by simply looking at the midmost element of the array. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. We also have the inherent downside of sorting a list in order to find the median, since O(n) algorithms for finding the median exist, compared to the O(n log(n)) time required by sorting.
 
