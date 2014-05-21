@@ -1,0 +1,170 @@
+%!TEX root = ./main.tex
+
+
+\usepackage{setspace}
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{color}
+\usepackage[Lenny]{fncychap}
+\usepackage[pdftex,bookmarks=true]{hyperref}
+\usepackage[pdftex]{hyperref}
+\hypersetup{
+    colorlinks,%
+    citecolor=black,%
+    filecolor=black,%
+    linkcolor=black,%
+    urlcolor=black
+}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{fancyhdr}
+\usepackage{times}
+%\usepackage[intoc]{nomencl}
+%\renewcommand{\nomname}{List of Abbreviations}
+%\makenomenclature
+\usepackage{natbib}
+\usepackage{float}
+%\floatstyle{boxed}
+\restylefloat{figure}
+
+% \usepackage[number=none]{glossary}
+% \makeglossary
+% \newglossarytype[abr]{abbr}{abt}{abl}
+% \newglossarytype[alg]{acronyms}{acr}{acn}
+\newcommand{\abbrname}{Abbreviations}
+\newcommand{\shortabbrname}{Abbreviations}
+%\makeabbr
+\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+
+\renewcommand*\contentsname{Table of Contents}
+
+
+% Define aothor and title
+\newcommand{\myauthorA}{Simen Haugerud Granlund}
+\newcommand{\myauthorB}{Teodor Ande Elstad}
+\newcommand{\mytitle}{Utilizing general-purpose computing on graphic processing units (gpgpu) for engineering algorithm speed up}
+
+\pagestyle{fancy}
+\fancyhf{}
+    \fancyfoot[LO]{\mytitle} %Title of paper
+    \fancyfoot[RE]{Stud.techn. \myauthorA, Stud.techn. \myauthorB} % Name of author
+    \fancyfoot[LE,RO]{\thepage} % Print page number
+\renewcommand{\chaptermark}[1]{\markboth{\chaptername\ \thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\renewcommand{\headrulewidth}{0.1ex}
+\renewcommand{\footrulewidth}{0.1ex}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[LE,RO]{\thepage}\renewcommand{\headrulewidth}{0ex}}
+
+
+%To inclode source code filed
+\usepackage{listings}
+
+% Define reserch question label
+\newtheorem{myrq}{RQ}
+\usepackage[parfill]{parskip}
+
+% Define definition label
+% \theoremstyle{def}
+% \newtheorem{mydef}{Definition}
+
+%prettier references
+\usepackage{natbib}
+
+%to include pdf
+\usepackage{pdfpages}
+
+
+% \documentclass[a4paper, english, 12pt, twoside, titlepage]{article} %two-sided
+% \usepackage{babel, fancyhdr, amsmath, amsfonts, amssymb, graphicx, float, enumerate, hyperref}
+% \usepackage[utf8]{inputenc}
+% \usepackage[portrait,pdftex]{geometry}
+% %Theorem and definitions formatting
+% \usepackage{amsthm}
+
+% %prettier references
+% \usepackage{natbib}
+
+% \usepackage[autostyle]{csquotes}
+
+% % To use appendix envoronment
+% \usepackage[title,titletoc]{appendix}
+% %nomenclature
+% \usepackage{nomencl}
+% \makenomenclature
+% \renewcommand{\nomname}{List of abbreviations and definitions}
+
+% %used to get  figure, table and equation-numbers show the section they belong to, like ``Figure 2.1``
+% \numberwithin{figure}{section}
+% \numberwithin{table}{section}
+% \numberwithin{equation}{section}
+
+% %nicer captionsv
+% \usepackage[font=small,format=plain,labelfont=bf,up,textfont=it,up]{caption}
+% \usepackage{fancyhdr}
+% \setlength{\headheight}{15pt}
+
+% % Regluar style, with top and bottom rulers, section name at top
+% % and title and page number at bottom, set up for two-sided printing
+% \fancypagestyle{mystyle}{
+%     \fancyhf{} % remove everything
+%     \fancyhead[RO,LE]{\nouppercase\leftmark} %section name in lowercase
+%     \fancyfoot[LO]{\mytitle} %Title of paper
+    % \fancyfoot[RE]{Stud.techn. \myauthorA, Stud.techn. \myauthorB} % Name of author
+%     \fancyfoot[LE,RO]{\thepage} % Print page number
+%     \renewcommand{\headrulewidth}{0.5pt} % Ruler at top
+%     \renewcommand{\footrulewidth}{0.5pt}% Ruler at boottom
+%     \addtolength{\headheight}{15pt} % make space for the rule
+% }
+
+% % Plain style, just page number, set up for two-sided printing
+% \fancypagestyle{plain}{ %
+%     \fancyhead{} % get rid of headers on plain pages
+%     \renewcommand{\headrulewidth}{0pt} % and the line
+%     \fancyfoot{} % get rid of footers on plain pages
+%     \renewcommand{\footrulewidth}{0pt} % and the line
+%     \fancyfoot[LE,RO]{\thepage} % Print page number
+% }
+
+
+% % this package adds clickable links to http addresses and footnotes
+% \usepackage{hyperref}
+
+% %set links to be painted in black
+% \hypersetup{colorlinks,
+% linkcolor=black,
+% filecolor=black,
+% urlcolor=black,
+% citecolor=black}
+
+% % this package makes url's breakable with hyperref (but loses the cyan boxes)
+% \usepackage{breakurl}
+% \usepackage{multirow}
+% \usepackage{subfigure}
+% % Change margins for two-sided
+% \oddsidemargin 1.0cm
+% \evensidemargin 0.0cm
+
+
+% %Style to definition and RQ's
+% \newtheoremstyle{def}% name
+%   {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space above
+%   {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space below
+%   {\slshape}% Body font
+%   {\parindent}%Indent amount (empty = no indent, \parindent = para indent)
+%   {\bfseries}%  Thm head font
+%   {.}%       Punctuation after thm head
+%   { }%      Space after thm head: " " = normal interword space;
+%         %       \newline = linebreak
+%   {}%       Thm head spec
+
+
+% \theoremstyle{def}
+% % Define definition label
+% \newtheorem{mydef}{Definition}
+
+
+
+
+% %---------------------------------------------------------
