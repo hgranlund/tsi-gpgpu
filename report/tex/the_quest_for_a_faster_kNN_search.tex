@@ -82,16 +82,40 @@ Steps:
 \end{enumerate}
 
 % section application_of_kd_trees_to_the_knn_problem (end)
+\begin{algorithm}                      % enter the algorithm environment
+\caption{Seriel Tree Build thing}          % give the algorithm a caption
+\label{seriel_tree_build}                           % and a label for \ref{} commands later in the document
+\begin{algorithmic}                    % enter the algorithmic environment
+    \REQUIRE $n \geq 0 \vee x \neq 0$
+    \ENSURE $y = x^n$
+    \STATE $y \Leftarrow 1$
+    \IF{$n < 0$}
+        \STATE $X \Leftarrow 1 / x$
+        \STATE $N \Leftarrow -n$
+    \ELSE
+        \STATE $X \Leftarrow x$
+        \STATE $N \Leftarrow n$
+    \ENDIF
+    \WHILE{$N \neq 0$}
+        \IF{$N$ is even}
+            \STATE $X \Leftarrow X \times X$
+            \STATE $N \Leftarrow N / 2$
+        \ELSE[$N$ is odd]
+            \STATE $y \Leftarrow y \times X$
+            \STATE $N \Leftarrow N - 1$
+        \ENDIF
+    \ENDWHILE
+\end{algorithmic}
+\end{algorithm}
+
 
 \section{Development of a parallel kd-tree build algorithm} % (fold)
 \label{sub:development_of_a_parallel_kd_tree_build_algorithm}
 \input{development_of_a_parallel_kd_tree_build_algorithm.tex}
 % section development_of_a_parallel_kd_tree_build_algorithm (end)
 
-
 \section{Development of a parallel kd-tree search algorithm} % (fold)
 \label{sub:development_of_a_parallel_kd_tree_search_algorithm}
-
 
 \section{The quest for a fast KNN search} % (fold)
 \label{sec:the_quest_for_a_fast_KNN_search}
