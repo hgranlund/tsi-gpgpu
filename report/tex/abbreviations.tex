@@ -1,0 +1,32 @@
+%!TEX root = ./main.tex
+
+\section*{{\Huge Abbreviations}}
+\addcontentsline{toc}{chapter}{Abbreviations}
+$\\[0.5cm]$
+
+\noindent
+\begin{center}
+\begin{tabular}{ l c l }
+   CUDA & = & Compute Unified Device Architecture \\
+   CPU & = & Central processing unit \\
+   GPGPU & = & General-purpose computing on graphics processing units \\
+   GPU & = & Graphics processing unit \\
+   SM & = & Streaming Multiprocessor \\
+\end{tabular}
+\end{center}
+
+\cleardoublepage
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\chaptermark}[1]{\markboth{\chaptername\ \thechapter.\ #1}{}}
+\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
+\renewcommand{\headrulewidth}{0.1ex}
+\renewcommand{\footrulewidth}{0.1ex}
+\fancyfoot[LE,RO]{\thepage}
+\fancyhead[LE]{\leftmark}
+\fancyhead[RO]{\rightmark}
+\fancypagestyle{plain}{\fancyhf{}\fancyfoot[LE,RO]{\thepage}\renewcommand{\headrulewidth}{0ex}}
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
