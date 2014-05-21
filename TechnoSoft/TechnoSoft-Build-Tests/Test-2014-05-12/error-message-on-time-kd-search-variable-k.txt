@@ -1,0 +1,118 @@
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 20000000
+Running kd-search-all with n = 20000000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 10000000
+Running kd-search-all with n = 10000000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 5000000
+Running kd-search-all with n = 5000000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=6(cudaErrorLaunchTimeout)
+"cudaMemcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1000000
+Running kd-search-all with n = 1000000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+*Alok - Querying all done
+kd-search-all,  Build Time = 379.51004 ms, Query Time = 1566.56470 ms, Total time = 1946.07474 ms, Size = 1000000 Elements, NumDevsUsed = 1
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 3000000
+Running kd-search-all with n = 3000000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 2000000
+Running kd-search-all with n = 2000000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1500000
+Running kd-search-all with n = 1500000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1250000
+Running kd-search-all with n = 1250000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+*Alok - Querying all done
+kd-search-all,  Build Time = 503.50638 ms, Query Time = 1899.46863 ms, Total time = 2402.97501 ms, Size = 1250000 Elements, NumDevsUsed = 1
+
+
+k = 1000
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1250000
+Running kd-search-all with n = 1250000
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:285 code=2(cudaErrorMemoryAllocatio
+n) "cudaMalloc(&d_result, queries_in_step * k * sizeof(int))"
+
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1250000
+Running kd-search-all with n = 1250000, k = 100
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+
+******* VARIABLE K *********
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1250000
+Running kd-search-all with n = 1250000, k = 100
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1250000
+Running kd-search-all with n = 1250000, k = 10
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+CUDA error at R:/AML/K-Neighbor-Search/Github/tsi-gpgpu/src/kNN/kd-tree/kd-search.cu:299 code=30(cudaErrorUnknown) "cuda
+Memcpy(h_result, d_result, queries_in_step * k * sizeof(int), cudaMemcpyDeviceToHost)"
+
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>time_kd_search_variable_k.exe 1250000
+Running kd-search-all with n = 1250000, k = 1
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+*Alok - Querying all...
+*Alok - Querying all done
+kd-search-all,  Build Time = 501.63214 ms, Query Time = 1897.72632 ms, Total time = 2399.35846 ms, Size = 1250000 Elemen
+ts, NumDevsUsed = 1
+
+
+
+
+

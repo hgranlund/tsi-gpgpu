@@ -1,0 +1,6 @@
+R:\AML\K-Neighbor-Search\Github\tsi-gpgpu\build\bin>.\time_kd_search_variable_k.exe 20000000 20000000 250000 10
+Running kd-search-1000 from n = 20000000 to n = 20000000 with step = 250000, k = 10
+*Alok - Finished Reading Points
+*Alok - Finished Building Tree
+kd-search-all,  Build Time = 9122.30664 ms, Query Time = 131.81529 ms, Total time = 9254.12193 ms, Size = 20000000 Eleme
+nts, NumDevsUsed = 1
