@@ -84,6 +84,9 @@ tests/data/100_mill_points.data
 *.xdy
 *.tdo
 
+###IndividualRapport files###
+main.pdf
+
 
 ###Emacs###
 
@@ -95,3 +98,4 @@ tests/data/100_mill_points.data
 auto-save-list
 tramp
 .\#*
+report/tex/Output/

@@ -54,7 +54,8 @@ int main(int argc, char const *argv[])
 {
     int n, nu, ni = 1024,
                step = 250000,
-               k = 1;
+               k = 1,
+               n_qp = -1;
     bool from_file = 0;
     n = nu = ni;
 
@@ -94,6 +95,15 @@ int main(int argc, char const *argv[])
         k = atoi(argv[4]);
         printf("Running kd-search-all from n = %d to n = %d with step = %d and k = %d\n", nu, ni, step, k);
     }
+    else if (argc == 6)
+    {
+        nu = atoi(argv[1]);
+        ni = atoi(argv[2]);
+        step = atoi(argv[3]);
+        k = atoi(argv[4]);
+        n_qp = atoi(argv[5]);
+        printf("Running kd-search-all from n = %d to n = %d with step = %d and k = %d n_qp = %d\n", nu, ni, step, k, n_qp);
+    }
     else
     {
         printf("Running kd-search-all with n = %d and k = %d\n", nu, k);
@@ -129,12 +139,26 @@ int main(int argc, char const *argv[])
 
         cudaDeviceReset();
 
+        for (int i = 0; i < n; ++i)
+        {
+            points[i].p[0] = tree[i].p[0];
+            points[i].p[1] = tree[i].p[1];
+            points[i].p[2] = tree[i].p[2];
+        }
+
         float elapsed_time_search = 0;
         checkCudaErrors(cudaEventCreate(&start));
         checkCudaErrors(cudaEventCreate(&stop));
         checkCudaErrors(cudaEventRecord(start, 0));
 
-        cuQueryAll(points, tree, n, n, k, result);
+        if (n_qp > -1)
+        {
+            cuQueryAll(points, tree, n_qp, n, k, result);
+        }
+        else
+        {
+            cuQueryAll(points, tree, n, n, k, result);
+        }
 
         checkCudaErrors(cudaEventRecord(stop, 0));
         cudaEventSynchronize(start);

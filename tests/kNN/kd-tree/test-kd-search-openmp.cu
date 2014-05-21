@@ -126,14 +126,17 @@ TEST(kd_search_openmp, peek)
 
 TEST(kd_search_openmp, initKStack)
 {
-    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(struct KPoint)),
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
-    initKStack(&k_stack, 50);
+    int k = 50;
 
-    ASSERT_EQ(-1, k_stack[-1].dist);
-    ASSERT_EQ(FLT_MAX, k_stack[0].dist);
-    ASSERT_EQ(FLT_MAX, k_stack[49].dist);
+    initKStack(&k_stack, k);
+
+    for (int i = 1; i <= k; ++i)
+    {
+        ASSERT_EQ(FLT_MAX, k_stack[i].dist);
+    }
 
     free(k_stack_ptr);
 }
@@ -141,7 +144,7 @@ TEST(kd_search_openmp, initKStack)
 TEST(kd_search_openmp, insert)
 {
     int n = 3;
-    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(struct KPoint)),
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
     initKStack(&k_stack, n);
@@ -152,21 +155,19 @@ TEST(kd_search_openmp, insert)
     c.dist = 3;
     d.dist = 0;
 
+    ASSERT_EQ(FLT_MAX, look(k_stack).dist);
+
     insert(k_stack, a, n);
-    ASSERT_EQ(FLT_MAX, look(k_stack, n).dist);
-    ASSERT_EQ(a.dist, k_stack[0].dist);
+    ASSERT_EQ(FLT_MAX, look(k_stack).dist);
 
     insert(k_stack, b, n);
-    ASSERT_EQ(FLT_MAX, look(k_stack, n).dist);
-    ASSERT_EQ(b.dist, k_stack[1].dist);
-
     insert(k_stack, c, n);
-    ASSERT_EQ(c.dist, look(k_stack, n).dist);
-    ASSERT_EQ(c.dist, k_stack[2].dist);
+    ASSERT_EQ(c.dist, look(k_stack).dist);
 
     insert(k_stack, d, n);
-    ASSERT_EQ(b.dist, look(k_stack, n).dist);
-    ASSERT_EQ(d.dist, k_stack[0].dist);
+    ASSERT_EQ(b.dist, look(k_stack).dist);
+    insert(k_stack, d, n);
+    ASSERT_EQ(a.dist, look(k_stack).dist);
 
     free(k_stack_ptr);
 }
@@ -174,7 +175,7 @@ TEST(kd_search_openmp, insert)
 TEST(kd_search_openmp, insert_k_is_one)
 {
     int n = 1;
-    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(struct KPoint)),
+    struct KPoint *k_stack_ptr = (struct KPoint *) malloc(51 * sizeof(KPoint)),
                    *k_stack = k_stack_ptr;
 
     initKStack(&k_stack, n);
@@ -184,12 +185,10 @@ TEST(kd_search_openmp, insert_k_is_one)
     b.dist = 0;
 
     insert(k_stack, a, n);
-    ASSERT_EQ(a.dist, look(k_stack, n).dist);
-    ASSERT_EQ(a.dist, k_stack[0].dist);
+    ASSERT_EQ(a.dist, look(k_stack).dist);
 
     insert(k_stack, b, n);
-    ASSERT_EQ(b.dist, look(k_stack, n).dist);
-    ASSERT_EQ(b.dist, k_stack[0].dist);
+    ASSERT_EQ(b.dist, look(k_stack).dist);
 
     free(k_stack_ptr);
 }
@@ -198,16 +197,16 @@ TEST(kd_search_openmp, upDim)
 {
     int dim = 0;
 
-    upDim(&dim);
+    upDim(dim);
     ASSERT_EQ(1, dim);
 
-    upDim(&dim);
+    upDim(dim);
     ASSERT_EQ(2, dim);
 
-    upDim(&dim);
+    upDim(dim);
     ASSERT_EQ(0, dim);
 
-    upDim(&dim);
+    upDim(dim);
     ASSERT_EQ(1, dim);
 }
 
@@ -237,9 +236,9 @@ TEST(kd_search_openmp, correctness_with_k)
     cudaDeviceReset();
     kNN(points[4], tree, n, k, result, s_stack_ptr, k_stack_ptr);
 
-    ASSERT_EQ(4, result[0]);
+    ASSERT_EQ(4, result[2]);
     ASSERT_EQ(3, result[1]);
-    ASSERT_EQ(1, result[2]);
+    ASSERT_EQ(1, result[0]);
 
     free(points);
     free(tree);
@@ -282,7 +281,7 @@ TEST(kd_search_openmp, correctness_with_10000_points_file)
             // printf("Looking for (%3.1f, %3.1f, %3.1f), found (%3.1f, %3.1f, %3.1f)\n",
             //        tree[i].p[0], tree[i].p[1], tree[i].p[2],
             //        tree[result[0]].p[0], tree[result[0]].p[1], tree[result[0]].p[2]);
-
+            quickSortResult(result + (i * k), tree, points[i], k);
             ASSERT_EQ(points[i].p[0], tree[result[0]].p[0]) << "Failed at i = " << i << " with n = " << n ;
             ASSERT_EQ(points[i].p[1], tree[result[0]].p[1]) << "Failed at i = " << i << " with n = " << n;
             ASSERT_EQ(points[i].p[2], tree[result[0]].p[2]) << "Failed at i = " << i << " with n = " << n;
@@ -320,6 +319,7 @@ TEST(kd_search_openmp, mp_query_all_correctness_with_10000_points_file)
 
         for (i = 0; i < n; ++i)
         {
+            quickSortResult(result + (i * k), tree, points[i], k);
             ASSERT_EQ(points[i].p[0], tree[result[i]].p[0]) << "Failed at i = " << i << " with n = " << n ;
             ASSERT_EQ(points[i].p[1], tree[result[i]].p[1]) << "Failed at i = " << i << " with n = " << n;
             ASSERT_EQ(points[i].p[2], tree[result[i]].p[2]) << "Failed at i = " << i << " with n = " << n;

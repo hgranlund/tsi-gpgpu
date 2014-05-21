@@ -1,5 +1,6 @@
-#ifndef _KERNELS_H_
-#define _KERNELS_H_
+#ifndef _KNN_GPGPU_
+#define _KNN_GPGPU_
+
 #include "point.h"
 
 void buildKdTree(struct Point *points, int n, struct Node *tree);
@@ -10,4 +11,4 @@ void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_t
 void knn_brute_force_garcia(float *ref_host, int ref_width, float *query_host, int query_width, int height, int k, float *dist_host, int *ind_host);
 void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, int k, float *dist_host, int *ind_host);
 
-#endif //  _KERNELS_H_
+#endif //  _KNN_GPGPU_

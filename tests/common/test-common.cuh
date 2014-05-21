@@ -17,6 +17,8 @@ void cudaStartTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time)
 void cudaStopTiming(cudaEvent_t &start, cudaEvent_t &stop, float &elapsed_time);
 void printCudaTiming(float elapsed_time, int bytes, int n);
 
+void quickSortResult(int *result, struct Node *tree, struct Point qp, int n);
+
 long startTiming();
 long endTiming(long start_time);
 

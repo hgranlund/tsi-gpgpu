@@ -100,6 +100,43 @@ void nextStep_(int *steps_new, int *steps_old, int p)
     }
 }
 
+float dist_test(struct Point qp, struct Node point)
+{
+    float dx = qp.p[0] - point.p[0],
+          dy = qp.p[1] - point.p[1],
+          dz = qp.p[2] - point.p[2];
+
+    return (dx * dx) + (dy * dy) + (dz * dz);
+}
+
+void quickSortResult(int *result, struct Node *tree, struct Point qp, int n)
+{
+    if (n < 2)
+        return;
+    int p = result[n / 2];
+    int *l = result;
+    int *r = result + n - 1;
+    while (l <= r)
+    {
+        if (dist_test(qp, tree[(*l)])  < dist_test(qp, tree[p]))
+        {
+            l++;
+            continue;
+        }
+        if (dist_test(qp, tree[*r]) > dist_test(qp, tree[p]))
+        {
+            r--;
+            continue; // we need to check the condition (l <= r) every time we change the value of l or r
+        }
+        int t = *l;
+        *l++ = *r;
+        *r-- = t;
+    }
+    quickSortResult(result, tree, qp, r - result + 1);
+    quickSortResult(l, tree, qp, result + n - l);
+}
+
+
 void swap_pointer_(int **a, int **b)
 {
     int *swap;

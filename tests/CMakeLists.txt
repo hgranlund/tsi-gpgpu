@@ -95,6 +95,7 @@ if (BUILD_TESTS)
     kNN/brute_force/test-knn-brute-force-reduce.cu
     kNN/brute_force/test-knn-brute-force-bitonic.cu
 
+    kNN/kd-tree/test-cu-kd-search.cu
     kNN/kd-tree/test-kd-search.cu
     kNN/kd-tree/test-kd-search-openmp.cu
     kNN/kd-tree/test-kd-tree-build.cu
@@ -127,14 +128,6 @@ if (BUILD_TESTS)
 
   target_link_libraries(time_kd_search knn_gpgpu)
   add_custom_target(kd-search time_kd_search)
-
-  cuda_add_executable(time_kd_search_variable_k
-    kNN/kd-tree/time-kd-search-variable-k.cu
-    OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
-  )
-
-  target_link_libraries(time_kd_search_variable_k knn_gpgpu)
-  add_custom_target(kd_search_variable_k time_kd_search_variable_k)
 
   cuda_add_executable(time_kd_search_openmp
     kNN/kd-tree/time-kd-search-openmp.cu
