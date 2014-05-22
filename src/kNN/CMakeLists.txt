@@ -12,8 +12,6 @@ include_directories(
   )
 
 set(CUHFILES
-../common/utils.cuh
-
 brute-force/kNN-brute-force-reduce.cuh
 brute-force/kNN-brute-force-bitonic.cuh
 brute-force/reduction-mod.cuh
@@ -28,8 +26,6 @@ kd-tree/cu-kd-search.cuh
 )
 
 set(CUFILES
-../common/utils.cu
-
 brute-force/kNN-brute-force-reduce.cu
 brute-force/kNN-brute-force-bitonic.cu
 brute-force/reduction-mod.cu
