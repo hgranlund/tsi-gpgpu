@@ -19,7 +19,7 @@
     It is possible to use a k-d tree, to increase the performance of a large number of repeated, 3-d, low k queries in a large dataset.
 \end{myrq}
 
-
+ % Det finnes mange papers om alternativer til k-d tree som vi bør nevne i starten. eks. \cite{Owens:2007:ASO}  See page 7 av S12140-Superfast-Nearest-Neighbor-Searches-Using-Minimal-kd-Tree.pdf som ligger i git.
 \section{Application of k-d trees to the kNN problem} % (fold)
 \label{sub:application_of_kd_trees_to_the_knn_problem}
 
@@ -49,9 +49,9 @@ We can ensure that the k-d tree is balanced, by always selecting the median as o
 
 In this example we have been In order to use k-d trees for storing point cloud data, we will be fixing the number of dimensions to the three spatial dimensions, x, y, and z.
 
-We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. The elements in the child-subtrees is then organized in such a way that all elements 
+We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. The elements in the child-subtrees is then organized in such a way that all elements
 
-We will call this dimensions the discriminant for the root level, and we will use the discriminant as the sorting criteria for 
+We will call this dimensions the discriminant for the root level, and we will use the discriminant as the sorting criteria for
 
 
 A k-d tree can be thought of as a binary search tree in k dimensions.
