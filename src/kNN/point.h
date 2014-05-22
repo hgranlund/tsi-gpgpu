@@ -1,7 +1,7 @@
 #ifndef _POINT_
 #define _POINT_
 
-#define KEEP_POINT_INDEX false
+#define ADD_POINT_ID true
 
 // Main point struct used in finished kd-tree
 struct Node
@@ -9,8 +9,8 @@ struct Node
     float p[3];
     int left;
     int right;
-# if KEEP_POINT_INDEX
-    int index_orig;
+# if ADD_POINT_ID
+    int id;
 #endif
 };
 
@@ -18,8 +18,8 @@ struct Node
 struct Point
 {
     float p[3];
-# if KEEP_POINT_INDEX
-    int index_orig;
+# if ADD_POINT_ID
+    int id;
 #endif
 };
 #endif //  _DATA_TYPES_
