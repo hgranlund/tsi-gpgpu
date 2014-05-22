@@ -15,6 +15,7 @@ void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, in
 
 // #### Utils
 size_t getFreeBytesOnGpu();
+void cuSetDevice(int devive);
 
 // Tree build
 size_t getNeededBytesForBuildingKdTree(int n_tree);
@@ -22,9 +23,10 @@ size_t getTreeSize(int n_tree);
 
 // Search
 size_t getNeededBytesForQueryAll(int n_qp, int k, int n_tree);
-size_t getNeededBytesInSearch(int n_qp, int k, int n, int thread_num, int block_num);
+size_t getNeededBytesInSearch(int n_qp, int k, int n_tree, int thread_num, int block_num);
 size_t getSStackSizeInBytes(int n_tree, int thread_num, int block_num);
 int getSStackSize(int n_tree);
+
 
 
 #endif //  _KNN_GPGPU_
