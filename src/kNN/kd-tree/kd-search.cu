@@ -12,7 +12,7 @@ size_t getTreeSize(int n)
     return n * sizeof(struct Node);
 }
 
-size_t getRequierdSizeForQueryAll(int n_qp, int k, int n)
+size_t getNeededBytesForQueryAll(int n_qp, int k, int n)
 {
     int numBlocks, numThreads;
     getThreadAndBlockCountForQueryAll(n, numBlocks, numThreads);
@@ -57,9 +57,9 @@ void mergeResult(struct Node *tree, struct Point *query_points, int k, int n_qp,
     }
 }
 
-void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result, int switch_limit)
+void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
-    if (getFreeBytesOnGpu() > getRequierdSizeForQueryAll(n_qp, k , n_tree) || k > n_tree)
+    if (getFreeBytesOnGpu() > getNeededBytesForQueryAll(n_qp, k , n_tree) || k > n_tree)
     {
         cuQueryAll(h_query_points, h_tree, n_qp, n_tree, k, h_result);
     }
@@ -69,14 +69,14 @@ void queryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n
         int *h_result_right, root = n_tree / 2, n_tree_rigth;
         h_result_right = (int *) malloc(k * n_qp * sizeof(int));
 
-        queryAll(h_query_points, h_tree, n_qp, root, k, h_result, switch_limit );
+        queryAll(h_query_points, h_tree, n_qp, root, k, h_result);
         cudaDeviceReset();
 
         n_tree_rigth = n_tree - root - 1;
         tree_rigth = h_tree + (root + 1);
         store_locations(tree_rigth, 0, n_tree_rigth, n_tree_rigth);
 
-        queryAll(h_query_points, tree_rigth, n_qp, n_tree_rigth, k, h_result_right, switch_limit );
+        queryAll(h_query_points, tree_rigth, n_qp, n_tree_rigth, k, h_result_right);
 
         mergeResult(h_tree, h_query_points, k, n_qp, root, h_result_right, h_result);
     }

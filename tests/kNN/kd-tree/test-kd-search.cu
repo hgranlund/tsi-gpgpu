@@ -34,7 +34,7 @@ TEST(kd_search, query_all_correctness_with_10000_points_file)
         // printTree(tree, 0, n / 2);
         int *result = (int *) malloc(n * k * sizeof(int));
 
-        queryAll(points, tree, n, n, k, result, 100);
+        queryAll(points, tree, n, n, k, result);
 
         for (i = 0; i < n; ++i)
         {
