@@ -67,6 +67,16 @@ The CUDA programming model is designed to make the heterogeneous GPU+CPU program
 
 A CUDA program is is based on a data-parallel behavior, where threads is running in parallel. The execution of a kernel is organized as a grid of blocks consisting of threads. When a kernel grid is launched, on the host CPU, blocks of the grid is enumerated and distributed among the SMs. The blocks then executes concurrently on individual SMs. As blocks terminates, new blocks are added. Only threads in a block can communicate with each other, by creating synchronization walls. They can also communicate through the fast shared memory, that is located on each individual SM. Each block and thread have their own id, which often is used to determines what portion of data to be processed by each thread.
 
+
+% Maybe we should write about have to optimize parallel programs:
+% 1. find a good serial algorithm
+% 2. find a good parallelization strategy
+% 3. find a good parallel algorithm
+% 4. Small improvements like:
+%     * do memory optimization (types of memory)
+%     *. minimize data divergence
+%     *. optimize arithmetic operations.
+
 % subsection cuda_programming_model (end)
 
 
