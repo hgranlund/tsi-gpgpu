@@ -33,7 +33,21 @@ In this section, we will present the k-d tree data structure, and show how it ca
 
 A k-d tree can be thought of as a binary search tree in k dimensions. A binary search tree is constructed such that, for a given node, one of Its child-subtrees is consisting of elements smaller than the current node, and the other child-subtree is consisting of elements larger than the current node. The same strategy is applied when constructing a k-d tree, but at each level we are sorting the child-subtree elements according to one selected dimension, called the discriminant for this level. This discriminant is cycled through the different dimensions, as we move down each level in the tree. A formal description of k-d trees is given by Jon Louis Bentley in the paper Multidimensional Binary Search Trees Used for Associative Searching \cite{Bentley:1975:MBS:361002.361007}.
 
+Let us have a look at an example using data for two dimensions. Figure X shows us a set of points on a two dimensional plane. The lines indicate the split plane formed by the discriminant associated with the different points.
 
+FIG X
+
+The corresponding k-d tree is shown in figure Y. Note that lover values in each level are placed in the left branches, and higher values are placed in the right branches.
+
+FIG Y
+
+By extending this example with three fixed dimensions for the spatial dimensions, x, y, and z, we get a k-d tree suitable for storing point cloud data.
+
+We can ensure that the k-d tree is balanced, by always selecting the median as our parent when constructing the tree \cite{Bentley:1975:MBS:361002.361007} (site directly to section?).
+
+
+
+In this example we have been In order to use k-d trees for storing point cloud data, we will be fixing the number of dimensions to the three spatial dimensions, x, y, and z.
 
 We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. The elements in the child-subtrees is then organized in such a way that all elements 
 
@@ -71,8 +85,6 @@ Interested readers is encouraged to look at the paper Multidimensional binary se
 
 
 % subsection using_k_d_trees_for_point_cloud_data (end)
-
-
 
 \subsection{The serial base algorithm} % (fold)
 \label{ssub:the_serial_base_algorithm}
