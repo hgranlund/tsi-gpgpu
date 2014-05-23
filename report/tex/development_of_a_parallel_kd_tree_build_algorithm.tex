@@ -1,5 +1,5 @@
 
-As noted in the previous section, the k-d tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize it. This introduces a new resource question.
+As noted in the previous section, the k-d tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize it. One could think, why not use the serial build algorithm. This is a intuitive choice, but in a CUDA context a recursive algorithm is hard to parallelize. CUDA is based on a massive number of lightweight threads, and to get a fast algorithm one have to split the work between as many threads as possible. This is only possible if it is easy to split and divide the work to independent subtasks. In a recursive context this is hard, because a algorithms execution flow in hidden inside a threads call stack. This makes it hard for other threads to get the information needed to participate. The opposite of a recessive algorithm in an iterative approach, with have a more globally accessible execution flow. This introduces a new resource question.
 
 \begin{myrq}
 \label{rq:parallel_build}
@@ -18,6 +18,7 @@ Steps:
 If we analyze the algorithm \ref{alg:seriel_tree_build}, we can see that for each node in the k-d tree a median finding and a partition has to be made, as described in step 1 and 2. We can call this recursive step a node task. The node task has to be done for all nodes starting at the root and successively go down the tree.
 
 
+
 \subsubsection{Parallelization strategy} % (fold)
 \label{ssub:parallelization_strategy}
 
@@ -33,6 +34,29 @@ Both strategies can be used in conjunction with each other. The parallel node ta
 
 % subsubsection parallelization_strategy (end)
 
+\subsubsection{From recursive to iterative implementation} % (fold)
+\label{ssub:from_recursive_to_iterative_implementation}
+
+\begin{algorithm}
+\caption{Iterative k-d tree build}
+\label{alg:iterativ_tree_build}
+\begin{algorithmic}
+    \Function{Build-KD-Tree}{$Tree$}
+        \ForAll {$level \in \text{all levels in } Tree$}
+            \ForAll{$node \in level$}
+                \State $dimension \gets |level| \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
+                \State $\text{Balance-node}(node, dimension)$
+            \EndFor
+        \EndFor
+    \EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+
+% subsubsection from_recursive_to_iterative_implementation (end)
+
+
+
 
 % TODO: Header must be improved
 \subsubsection{Selecting an algorithm} % (fold)
@@ -40,7 +64,7 @@ Both strategies can be used in conjunction with each other. The parallel node ta
 
 
 
-As we have seen in section \ref{sub:application_of_kd_trees_to_the_knn_problem}, many algorithms for finding median exist. Since we now want to implement the algorithm with CUDA, the environment has changed, and quick select may not be the best alternative anymore. The first problem with quick select is that it is recursive, which makes it hard to parallelize on CUDA. This is because in a recursive implementation the programs institution and control flow is hidden in a single threads call stack, and not accessible to the other threads. Therefor it may be profitable to look at other, more parallelization, algorithms.
+As we have seen in section \ref{sub:application_of_kd_trees_to_the_knn_problem}, many algorithms for finding median exist. Since we now want to implement the algorithm with CUDA, the environment has changed, and quick select may not be the best alternative anymore. The first problem with quick select is that it is recursive, which makes it hard to parallelize on CUDA. Therefor it may be profitable to look at other, more parallelization, algorithms.
 
 
 First a reuse of the bitonic sort was investigated. Given a sorted list one can find the median directly, by simply looking at the midmost element of the array. The partitioning is also done in the process. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. The reason for this is that a pure bitonic sort only manage to sort lists with a length of power of two. The normal solution is to create a longer list then needed, which destroys many of the advantages with our binary tree representation. There are also other solutions to the problem, for example one by K.E. Batcher \cite{Batcher:1968}, but these solutions introduces a lot of divergence that destroys performance on the GPU. We also have the inherent downside of sorting a list in order to find the median, since \BigO{n} algorithms for finding the median exist, compared to the \BigO{n log(n)} time required by sorting.
@@ -64,8 +88,25 @@ The radix select is based on a bitwise partitioning, much like radix sort \cite[
 \label{fig:radix_select}
 \end{figure}
 
-When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort like, \citep{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select from \citep{Alabi:2012}.
+When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort like, \citep{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select from \citep{Alabi:2012}. They both uses a intuitive parallelization strategy by splitting each radix partition into parallel operations. The way our and Alba's solution differs from Merrill is firstly that we start on the most significant digit, since a least significant digit approach will not reduce the problem in each step. Secondly we only iterate on the digit which contains the median, and let us reduce the problem in each iteration.
 
+Our radix select is a slightly modified version in three ways. We want to solve the node task, which forces us to also partition the list around the median. The algorithm also need to work in a inplace fashion. The last modification, is that our parallel operation must to several radix selections at once, at different parts of the main tree array.
+
+
+\subsubsection{Our implementation} % (fold)
+\label{ssub:our_implementation}
+
+
+- split up the work in respect to cuda
+- Pseudocode
+- forklarting av cuda
+- diskutere minnebruk. shared memory
+- divergence
+-
+
+
+
+% subsubsection our_implementation (end)
 
 
 
