@@ -43,6 +43,69 @@ FIG Y
 
 By extending this example with three fixed dimensions for the spatial dimensions, x, y, and z, we get a k-d tree suitable for storing point cloud data.
 
+
+\begin{algorithm}
+\caption{Recursive k-d tree build}
+\label{alg:seriel_tree_build}
+\begin{algorithmic}
+    \Function{Build-KD-Tree}{$P$, $i$}
+        \If{$P.length = 0$} \Comment{We have reached the end of a branch}
+            \State \textbf{return} NIL 
+        \Else
+            \State $m \gets \text{Median}(P)$
+
+            \State \text{Let $L$ be all elements of $P < m$ in dimension $i$}
+            \State \text{Let $H$ be all elements of $P > m$ in dimension $i$}
+            
+            \State $i' \gets (i + 1) \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
+            
+            \State $m.left \gets \text{Build-KD-Tree}(L, i')$
+            \State $m.right \gets \text{Build-KD-Tree}(H, i')$
+        \EndIf
+        \State \textbf{return} $m$
+    \EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+Note: remember to mention what can be done for trees with duplicate points. Pseudo-code does not take it into account. Also remember to spesify input arguments and such.
+
+\begin{algorithm}
+\caption{Recursive kNN k-d tree search}
+\label{alg:recursive_knn_kd_tree_search}
+\begin{algorithmic}
+    \Procedure{kNN-KD-Tree}{$K, r, q, i$}
+        \If{$r =$ NIL} \Comment{We have reached the end of a branch}
+            \State \textbf{return} 
+        \EndIf
+
+        \State $d \gets \text{Distance}(r, q)$
+        \State $dx \gets r.x[i] - q.x[i]$
+
+        \If{$d < K.max$} \Comment{Is $r$ closer to $q$ than the current k best points?}
+            \State $r.distance \gets d$
+            \State \text{Insert}($K, r$)
+        \EndIf
+
+        \State $i' \gets (i + 1) \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
+
+        \If{$dx > 0$}  \Comment{Select $t$ and $o$ so we traverse towards closest point first}
+            \State $t \gets r.left$, $o \gets r.right$
+        \Else
+            \State $t \gets r.right$, $o \gets r.left$
+        \EndIf
+
+        \State \text{kNN-KD-Tree}($K, t, q, i'$)
+
+        \If{$dx^2 < K.max$} \Comment{Can there be closer points in the other subtree?}
+            \State \text{kNN-KD-Tree}($K, o, q, i'$)
+        \EndIf
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Is the algorithm included?
+
+
 We can ensure that the k-d tree is balanced, by always selecting the median as our parent when constructing the tree \cite{Bentley:1975:MBS:361002.361007} (site directly to section?).
 
 
@@ -101,33 +164,6 @@ Steps:
     \item O(n log2 n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
     \item Approximately O(log2 n), but dependent on size of k.
 \end{enumerate}
-
-% section application_of_kd_trees_to_the_knn_problem (end)
-\begin{algorithm}                      % enter the algorithm environment
-\caption{Seriel Tree Build thing}          % give the algorithm a caption
-\label{alg:seriel_tree_build}                           % and a label for \ref{} commands later in the document
-\begin{algorithmic}                    % enter the algorithmic environment
-    \REQUIRE $n \geq 0 \vee x \neq 0$
-    \ENSURE $y = x^n$
-    \STATE $y \Leftarrow 1$
-    \IF{$n < 0$}
-        \STATE $X \Leftarrow 1 / x$
-        \STATE $N \Leftarrow -n$
-    \ELSE
-        \STATE $X \Leftarrow x$
-        \STATE $N \Leftarrow n$
-    \ENDIF
-    \WHILE{$N \neq 0$}
-        \IF{$N$ is even}
-            \STATE $X \Leftarrow X \times X$
-            \STATE $N \Leftarrow N / 2$
-        \ELSE[$N$ is odd]
-            \STATE $y \Leftarrow y \times X$
-            \STATE $N \Leftarrow N - 1$
-        \ENDIF
-    \ENDWHILE
-\end{algorithmic}
-\end{algorithm}
 
 
 \section{Development of a parallel kd-tree build algorithm} % (fold)
