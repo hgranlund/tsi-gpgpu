@@ -82,6 +82,7 @@ tests/data/100_mill_points.data
 *.vrb
 *.xdy
 *.tdo
+*.loa
 
 ###IndividualRapport files###
 main.pdf
