@@ -103,6 +103,106 @@ Note: remember to mention what can be done for trees with duplicate points. Pseu
 \end{algorithmic}
 \end{algorithm}
 
+% __device__ __host__
+% void cuKNN(struct Point qp, struct Node *tree, int n, int k,
+%            struct SPoint *stack, struct KPoint *k_stack)
+% {
+%     int  dim = 2, target;
+%     float current_dist;
+
+%     struct Node current_point;
+%     struct SPoint current;
+%     struct KPoint worst_best;
+
+%     current.index = n / 2;
+
+%     cuInitStack(&stack);
+%     cuInitKStack(&k_stack, k);
+%     worst_best = cuLook(k_stack);
+
+%     while (!cuIsEmpty(stack) || current.index != -1)
+%     {
+%         if (current.index == -1 && !cuIsEmpty(stack))
+%         {
+%             current = cuPop(&stack);
+%             dim = current.dim;
+
+%             current.index = (current.dx * current.dx < worst_best.dist) ? current.other : -1;
+%         }
+%         else
+%         {
+%             current_point = tree[current.index];
+
+%             current_dist = cuDist(qp, current_point);
+%             if (worst_best.dist > current_dist)
+%             {
+%                 worst_best.dist = current_dist;
+%                 worst_best.index = current.index;
+%                 cuInsert(k_stack, worst_best, k);
+%                 worst_best = cuLook(k_stack);
+%             }
+
+%             cuUpDim(dim);
+%             current.dim = dim;
+%             current.dx = current_point.p[dim] - qp.p[dim];
+%             cuChildren(qp, current_point, current.dx, target, current.other);
+%             cuPush(&stack, current);
+
+%             current.index = target;
+%         }
+%     }
+% }
+
+\begin{algorithm}
+\caption{Iterative kNN k-d tree search}
+\label{alg:iterative_knn_kd_tree_search}
+\begin{algorithmic}
+    \Procedure{Iterative-kNN-KD-Tree}{$K, T, q, i$}
+        \State \text{Let $S$ be a stack for collecting tree nodes}
+        \State \text{Let $r$ be the root of $T$}
+
+        \State $i \gets 2$
+
+        \While{$!S.empty$ \textbf{or} $r$ != NIL}
+            \If{$r$ = NIL}
+                \State $r \gets S.pop$
+                \State $i \gets r.dimension$
+
+                \If{$r.dx^2 < K.max$} \Comment{Can there be closer points in the other subtree?}
+                    \State $r \gets r.other$
+                \Else
+                    \State $r \gets \text{NIL}$
+                \EndIf
+            \Else
+                \State $d \gets \text{Distance}(r, q)$
+
+                \If{$d < K.max$} \Comment{Is $r$ closer to $q$ than the current k best points?}
+                    \State $r.distance \gets d$
+                    \State \text{Insert}($K, r$)
+                \EndIf
+
+                \State $i \gets (i + 1) \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
+
+                \State $r.dimention \gets i$
+                \State $r.dx \gets r.x[i] - q.x[i]$
+
+                \If{$r.dx > 0$}  \Comment{Select $t$ and $o$ so we traverse towards closest point first}
+                    \State $t \gets r.left$, $r.other \gets r.right$
+                \Else
+                    \State $t \gets r.right$, $r.other \gets r.left$
+                \EndIf
+
+                \State \text{Push}($S, r$)
+                \State $r \gets t$
+            \EndIf
+
+        \EndWhile
+
+        
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
 Is the algorithm included?
 
 
