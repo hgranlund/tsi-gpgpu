@@ -45,6 +45,8 @@ OpenCl is a low-level framework for heterogeneous computing on for example CPU a
 
 In contrast to the open OpenCL, the dominant proprietary framework is CUDA. It is, as OpenCL, based on a programming language and a programming interface. Science CUDA is created by the vendor, it is developed in close proximity with the hardware.
 
+For a deep and thoroughly survey of GPGPU programming, techniques and applications take a look at John D. Owens article from 2007 \citep{Owens:2007:ASO}.
+
 % subsection general_purpose_computing_on_graphics_processing_units (end)
 
 \subsection{NVIDIA GPU architecture} % (fold)
@@ -66,6 +68,16 @@ An other impotent part of the GPU architecture is the memory hierarchy. Global m
 The CUDA programming model is designed to make the heterogeneous GPU+CPU programming easier. The GPU works as a computation accelerator for the CPU, and the programming model should therefore be an easy bridge between the two. CUDA have created this bridge based on a runtime library, compiler and C language extensions. The C language extensions enables the programmer to create and launch methods on the GPU, through the runtime library. These methods are called kernels.
 
 A CUDA program is is based on a data-parallel behavior, where threads is running in parallel. The execution of a kernel is organized as a grid of blocks consisting of threads. When a kernel grid is launched, on the host CPU, blocks of the grid is enumerated and distributed among the SMs. The blocks then executes concurrently on individual SMs. As blocks terminates, new blocks are added. Only threads in a block can communicate with each other, by creating synchronization walls. They can also communicate through the fast shared memory, that is located on each individual SM. Each block and thread have their own id, which often is used to determines what portion of data to be processed by each thread.
+
+
+% Maybe we should write about have to optimize parallel programs:
+% 1. find a good serial algorithm
+% 2. find a good parallelization strategy
+% 3. find a good parallel algorithm
+% 4. Small improvements like:
+%     * do memory optimization (types of memory)
+%     *. minimize data divergence
+%     *. optimize arithmetic operations.
 
 % subsection cuda_programming_model (end)
 
