@@ -38,6 +38,25 @@ Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/b
 Performs a brute force knn-search based on the code written by Garcia.
 
 
+### Utils
+
 #### [void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, int k, float *dist_host, int *ind_host)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/brute-force/kNN-brute-force.cu)
 
 Performs a improved brute force knn-search.
+
+#### [size_t getFreeBytesOnGpu()](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Return the current amount of free memory on the gpu in bytes.
+
+#### [void cuSetDevice(int devive)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Sets device as the current device for the calling host thread.
+
+
+#### [int cuGetDevice()](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Returns the device on which the active host thread executes the device code.
+
+#### [int cuGetDeviceCount()](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Returns the number of devices accessable.
