@@ -194,13 +194,6 @@ __device__ __host__ int getSStackSize(int n)
     return fastIntegerLog2(n) + 2;
 }
 
-size_t getFreeBytesOnGpu()
-{
-    size_t free_byte, total_byte ;
-    cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
-    return free_byte - 1024;
-}
-
 size_t getSStackSizeInBytes(int n, int thread_num, int block_num)
 {
     return block_num * thread_num * ((getSStackSize(n) * sizeof(SPoint)));
