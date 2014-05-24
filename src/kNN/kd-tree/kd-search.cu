@@ -6,6 +6,7 @@
 #include <kd-search.cuh>
 #include <cu-kd-search.cuh>
 #include "kd-tree-build.cuh"
+#include "utils.cuh"
 
 size_t getTreeSize(int n)
 {

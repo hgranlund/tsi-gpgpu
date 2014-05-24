@@ -4,5 +4,6 @@
 void cuSetDevice(int devive);
 int cuGetDevice();
 int cuGetDeviceCount();
+size_t getFreeBytesOnGpu();
 
 #endif
