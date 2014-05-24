@@ -5,7 +5,21 @@
 
 
 
-void cuSetDevice(int devive)
+void cuSetDevice(int device)
 {
-    checkCudaErrors(cudaSetDevice(devive));
+    checkCudaErrors(cudaSetDevice(device));
+}
+
+int cuGetDevice()
+{
+    int device;
+    checkCudaErrors(cudaGetDevice(&device));
+    return device;
+}
+
+int cuGetDeviceCount()
+{
+    int device_count;
+    checkCudaErrors(cudaGetDeviceCount(&device_count));
+    return device_count;
 }

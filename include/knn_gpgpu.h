@@ -16,6 +16,8 @@ void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, in
 // #### Utils
 size_t getFreeBytesOnGpu();
 void cuSetDevice(int devive);
+int cuGetDeviceCount();
+int cuGetDevice();
 
 // Tree build
 size_t getNeededBytesForBuildingKdTree(int n_tree);

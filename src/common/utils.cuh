@@ -2,5 +2,7 @@
 #define _CU_UTILS_
 
 void cuSetDevice(int devive);
+int cuGetDevice();
+int cuGetDeviceCount();
 
 #endif
