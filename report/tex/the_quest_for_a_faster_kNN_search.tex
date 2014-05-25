@@ -28,21 +28,32 @@ A usual strategy, when wanting to improve the performance of repeated queries in
 In this section, we will present the k-d tree data structure, and show how it can be used for operating on three-dimensional point cloud data. Then an investigation is performed, in order to determine the possible benefits of a parallel k-d tree based algorithm.
 
 
-\subsection{Using k-d trees for point cloud data} % (fold)
-\label{ssub:using_k_d_trees_for_point_cloud_data}
+\subsection{Building k-d trees for point cloud data} % (fold)
+\label{ssub:building_k_d_trees_for_point_cloud_data}
 
 A k-d tree can be thought of as a binary search tree in k dimensions. A binary search tree is constructed such that, for a given node, one of Its child-subtrees is consisting of elements smaller than the current node, and the other child-subtree is consisting of elements larger than the current node. The same strategy is applied when constructing a k-d tree, but at each level we are sorting the child-subtree elements according to one selected dimension, called the discriminant for this level. This discriminant is cycled through the different dimensions, as we move down each level in the tree. A formal description of k-d trees is given by Jon Louis Bentley in the paper Multidimensional Binary Search Trees Used for Associative Searching \cite{Bentley:1975:MBS:361002.361007}.
 
-Let us have a look at an example using data for two dimensions. Figure X shows us a set of points on a two dimensional plane. The lines indicate the split plane formed by the discriminant associated with the different points.
+Let us have a look at an example using data for two dimensions. Figure \ref{fig:kd_tree_2d_plane} shows us a set of points on a two dimensional plane. The lines through each point indicate the split plane formed by the discriminant associated with the different points.
 
-FIG X
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/kd_tree_illustration_graph.png}
+\caption{A set of points on a plane, with a possible k-d tree indicated.}
+\label{fig:kd_tree_2d_plane}
+\end{figure}
 
-The corresponding k-d tree is shown in figure Y. Note that lover values in each level are placed in the left branches, and higher values are placed in the right branches.
+The corresponding k-d tree is shown in figure \ref{fig:kd_tree_2d}. Note that lover values in each level are placed in the left branches, and higher values are placed in the right branches.
 
-FIG Y
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/kd_tree_illustration_tree.png}
+\caption{Tree representation of the points in figure \ref{fig:kd_tree_2d_plane}.}
+\label{fig:kd_tree_2d}
+\end{figure}
 
 By extending this example with three fixed dimensions for the spatial dimensions, x, y, and z, we get a k-d tree suitable for storing point cloud data.
 
+It it possible to construct several algorithms for building k-d trees from a set of points, and one simple approach is using a recursive function. Algorithm \ref{alg:seriel_tree_build} shows pseudocode for such a simple tree building algorithm. In the pseudocode, we have chosen to represent the different dimensions as a natural number. This means that x is represented by 0, y is represented by 1, z is represented by 2 and so on. Given a set of point, $P$, in $k$ space, and a initial split dimension $i$, it constructs a balanced k-d tree.
 
 \begin{algorithm}
 \caption{Recursive k-d tree build}
@@ -67,7 +78,24 @@ By extending this example with three fixed dimensions for the spatial dimensions
 \end{algorithmic}
 \end{algorithm}
 
-Note: remember to mention what can be done for trees with duplicate points. Pseudo-code does not take it into account. Also remember to spesify input arguments and such.
+Algorithm \ref{alg:seriel_tree_build} starts by checking if there is any more points left in $P$. If not, it returns NIL as an end of branch marker. If there still is points left, the algorithm selects the median point, $m$, as the root node. Then it sorts all remaining points into a collection of points lower than the median, $L$, and higher than the median, $H$. The dimension, $i$, is incremented, and the Build-KD-Tree function is called recursively on both collections of points. Finally the root node is returned, so it can be assigned as the child of its parent node, or be used as a global root node.
+
+It is worth to note that the performance of this k-d tree build algorithm is sensitive to the choice of a median finding algorithm, since we will be querying for the median \BigO{n} times. Choosing to just sorting the collection $P$, and selecting the median from the middle of the sorted collection, will not give optimal results. Fortunately, several \BigO{n} median selecting algorithms exist \cite{Cormen:2001} (Get chapter citation), quickselect, being the choice for our initial implementations. This gives a algorithm with a time complexity of \BigO{k*n*log(n)} \cite{Friedman:1977}.
+
+A final note about algorithm \ref{alg:seriel_tree_build}, is that it does not handles points with duplicate values in one dimension. If the algorithm where to be feed with a point collection where all points had the same value for x, it would not be able to handle it, since such a point does not explicitly belong in $L$ or $H$. Several modifications can be made to handle this case. We can choose to place all conflicting median points, exept one, in either $L$ or $H$. The problem with this solution, is that we are not guaranteed to get a balance tree. If we where to have a set of points, where all points where tha same, we would get a tree at all, but just one long branch of length n. Another strategy is to try to place the conflicting medians, equally in $L$ and $H$. This way the median we select will be the midmost element in the point collection, retaining the balance in the finished k-d tree. Given that we consider that duplicate median points can be located in both subtrees of a node, this will not affect search operations on the tree, as we will see later.
+% subsection building_k_d_trees_for_point_cloud_data (end)
+
+
+\subsection{Querying the k-d tree} % (fold)
+\label{sub:querying_the_k_d_tree}
+
+With a k-d tree we can perform efficient searches for the closest point to a given point in \BigO{n*log(n)} average time \cite{Friedman:1977}. By maintaining a collection of the k closest points during execution of the query, we can even perform kNN searches. An example of a kNN search algorithm is shown in listing \ref{alg:recursive_knn_kd_tree_search}.
+
+(Something about how searching works in the general sense?)
+
+The procedure will take the root of a k-d tree, $r$, a query point, for which we want to find the k closest points, an initial dimension, $i$, which should be the same as the one used to build the tree. It uses this data to manipulate a collection of the k closest points to $q$, stored in $K$.
+
+In our example $K$ is a data structure with some special properties, called the k-heap. You can query it for the maximum distance value of the k points stored in it, and it will only store a predetermined number of points. If you try to insert more points than the predetermined number of points, it will discard the highest values, and only keep the k lowest values. This data structure can be easily implemented as a modified max-heap. When the size of the heap is lower than k, it it used in the usual manner, but when the heap is of size k, a slight modification to the insertion operation is made. Instead of adding the new element to the heap, the new element is swapped with the maximum value of the heap, if it is lower than this maximum value. Then the heap is re-balanced using standard algorithms. In our code, we assume the k-heap to be filled at the start with k points of either a random sample of points from the k-d tree, or with positive infinity. This way we do not need to take into account if the stack is filled yet, during the recursive execution of the procedure.
 
 \begin{algorithm}
 \caption{Recursive kNN k-d tree search}
@@ -103,55 +131,14 @@ Note: remember to mention what can be done for trees with duplicate points. Pseu
 \end{algorithmic}
 \end{algorithm}
 
-% __device__ __host__
-% void cuKNN(struct Point qp, struct Node *tree, int n, int k,
-%            struct SPoint *stack, struct KPoint *k_stack)
-% {
-%     int  dim = 2, target;
-%     float current_dist;
+Algorithm \ref{alg:recursive_knn_kd_tree_search} starts by checking if we have reached the end of a branch. If not, it calculates the Euclidean distance between the query point, $q$, and the current root point, $r$. Calculating this distance is a costly step, since it usually involves calculating a square root. This can be circumvented when implementing, by relying on using the square of the Euclidean distance as the distance metric, instead of the actual distance. This will not make a difference for the algorithm. The distance, $dx$, between the current root and the query point in dimension $i$ is also calculated.
 
-%     struct Node current_point;
-%     struct SPoint current;
-%     struct KPoint worst_best;
+The algorithm then checks if the current root point is closer to the query point than one of the points in the k-heap. If this is the case, it inserts the current root into the k-heap. The next dimension, $i'$, is calculated, and then the algorithm determines if it should traverse to the right or left child node first. For efficient querying, we want to traverse down the branch that would contain the query point. In other words, if the query point is lower than the current root point in the current dimension, we want to traverse to the left child, and vice versa. The child node that we want to traverse first, is often called the target, and its corresponding subtree is often called the target subtree. In the algorithm the symbol $t$ is used to represent target. The child and child-subtree that is not chosen for immediate traversal is called other and other-subtree. In the algorithm the symbol $o$ is used to represent other. The ability to prune away the other subtree, given our current best estimates stored in the k-heap and the distance $dx$, is what makes the k-d tree efficient for kNN searches.
 
-%     current.index = n / 2;
+After recursively investigating the target subtree, we ask if our estimates in the k-heap is better than the distance $dx$, remembering that the distances stored in the k-heap is squared. If this is the case, we know that there cannot be a closer point in the other subtree, and we can prune it from our search. If not, we have to check the other subtree as well.
+% subsection querying_the_k_d_tree (end)
 
-%     cuInitStack(&stack);
-%     cuInitKStack(&k_stack, k);
-%     worst_best = cuLook(k_stack);
-
-%     while (!cuIsEmpty(stack) || current.index != -1)
-%     {
-%         if (current.index == -1 && !cuIsEmpty(stack))
-%         {
-%             current = cuPop(&stack);
-%             dim = current.dim;
-
-%             current.index = (current.dx * current.dx < worst_best.dist) ? current.other : -1;
-%         }
-%         else
-%         {
-%             current_point = tree[current.index];
-
-%             current_dist = cuDist(qp, current_point);
-%             if (worst_best.dist > current_dist)
-%             {
-%                 worst_best.dist = current_dist;
-%                 worst_best.index = current.index;
-%                 cuInsert(k_stack, worst_best, k);
-%                 worst_best = cuLook(k_stack);
-%             }
-
-%             cuUpDim(dim);
-%             current.dim = dim;
-%             current.dx = current_point.p[dim] - qp.p[dim];
-%             cuChildren(qp, current_point, current.dx, target, current.other);
-%             cuPush(&stack, current);
-
-%             current.index = target;
-%         }
-%     }
-% }
+% Denne seksjonen regner jeg med trenger en CUDA intro
 
 \begin{algorithm}
 \caption{Iterative kNN k-d tree search}
@@ -203,50 +190,21 @@ Note: remember to mention what can be done for trees with duplicate points. Pseu
 \end{algorithmic}
 \end{algorithm}
 
-Is the algorithm included?
-
-
-We can ensure that the k-d tree is balanced, by always selecting the median as our parent when constructing the tree \cite{Bentley:1975:MBS:361002.361007} (site directly to section?).
 
 
 
-In this example we have been In order to use k-d trees for storing point cloud data, we will be fixing the number of dimensions to the three spatial dimensions, x, y, and z.
 
-We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. The elements in the child-subtrees is then organized in such a way that all elements
-
-We will call this dimensions the discriminant for the root level, and we will use the discriminant as the sorting criteria for
-
-
-A k-d tree can be thought of as a binary search tree in k dimensions.
 
 A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/kd_tree_illustration_graph.png}
-
-\caption{2D KD-tree}
-\label{fig:kdtree_2d}
-\end{figure}
 
 In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
 
 Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under.
 
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/kd_tree_illustration_tree.png}
-
-\caption{corresponding-binary-tree}
-\label{fig:tree_0001}
-\end{figure}
-
 Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log2(n)) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log2(n)) time.
 
 Interested readers is encouraged to look at the paper Multidimensional binary search trees used for associative searching by Jon Louis Bentley, where k-d trees first was described.
 
-
-% subsection using_k_d_trees_for_point_cloud_data (end)
 
 \subsection{The serial base algorithm} % (fold)
 \label{ssub:the_serial_base_algorithm}
