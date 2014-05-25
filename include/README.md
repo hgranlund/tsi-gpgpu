@@ -28,7 +28,7 @@ Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/b
 
 #### [void mpQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, int *result)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-search-openmp.cu)
 
-Performes same operations as cuQueryAll, but is paralellized on the CPU using OpenMP insted of CUDA.
+Performes same operations as cuQueryAll, but is parallelized on the CPU using OpenMP instead of CUDA.
 
 Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/blob/master/tests/kNN/kd-tree/time-kd-search-openmp.cu) test file.
 
@@ -37,7 +37,47 @@ Example on usage can be found in [this](https://github.com/hgranlund/tsi-gpgpu/b
 
 Performs a brute force knn-search based on the code written by Garcia.
 
-
 #### [void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, int k, float *dist_host, int *ind_host)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/brute-force/kNN-brute-force.cu)
 
 Performs a improved brute force knn-search.
+
+### Utils
+
+#### [size_t getFreeBytesOnGpu()](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Return the current amount of free memory on the GPU in bytes.
+
+#### [void cuSetDevice(int device)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Sets device as the current device for the calling host thread.
+
+
+#### [int cuGetDevice()](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Returns the device on which the active host thread executes the device code.
+
+#### [int cuGetDeviceCount()](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/common/utils.cu)
+
+Returns the number of devices accessible.
+
+
+#### [size_t getNeededBytesForBuildingKdTree(int n_tree)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-tree-build.cu)
+
+Returns needed bytes on GPU to build a tree of size n_tree.
+
+#### [size_t getTreeSize(int n_tree)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/kd-tree-build.cu)
+
+Returns the size in bytes of a tree with length n_tree.
+
+
+#### [size_t getNeededBytesForQueryAll(int n_qp, int k, int n_tree)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/cu-kd-search.cu)
+
+Returns needed bytes on GPU to perform a queryAll operation on CUDA.
+
+
+#### [size_t getNeededBytesInSearch(int n_qp, int k, int n_tree, int thread_num, int block_num)](https://github.com/hgranlund/tsi-gpgpu/blob/master/src/kNN/kd-tree/cu-kd-search.cu)
+
+Returns needed bytes on GPU to perform a queryAll operation on CUDA without taking the tree size into account.
+
+
+
