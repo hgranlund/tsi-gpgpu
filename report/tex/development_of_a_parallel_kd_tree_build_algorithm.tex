@@ -108,6 +108,63 @@ Our radix select is a slightly modified version in three ways. We want to solve 
 
 % subsubsection our_implementation (end)
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Tenkte denne kunne passe bra hos deg når man skal begynne å snakke om paralellisering av søket:-)
+% Denne seksjonen regner jeg med trenger en liten intro som binder den sammen med CUDA og hvorfor man ikke kan bruke rekursive funksjoner der.
+
+We can rewrite algorithm \ref{alg:recursive_knn_kd_tree_search} into a iterative algorithm by using a stack. Algorithm \ref{alg:iterative_knn_kd_tree_search} shows how this can be done.
+
+\begin{algorithm}
+\caption{Iterative kNN k-d tree search}
+\label{alg:iterative_knn_kd_tree_search}
+\begin{algorithmic}
+    \Procedure{Iterative-kNN-KD-Tree}{$K, r, q$}
+        \State \text{Let $S$ be a stack for collecting tree nodes}
+
+        \State $i \gets 2$
+
+        \While{$!S.empty$ \textbf{or} $r$ != NIL}
+            \If{$r$ = NIL}
+                \State $r \gets S.pop$
+                \State $i \gets r.dimension$
+
+                \If{$r.dx^2 < K.max$} \Comment{Can there be closer points in the other subtree?}
+                    \State $r \gets r.other$
+                \Else
+                    \State $r \gets \text{NIL}$
+                \EndIf
+            \Else
+                \State $d \gets \text{Distance}(r, q)$
+
+                \If{$d < K.max$} \Comment{Is $r$ closer to $q$ than the current k best points?}
+                    \State $r.distance \gets d$
+                    \State \text{Insert}($K, r$)
+                \EndIf
+
+                \State $i \gets (i + 1) \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
+
+                \State $r.dimention \gets i$
+                \State $r.dx \gets r.x[i] - q.x[i]$
+
+                \If{$r.dx > 0$}  \Comment{Select $t$ and $o$ so we traverse towards closest point first}
+                    \State $t \gets r.left$, $r.other \gets r.right$
+                \Else
+                    \State $t \gets r.right$, $r.other \gets r.left$
+                \EndIf
+
+                \State \text{Push}($S, r$)
+                \State $r \gets t$
+            \EndIf
+
+        \EndWhile
+    \EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+The algorithm works in the same way as the recursive algorithm, but adds a stack, $S$, called the s-stack, and a while loop in order to handle the tree traversal iteratively. While there is a element assigned to the root variable, $r$, the algorithm will traverse down the target branch, updating the dimension, $i$, calculating the distance, $dx$, determining the target, $t$, and other, $o$, child node. then it will collect $r$, $o$, $i$ and $dx$ into one element, and push it on the s-stack. Finally the root variable is assigned to the target child, or NIL if we have reached the end of a branch.
+
+While there still is elements in the s-stack, but $r$ is assigned to NIL, we are traversing back up a branch. While this is happening, the algorithm pops elements from the s-stack, determines if they should be added to the k-heap, before it determines if it need to investigate the other branch of this node. If that is the case, the other node is assigned to $r$, and the algorithm will traverse down this subtree using the previously stated rules.
+
 
 
 
