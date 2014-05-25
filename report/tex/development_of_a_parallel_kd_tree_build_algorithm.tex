@@ -167,8 +167,6 @@ While there still is elements in the s-stack, but $r$ is assigned to NIL, we are
 
 
 
-
-
 % It is hard to use all the parallel power of cuda in this algorithm. The reason is that the problem is divided in three different types; partition one huge list, partition some middle sized list and partition many small lists. This is the reason why we have chosen to use three different implementation of k'th order statistic. The constant time penalties of the two algorithms we have chosen give us a clear indication the radix select is best on large lists while quick select is best on small lists.
 
 % Results:
