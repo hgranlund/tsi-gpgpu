@@ -50,15 +50,15 @@ By extending this example with three fixed dimensions for the spatial dimensions
 \begin{algorithmic}
     \Function{Build-KD-Tree}{$P$, $i$}
         \If{$P.length = 0$} \Comment{We have reached the end of a branch}
-            \State \textbf{return} NIL 
+            \State \textbf{return} NIL
         \Else
             \State $m \gets \text{Median}(P)$
 
             \State \text{Let $L$ be all elements of $P < m$ in dimension $i$}
             \State \text{Let $H$ be all elements of $P > m$ in dimension $i$}
-            
+
             \State $i' \gets (i + 1) \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
-            
+
             \State $m.left \gets \text{Build-KD-Tree}(L, i')$
             \State $m.right \gets \text{Build-KD-Tree}(H, i')$
         \EndIf
@@ -75,7 +75,7 @@ Note: remember to mention what can be done for trees with duplicate points. Pseu
 \begin{algorithmic}
     \Procedure{kNN-KD-Tree}{$K, r, q, i$}
         \If{$r =$ NIL} \Comment{We have reached the end of a branch}
-            \State \textbf{return} 
+            \State \textbf{return}
         \EndIf
 
         \State $d \gets \text{Distance}(r, q)$
@@ -558,5 +558,15 @@ Possible improvements:
 % % subsection v13_release_notes (end)
 % % section kd_tree_based_effort (end)
 
+
+\subsection*{Cuda Optimizations}
+
+\begin{enumerate}
+\item 32 threads in a warp
+\item Number of threads and blocks. Calaculate on each lounch
+\item divergence
+\item memory placement
+\item
+\end{enumerate}
 
 \cleardoublepage
