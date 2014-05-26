@@ -3,6 +3,7 @@
 \usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{mathrsfs}
+\usepackage{textcomp, amssymb}  % additional symbols (there are more packages)
 \usepackage{amsthm}
 \usepackage{amsmath}
 \usepackage{color}
@@ -24,13 +25,9 @@
 \makenomenclature
 \usepackage{natbib}
 \usepackage{float}
-\floatstyle{boxed}
 \restylefloat{figure}
 
-% \usepackage[number=none]{glossary}
-% \makeglossary
-% \newglossarytype[abr]{abbr}{abt}{abl}
-% \newglossarytype[alg]{acronyms}{acr}{acn}
+
 \newcommand{\abbrname}{Abbreviations}
 \newcommand{\shortabbrname}{Abbreviations}
 %\makeabbr
@@ -90,4 +87,6 @@
 
 \usepackage[chapter]{algorithm}
 \usepackage{algpseudocode}
+
+\input{glossaries.tex}
 % %---------------------------------------------------------
