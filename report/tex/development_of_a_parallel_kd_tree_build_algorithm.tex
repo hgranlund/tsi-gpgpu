@@ -32,11 +32,13 @@ The k-d tree construction basically boils down to successively balance each node
 \caption{Iterative k-d tree build}
 \label{alg:iterativ_tree_build}
 \begin{algorithmic}
-    \Function{Build-KD-Tree}{$Tree$}
-        \ForAll{$level \in \{\text{all levels in } Tree\}$}
-            \ForAll{$node \in level$}
-                \State$dimension \gets |level| \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
-                \State$\text{Balance-node}(node, dimension)$
+    \Require{An array of points, $T$}
+    \Ensure{$T$, as a k-d formated array}
+    \Function{Build-KD-Tree}{$T$}
+        \ForAll{$L \in \{\text{all levels in } T\}$}
+            \ForAll{$S \in L$}
+                \State$d \gets |L| \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
+                \State \Call{Balance-Subtree}{$S$, $d$}
             \EndFor
         \EndFor
     \EndFunction
@@ -142,8 +144,35 @@ Our radix select is a slightly modified version in three ways. We want to solve 
 \subsubsection{Our implementation} % (fold)
 \label{ssub:our_implementation}
 
+\begin{algorithm}
+\caption{}
+\label{alg:parallel_balance_subtree}
+\begin{algorithmic}
+    \Require{A subtree $S$ of length $n$, and dimension $d$}
+    \Ensure{A balanced subtree, $S$}
+    \Function{Balance-Subtree}{$T$, $d$}
+        \State Let $l$ and $u$ be the upper and lower bond of current partition.
+        \State Let $P$ be all nodes in $S$
+        \Repeat
+            \ForAll {$n \in P$}
+                \State $Z(t) \gets $  \text{Occurrences of zeros in radix, $r$, found by thread, $t$}.
+            \EndFor
+            \State $c \gets \Call{Sum-Reduce}{Z}$ \Comment{$c$ is the cut if the current partition $p$}
+            \If{$u-c >= n/2$}
+                \State$ u \gets u-c$
+                \State$P \in \{p \in P \mid p <= c\}$
+            \Else
+                \State$l \gets u-c$
+                \State$P \in \{p \in P \mid p > c\}$
+            \EndIf
+        \Until{$u-l<1 \lor r > \Call{Bits}{n} $}
+        \State \Call{Partition}{$S, P$}
+    \EndFunction
+\end{algorithmic}
+\end{algorithm}
 
-- split up the work in respect to cuda
+
+
 - Pseudocode
 - forklarting av cuda
 - diskutere minnebruk. shared memory
