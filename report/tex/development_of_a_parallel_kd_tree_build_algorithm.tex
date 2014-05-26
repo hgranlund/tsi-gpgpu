@@ -144,8 +144,14 @@ Our radix select is a slightly modified version in three ways. We want to solve 
 \subsubsection{Our implementation} % (fold)
 \label{ssub:our_implementation}
 
+
+Our implementation is based around three different operations that call each other. First we launch a CUDA kernel for each tree level, then the kernel partition the subtrees into different blocks, and the subtree gets balanced. The two first operations is just a partitioning and dividing of resources, as we have talked about in the previous sections. The interesting and time consuming operation is the last one, Algorithm~\ref{alg:parallel_balance_subtree}, the balance subtree operation.
+
+
+Lets take a deeper look into Algorithm~\ref{alg:parallel_balance_subtree}.
+
 \begin{algorithm}
-\caption{}
+\caption{Parallel balance of a subtree}
 \label{alg:parallel_balance_subtree}
 \begin{algorithmic}
     \Require{A subtree $S$ of length $n$, and dimension $d$}
@@ -155,9 +161,9 @@ Our radix select is a slightly modified version in three ways. We want to solve 
         \State Let $P$ be all nodes in $S$
         \Repeat
             \ForAll {$n \in P$}
-                \State $Z(t) \gets $  \text{Occurrences of zeros in radix, $r$, found by thread, $t$}.
+                \State $Z(t) \gets $  \text{Occurrences of zeros in current radix $r$, found by thread, $t$.}
             \EndFor
-            \State $c \gets \Call{Sum-Reduce}{Z}$ \Comment{$c$ is the cut if the current partition $p$}
+            \State $c \gets \Call{Sum-Reduce}{Z}$ \Comment{$c$ is the cut of the current partition $p$.}
             \If{$u-c >= n/2$}
                 \State$ u \gets u-c$
                 \State$P \in \{p \in P \mid p <= c\}$
@@ -165,7 +171,9 @@ Our radix select is a slightly modified version in three ways. We want to solve 
                 \State$l \gets u-c$
                 \State$P \in \{p \in P \mid p > c\}$
             \EndIf
-        \Until{$u-l<1 \lor r > \Call{Bits}{n} $}
+            \State $r \gets r+1$ \Comment{Move to the next radix}
+            \State \Call{Synchronize-Threads}{\ }
+        \Until{$u-l<1 \lor r > \Call{Bits}{p \in P} $}
         \State \Call{Partition}{$S, P$}
     \EndFunction
 \end{algorithmic}
