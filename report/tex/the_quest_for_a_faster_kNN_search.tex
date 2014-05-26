@@ -20,6 +20,17 @@
 \end{myrq}
 
  % Det finnes mange papers om alternativer til k-d tree som vi bør nevne i starten. eks. \cite{Owens:2007:ASO}  See page 7 av S12140-Superfast-Nearest-Neighbor-Searches-Using-Minimal-kd-Tree.pdf som ligger i git.
+
+% A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
+
+% In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
+
+% Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under.
+
+% Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log2(n)) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log2(n)) time.
+
+% Interested readers is encouraged to look at the paper Multidimensional binary search trees used for associative searching by Jon Louis Bentley, where k-d trees first was described.
+
 \section{Application of k-d trees to the kNN problem} % (fold)
 \label{sub:application_of_kd_trees_to_the_knn_problem}
 
@@ -28,21 +39,32 @@ A usual strategy, when wanting to improve the performance of repeated queries in
 In this section, we will present the k-d tree data structure, and show how it can be used for operating on three-dimensional point cloud data. Then an investigation is performed, in order to determine the possible benefits of a parallel k-d tree based algorithm.
 
 
-\subsection{Using k-d trees for point cloud data} % (fold)
-\label{ssub:using_k_d_trees_for_point_cloud_data}
+\subsection{Building k-d trees for point cloud data} % (fold)
+\label{ssub:building_k_d_trees_for_point_cloud_data}
 
 A k-d tree can be thought of as a binary search tree in k dimensions. A binary search tree is constructed such that, for a given node, one of Its child-subtrees is consisting of elements smaller than the current node, and the other child-subtree is consisting of elements larger than the current node. The same strategy is applied when constructing a k-d tree, but at each level we are sorting the child-subtree elements according to one selected dimension, called the discriminant for this level. This discriminant is cycled through the different dimensions, as we move down each level in the tree. A formal description of k-d trees is given by Jon Louis Bentley in the paper Multidimensional Binary Search Trees Used for Associative Searching \cite{Bentley:1975:MBS:361002.361007}.
 
-Let us have a look at an example using data for two dimensions. Figure X shows us a set of points on a two dimensional plane. The lines indicate the split plane formed by the discriminant associated with the different points.
+Let us have a look at an example using data for two dimensions. Figure \ref{fig:kd_tree_2d_plane} shows us a set of points on a two dimensional plane. The lines through each point indicate the split plane formed by the discriminant associated with the different points.
 
-FIG X
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/kd_tree_illustration_graph.png}
+\caption{A set of points on a plane, with a possible k-d tree indicated.}
+\label{fig:kd_tree_2d_plane}
+\end{figure}
 
-The corresponding k-d tree is shown in figure Y. Note that lover values in each level are placed in the left branches, and higher values are placed in the right branches.
+The corresponding k-d tree is shown in figure \ref{fig:kd_tree_2d}. Note that lover values in each level are placed in the left branches, and higher values are placed in the right branches.
 
-FIG Y
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/kd_tree_illustration_tree.png}
+\caption{Tree representation of the points in figure \ref{fig:kd_tree_2d_plane}.}
+\label{fig:kd_tree_2d}
+\end{figure}
 
 By extending this example with three fixed dimensions for the spatial dimensions, x, y, and z, we get a k-d tree suitable for storing point cloud data.
 
+It it possible to construct several algorithms for building k-d trees from a set of points, and one simple approach is using a recursive function. Algorithm \ref{alg:seriel_tree_build} shows pseudocode for such a simple tree building algorithm. In the pseudocode, we have chosen to represent the different dimensions as a natural number. This means that x is represented by 0, y is represented by 1, z is represented by 2 and so on. Given a set of point, $P$, in $k$ space, and a initial split dimension $i$, it constructs a balanced k-d tree.
 
 \begin{algorithm}
 \caption{Recursive k-d tree build}
@@ -67,7 +89,24 @@ By extending this example with three fixed dimensions for the spatial dimensions
 \end{algorithmic}
 \end{algorithm}
 
-Note: remember to mention what can be done for trees with duplicate points. Pseudo-code does not take it into account. Also remember to spesify input arguments and such.
+Algorithm \ref{alg:seriel_tree_build} starts by checking if there is any more points left in $P$. If not, it returns NIL as an end of branch marker. If there still is points left, the algorithm selects the median point, $m$, as the root node. Then it sorts all remaining points into a collection of points lower than the median, $L$, and higher than the median, $H$. The dimension, $i$, is incremented, and the Build-KD-Tree function is called recursively on both collections of points. Finally the root node is returned, so it can be assigned as the child of its parent node, or be used as a global root node.
+
+It is worth to note that the performance of this k-d tree build algorithm is sensitive to the choice of a median finding algorithm, since we will be querying for the median \BigO{n} times. Choosing to just sorting the collection $P$, and selecting the median from the middle of the sorted collection, will not give optimal results. Fortunately, several \BigO{n} median selecting algorithms exist \cite{Cormen:2001} (Get chapter citation), quickselect, being the choice for our initial implementations. This gives a algorithm with a time complexity of \BigO{k*n*log(n)} \cite{Friedman:1977}.
+
+A final note about algorithm \ref{alg:seriel_tree_build}, is that it does not handles points with duplicate values in one dimension. If the algorithm where to be feed with a point collection where all points had the same value for x, it would not be able to handle it, since such a point does not explicitly belong in $L$ or $H$. Several modifications can be made to handle this case. We can choose to place all conflicting median points, exept one, in either $L$ or $H$. The problem with this solution, is that we are not guaranteed to get a balance tree. If we where to have a set of points, where all points where tha same, we would get a tree at all, but just one long branch of length n. Another strategy is to try to place the conflicting medians, equally in $L$ and $H$. This way the median we select will be the midmost element in the point collection, retaining the balance in the finished k-d tree. Given that we consider that duplicate median points can be located in both subtrees of a node, this will not affect search operations on the tree, as we will see later.
+% subsection building_k_d_trees_for_point_cloud_data (end)
+
+
+\subsection{Querying the k-d tree} % (fold)
+\label{sub:querying_the_k_d_tree}
+
+With a k-d tree we can perform efficient searches for the closest point to a given point in \BigO{n*log(n)} average time \cite{Friedman:1977}. By maintaining a collection of the k closest points during execution of the query, we can even perform kNN searches. An example of a kNN search algorithm is shown in listing \ref{alg:recursive_knn_kd_tree_search}.
+
+(Something about how searching works in the general sense?)
+
+The procedure will take the root of a k-d tree, $r$, a query point, for which we want to find the k closest points, an initial dimension, $i$, which should be the same as the one used to build the tree. It uses this data to manipulate a collection of the k closest points to $q$, stored in $K$.
+
+In our example $K$ is a data structure with some special properties, called the k-heap. You can query it for the maximum distance value of the k points stored in it, and it will only store a predetermined number of points. If you try to insert more points than the predetermined number of points, it will discard the highest values, and only keep the k lowest values. This data structure can be easily implemented as a modified max-heap. When the size of the heap is lower than k, it it used in the usual manner, but when the heap is of size k, a slight modification to the insertion operation is made. Instead of adding the new element to the heap, the new element is swapped with the maximum value of the heap, if it is lower than this maximum value. Then the heap is re-balanced using standard algorithms. In our code, we assume the k-heap to be filled at the start with k points of either a random sample of points from the k-d tree, or with positive infinity. This way we do not need to take into account if the stack is filled yet, during the recursive execution of the procedure.
 
 \begin{algorithm}
 \caption{Recursive kNN k-d tree search}
@@ -103,232 +142,272 @@ Note: remember to mention what can be done for trees with duplicate points. Pseu
 \end{algorithmic}
 \end{algorithm}
 
-Is the algorithm included?
+Algorithm \ref{alg:recursive_knn_kd_tree_search} starts by checking if we have reached the end of a branch. If not, it calculates the Euclidean distance between the query point, $q$, and the current root point, $r$. Calculating this distance is a costly step, since it usually involves calculating a square root. This can be circumvented when implementing, by relying on using the square of the Euclidean distance as the distance metric, instead of the actual distance. This will not make a difference for the algorithm. The distance, $dx$, between the current root and the query point in dimension $i$ is also calculated.
 
+The algorithm then checks if the current root point is closer to the query point than one of the points in the k-heap. If this is the case, it inserts the current root into the k-heap. The next dimension, $i'$, is calculated, and then the algorithm determines if it should traverse to the right or left child node first. For efficient querying, we want to traverse down the branch that would contain the query point. In other words, if the query point is lower than the current root point in the current dimension, we want to traverse to the left child, and vice versa. The child node that we want to traverse first, is often called the target, and its corresponding subtree is often called the target subtree. In the algorithm the symbol $t$ is used to represent target. The child and child-subtree that is not chosen for immediate traversal is called other and other-subtree. In the algorithm the symbol $o$ is used to represent other. The ability to prune away the other subtree, given our current best estimates stored in the k-heap and the distance $dx$, is what makes the k-d tree efficient for kNN searches.
 
-We can ensure that the k-d tree is balanced, by always selecting the median as our parent when constructing the tree \cite{Bentley:1975:MBS:361002.361007} (site directly to section?).
+After recursively investigating the target subtree, we ask if our estimates in the k-heap is better than the distance $dx$, remembering that the distances stored in the k-heap is squared. If this is the case, we know that there cannot be a closer point in the other subtree, and we can prune it from our search. If not, we have to check the other subtree as well. When the procedure terminated, the k closest points to the query point is stored in the k-heap.
+% subsection querying_the_k_d_tree (end)
 
-
-
-In this example we have been In order to use k-d trees for storing point cloud data, we will be fixing the number of dimensions to the three spatial dimensions, x, y, and z.
-
-We start by selecting one of the dimensions and assigning it to the root level. We will call this dimension the discriminant for the root level. The elements in the child-subtrees is then organized in such a way that all elements
-
-We will call this dimensions the discriminant for the root level, and we will use the discriminant as the sorting criteria for
-
-
-A k-d tree can be thought of as a binary search tree in k dimensions.
-
-A few different variations exist, but we will focus our explanation around a 2D example, storing point data in all nodes. The plane is split into two sub-planes along one of the axis (in our example the y-axis) and all the nodes are sorted as to whether they belong to the left or right of this split. To determine the left and right child of the root node, the two sub-planes are again split at an arbitrary point, this time cycling to the next axis (in our example the x-axis) and the
+\subsection{Testing a serial k-d tree based kNN solver} % (fold)
+\label{sub:testing_a_serial_k_d_tree_based_knn_solver}
 
 \begin{figure}[ht!]
 \centering
-\includegraphics[width=120mm]{../gfx/kd_tree_illustration_graph.png}
+\includegraphics[width=120mm]{../gfx/serial-k-d-tree-breakdown.png}
 
-\caption{2D KD-tree}
-\label{fig:kdtree_2d}
-\end{figure}
-
-In order to build a k-d tree for 3D space, you simply cycle through the three dimensions, instead of two.
-
-Given the previous splits and selection of nodes, the resulting binary tree would be as shown in the illustration under.
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/kd_tree_illustration_tree.png}
-
-\caption{corresponding-binary-tree}
-\label{fig:tree_0001}
-\end{figure}
-
-Given that the resulting binary tree is balanced, we get an average search time for the closest neighbor in O(log2(n)) time. For values of k << n, the same average search time can be achieved, with minimal changes to the algorithm, when searching for the k closest neighbors. It is known from literature that balancing the tree can be achieved by always splitting on the meridian node. Building a k-d tree in this manner takes O(kn log2(n)) time.
-
-Interested readers is encouraged to look at the paper Multidimensional binary search trees used for associative searching by Jon Louis Bentley, where k-d trees first was described.
-
-
-% subsection using_k_d_trees_for_point_cloud_data (end)
-
-\subsection{The serial base algorithm} % (fold)
-\label{ssub:the_serial_base_algorithm}
-
-\begin{enumerate}
-    \item Build a balanced k-d tree from the point cloud.
-    \item Query the tree for different sets of neighbors.
-\end{enumerate}
-
-Time complexity:
-
-Steps:
-\begin{enumerate}
-    \item O(n log2 n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
-    \item Approximately O(log2 n), but dependent on size of k.
-\end{enumerate}
-
-
-\section{Development of a parallel kd-tree build algorithm} % (fold)
-\label{sub:development_of_a_parallel_kd_tree_build_algorithm}
-\input{development_of_a_parallel_kd_tree_build_algorithm.tex}
-% section development_of_a_parallel_kd_tree_build_algorithm (end)
-
-\section{Development of a parallel kd-tree search algorithm} % (fold)
-\label{sub:development_of_a_parallel_kd_tree_search_algorithm}
-
-\section{The quest for a fast KNN search} % (fold)
-\label{sec:the_quest_for_a_fast_KNN_search}
-
-This document is a summary of our most recent (7 February 2014) findings, in the quest for a fast kNN search algorithm. The most up to date information can be found in the
-%[release notes](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN#v14-release-notes)
-for the most recent version of this project.
-
-Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
-
-In order to make the document more readable, we have included short descriptions of the algorithms used, a short reference to theoretical time complexity. We then go on to list our current results, problematic areas and possible improvements.
-
-The following papers, available in the resources folder, forms the literary basis for our current work.
-
-Related to the brute force approach:
-\begin{itemize}
-    \item Improving the k-Nearest Neighbor Algorithm with CUDA - Graham Nolan
-    \item Fast k Nearest Neighbor Search using GPU - Garcia et al.
-    \item K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al.
-\end{itemize}
-
-Related to the k-d tree based approach:
-\begin{itemize}
-    \item Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al.
-\end{itemize}
-
-
-\section{Brute force based effort} % (fold)
-\label{sub:brute_force_based_effort}
-
-\subsection{Garcia's base algorithm} % (fold)
-\label{ssub:garcias_base_algorithme}
-
-Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
-\begin{enumerate}
-    \item Calculate the distance between all reference points and query points.
-    \item Sort the distances and pick the k smallest distances.
-\end{enumerate}
-
-Garcias implementation supports any number of dimensions, reference points and query points (or up to ~65000, number of blocks in the GPU). Due to this feature the algorithm use a lot of extra computation power when only one query point and a small dimensions is selected.
-
-Time complexity:
-
-Steps:
-
-\begin{enumerate}
-    \item O(n). Every reference point must be evaluated once. Since all calculations are independent, we have a large potential for parallelizing.
-    \item Insertion sort: O(pow(n, 2)).
-\end{enumerate}
-% subsection garcias_base_algorithme (end)
-
-\subsection{Our reimplementation} % (fold)
-\label{ssub:our_reimplementation_2}
-
-Bitonic-sort:
-
-Graham Nolan discusses the possibility of improving Garcia's algorithm by reimplementing step two with a bitonic sort. His source code has not been available to us, but he states that the run-time improvements was significant. As well as choosing bitonic sort for the sorting stage of our algorithm, our implementation supports up to 15 000 000 points before memory errors occur, and we have limited the number of dimensions to three.
-
-Time complexity:
-
-Steps:
-\begin{enumerate}
-    \item O(n).
-    \item Bitonic sort: worst case = O(n * log2(n)), average time ( parallel) = O(log2(n)).
-\end{enumerate}
-
-Results:
-
-Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/knn-brute-force-vs-serial-k-d-tree.png}
-
-\caption{knn-brute-force-vs-serial-k-d-tree.png}
-\label{fig:knn_brute_force_vs_serial_k_d_tree}
-\end{figure}
-
-We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
-
-Test with n = 8 388 608:
-
-\begin{itemize}
-    \item Memory transfer 21.1 ms
-    \item Calculate all distances 2.5 ms
-    \item Bitonic sort 176 ms
-    \item Total 200 ms
-\end{itemize}
-
-Min-Reduce:
-
-An other possibility to improve step 2 is to use a reduce operation to get the smallest distances. This can be done k times to get the k smallest values.
-
-Time complexity:
-
-Steps:
-
-\begin{enumerate}
-    \item O(n).
-    \item Min-reduce: k* log2(n)).
-\end{enumerate}
-
-Memory optimalisation:
-
-We have done some memory optimization based on a
-%[presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf)
-from Nvidia.
-
-The optimizations include:
-
-\begin{itemize}
-    \item Shared memory utilization.
-    \item Sequential Addressing.
-    \item Complete for-loop Unrolling.
-\end{itemize}
-
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/knn-brute-force-reduce-memory-opt.png}
-
-\caption{Comparison between knn-brute-force-reduce with and without memory optimizations (k=10).}
-\label{fig:knn_brute_force_reduce_memory_opt}
+\caption{serial-k-d-tree-breakdown}
+\label{fig:serial_kd_tree_breakdown}
 \end{figure}
 
 Results:
 
-Test results of n = 8 388 608 with no memory optimization:
+As expected, almost all the time is spent building the tree. Querying for the closest neighbor in the largest tree took less than 0.0015 ms, but 9 seconds is a long time to wait for the tree to build.
+
+The paper Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al. offers interesting, although slightly complex, ideas to an efficient parallelization of k-d tree construction. I order to save time, a good amount of time was spent searching for, and trying out, different open source implementations based on this paper. This search was unsuccessful. All the implementations we managed to find was problematic due to lack of updates, often not updated since 2011, and still running on CUDA 4.1, lack of documentation, lack of generalization or dubious source code.
+
+A more uplifting find was several references to Real-Time KD-Tree Construction on Graphics Hardware in material published by Nvidia, regarding their proprietary systems for ray tracing. A graphics rendering technique often reliant on k-d trees, and indeed dependent on high performance.
+
+Finding a way to represent the kd-tree boils down to representing a binary tree. This can be done in several ways, but we had some criteria for our representation:
+
 \begin{itemize}
-    \item Memory transfer:  21.1 ms.
-    \item Calculate all distances: 2.5 ms
-    \item One min-reduce step : 4.8 ms.
-    \item Total time: (23.7 + k*4.8) ms.
+    \item The kd-tree should be memory-efficient, at best explicitly storing only the actual point coordinates. This since we want to store the largest possible amount of points on the smaller memory of the GPU.
+    \item The kd-tree representation should be easy to split, distribute and join, since we want to build it on several independent processes.
 \end{itemize}
 
-Test results of n = 8 388 608 with memory optimization:
+After a bit of research and trial and error, we choose to represent the kd-tree as a array of structs, representing points, with an x, y and z coordinate stored in an short array. In order to turn this array into a binary tree, the following scheme was derived. Given an array, the root node of that array is the midmost element (the leftmost of the two, given an even number of elements). To find the left child of the root, you simply find the midmost element of the left sub-array, and likewise for the right child. This representation have some advantages and drawbacks.
+
+Advantages:
 \begin{itemize}
-    \item Memory transfer:  21.1 ms.
-    \item Calculate all distances: 2.5 ms
-    \item One min-reduce step : 1.7 ms.
-    \item Total time: (23.7 + k*1.7) ms.
+    \item Can represent binary trees where not all leaf-nodes are present. This is the minimal requirement for representing perfectly balanced k-d trees.
+    \item Joining or splitting subtrees is as simple as appending or splitting arrays.
+    \item Minimal memory overhead, k-d trees can even be built in-place on the array.
 \end{itemize}
+
+Drawbacks:
+\begin{itemize}
+    \item Cannot represent imperfectly balanced k-d trees. This mens that the median cannot be calculated through heuristic methods, but enforces a tree optimized for fast queries.
+    \item Location of children and parents have to be recalculated for all basic traversing of the tree, with may reduce the performance of queries on the tree. In order to eliminate this drawback, a index cache is computed before the search is performed.
+\end{itemize}
+
+Given this representation of the kd-tree, the base kd-tree building algorithm can be expanded to the following:
+
+Steps:
+\begin{enumerate}
+    \item Find the exact median (of the current split dimension) in this sub-array, and swap it to the midmost place.
+    \item Go through all elements in the list, and swap elements, such that all elements lower than the median is placed to the left, and all elements higher than the median is placed to the right.
+    \item Repeat for the new sub-arrays, until the entire tree is built.
+\end{enumerate}
+
+Results:
+
+The serial kd-tree build times was similar or better than the base algorithm, so it is not discussed here
 
 \begin{figure}[ht!]
 \centering
-\includegraphics[width=120mm]{../gfx/BitonicVSreduce.png}
+\includegraphics[width=120mm]{../gfx/awg-query-time-old-vs-new.png}
 
-\caption{Comparison between bitonic and reduce (k=10).}
-\label{fig:bitonic_vs_reduce}
+\caption{Awg query time old vs new}
+\label{fig:awg_query_time_old_vs_new}
 \end{figure}
 
-Possible improvements:
+The graph shows that our serial implementation of search in this data structure, given a pre-calculated index cache, is as fast, or slightly faster than the base algorithm. The possibility of improving the search even more, by storing all calculated distances in a distance cache was also explored, but we can see from the graph that the overhead associated with this operation did outweigh the benefits.
 
-\begin{itemize}
-    \item Memory improvements. Use shared memory and texture memory.
-    \item Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log2(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
-    \item Replace bitonic sort with min reduce. O(k*log2(n)).
-\end{itemize}
+Some instability is apparent in the graph, but this is probably due to the author running other programs in the background when performing the test.
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=120mm]{../gfx/n-query-time-old-vs-new.png}
+
+\caption{n query time old vs new}
+\label{fig:n_query_time_old_vs_new}
+\end{figure}
+
+The trend is exaggerated when considering N searches. Searching with an index cache is overall fastest, and gives a total search time of ~17 s for 14 million searches in a point cloud of 14 million.
+
+
+% subsection testing_a_serial_k_d_tree_based_knn_solver (end)
+
+
+
+
+% \subsection{The serial base algorithm} % (fold)
+% \label{ssub:the_serial_base_algorithm}
+
+% \begin{enumerate}
+%     \item Build a balanced k-d tree from the point cloud.
+%     \item Query the tree for different sets of neighbors.
+% \end{enumerate}
+
+% Time complexity:
+
+% Steps:
+% \begin{enumerate}
+%     \item O(n log2 n). Achieving this speed is dependent on an efficient algorithm for finding the meridian.
+%     \item Approximately O(log2 n), but dependent on size of k.
+% \end{enumerate}
+
+
+% \section{Development of a parallel kd-tree build algorithm} % (fold)
+% \label{sub:development_of_a_parallel_kd_tree_build_algorithm}
+% \input{development_of_a_parallel_kd_tree_build_algorithm.tex}
+% % section development_of_a_parallel_kd_tree_build_algorithm (end)
+
+% \section{Development of a parallel kd-tree search algorithm} % (fold)
+% \label{sub:development_of_a_parallel_kd_tree_search_algorithm}
+
+% \section{The quest for a fast KNN search} % (fold)
+% \label{sec:the_quest_for_a_fast_KNN_search}
+
+% Our initial investigation led us to believe that a serial implementation could be as fast as the parallel brute-force solution, for point clouds with fewer than 1 000 000 points, given that both algorithms start with an unordered set of points. Reimplementing the brute-force algorithm with bitonic sort, and optimizing for three dimensions, has shown us that this initial belief was unsupported, and currently the brute force algorithm is faster when starting from a unorganized set of points. When considering repeated querying of the same point cloud, the k-d tree based solution pulls ahead, as most of its running time is spent building the k-d tree for querying. If building the k-d tree could be parallelized this could change. although documented in literature, such an parallelization is still elusive.
+
+% In order to make the document more readable, we have included short descriptions of the algorithms used, a short reference to theoretical time complexity. We then go on to list our current results, problematic areas and possible improvements.
+
+% The following papers, available in the resources folder, forms the literary basis for our current work.
+
+% Related to the brute force approach:
+% \begin{itemize}
+%     \item Improving the k-Nearest Neighbor Algorithm with CUDA - Graham Nolan
+%     \item Fast k Nearest Neighbor Search using GPU - Garcia et al.
+%     \item K-nearest neighbor search: fast gpu-based implementations and application to high-dimensional feature matching - Garcia et al.
+% \end{itemize}
+
+% Related to the k-d tree based approach:
+% \begin{itemize}
+%     \item Real-Time KD-Tree Construction on Graphics Hardware - Kun Zhou et al.
+% \end{itemize}
+
+
+% \section{Brute force based effort} % (fold)
+% \label{sub:brute_force_based_effort}
+
+% \subsection{Garcia's base algorithm} % (fold)
+% \label{ssub:garcias_base_algorithme}
+
+% Garcia's algorithm is based on a naive brute-force approach. It consists if two steps:
+% \begin{enumerate}
+%     \item Calculate the distance between all reference points and query points.
+%     \item Sort the distances and pick the k smallest distances.
+% \end{enumerate}
+
+% Garcias implementation supports any number of dimensions, reference points and query points (or up to ~65000, number of blocks in the GPU). Due to this feature the algorithm use a lot of extra computation power when only one query point and a small dimensions is selected.
+
+% Time complexity:
+
+% Steps:
+
+% \begin{enumerate}
+%     \item O(n). Every reference point must be evaluated once. Since all calculations are independent, we have a large potential for parallelizing.
+%     \item Insertion sort: O(pow(n, 2)).
+% \end{enumerate}
+% % subsection garcias_base_algorithme (end)
+
+% \subsection{Our reimplementation} % (fold)
+% \label{ssub:our_reimplementation_2}
+
+% Bitonic-sort:
+
+% Graham Nolan discusses the possibility of improving Garcia's algorithm by reimplementing step two with a bitonic sort. His source code has not been available to us, but he states that the run-time improvements was significant. As well as choosing bitonic sort for the sorting stage of our algorithm, our implementation supports up to 15 000 000 points before memory errors occur, and we have limited the number of dimensions to three.
+
+% Time complexity:
+
+% Steps:
+% \begin{enumerate}
+%     \item O(n).
+%     \item Bitonic sort: worst case = O(n * log2(n)), average time ( parallel) = O(log2(n)).
+% \end{enumerate}
+
+% Results:
+
+% Testing the different algorithms for a range of point cloud sizes and a fixed value for k, gave the following results.
+
+% \begin{figure}[ht!]
+% \centering
+% \includegraphics[width=120mm]{../gfx/knn-brute-force-vs-serial-k-d-tree.png}
+
+% \caption{knn-brute-force-vs-serial-k-d-tree.png}
+% \label{fig:knn_brute_force_vs_serial_k_d_tree}
+% \end{figure}
+
+% We see that our reimplementation of the brute-force algorithm performs well overall, notably improving on Garcia's implementation (only visible as a short line in the beginning of the graph, due to the restricted number of points it is able to compute). Still more speed is desired before good interactive usage can be achieved.
+
+% Test with n = 8 388 608:
+
+% \begin{itemize}
+%     \item Memory transfer 21.1 ms
+%     \item Calculate all distances 2.5 ms
+%     \item Bitonic sort 176 ms
+%     \item Total 200 ms
+% \end{itemize}
+
+% Min-Reduce:
+
+% An other possibility to improve step 2 is to use a reduce operation to get the smallest distances. This can be done k times to get the k smallest values.
+
+% Time complexity:
+
+% Steps:
+
+% \begin{enumerate}
+%     \item O(n).
+%     \item Min-reduce: k* log2(n)).
+% \end{enumerate}
+
+% Memory optimalisation:
+
+% We have done some memory optimization based on a
+% %[presentation](https://github.com/hgranlund/tsi-gpgpu/blob/master/resources/kNN/reduction.pdf)
+% from Nvidia.
+
+% The optimizations include:
+
+% \begin{itemize}
+%     \item Shared memory utilization.
+%     \item Sequential Addressing.
+%     \item Complete for-loop Unrolling.
+% \end{itemize}
+
+% \begin{figure}[ht!]
+% \centering
+% \includegraphics[width=120mm]{../gfx/knn-brute-force-reduce-memory-opt.png}
+
+% \caption{Comparison between knn-brute-force-reduce with and without memory optimizations (k=10).}
+% \label{fig:knn_brute_force_reduce_memory_opt}
+% \end{figure}
+
+% Results:
+
+% Test results of n = 8 388 608 with no memory optimization:
+% \begin{itemize}
+%     \item Memory transfer:  21.1 ms.
+%     \item Calculate all distances: 2.5 ms
+%     \item One min-reduce step : 4.8 ms.
+%     \item Total time: (23.7 + k*4.8) ms.
+% \end{itemize}
+
+% Test results of n = 8 388 608 with memory optimization:
+% \begin{itemize}
+%     \item Memory transfer:  21.1 ms.
+%     \item Calculate all distances: 2.5 ms
+%     \item One min-reduce step : 1.7 ms.
+%     \item Total time: (23.7 + k*1.7) ms.
+% \end{itemize}
+
+% \begin{figure}[ht!]
+% \centering
+% \includegraphics[width=120mm]{../gfx/BitonicVSreduce.png}
+
+% \caption{Comparison between bitonic and reduce (k=10).}
+% \label{fig:bitonic_vs_reduce}
+% \end{figure}
+
+% Possible improvements:
+
+% \begin{itemize}
+%     \item Memory improvements. Use shared memory and texture memory.
+%     \item Modify bitonic sort, so do not need to sort all points. We can split the distance array to fit into the GPU blocks, move the smallest values in each block, then sort the moved values. ~O((n/b)* b*log2(b)) subsetof O(n/b), b = Number of threads in each block, n= number of reference points
+%     \item Replace bitonic sort with min reduce. O(k*log2(n)).
+% \end{itemize}
 % subsection our_reimplementation (end)
 % section brute_force_based_effort (end)
 
