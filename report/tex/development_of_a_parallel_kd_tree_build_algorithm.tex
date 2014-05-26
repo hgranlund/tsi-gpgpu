@@ -11,7 +11,7 @@ One could think, why not use the serial build algorithm and parallelize it. This
 In order to investigate RQ~\ref{rq:parallel_build}, we have to look a bit closer at the different steps of the k-d tree build algorithm and look at different parallelization strategies.
 
 
-\subsubsection{From a recursive to a iterative implementation} % (fold)
+\subsection{From a recursive to a iterative implementation} % (fold)
 \label{ssub:from_recursive_to_iterative_implementation}
 
 
@@ -48,10 +48,10 @@ The k-d tree construction basically boils down to successively balance each node
 
 The solution is not as easy as shown in Algorithm~\ref{alg:iterativ_tree_build}, one key element is omitted. It is what the call stack was hiding in the recursive implementation, namely the partition of each subtree in a given tree level. This can be solved by keeping a partition array, that keep track of each sublist. The partition array then have to be incremented at each level.
 
-% subsubsection from_recursive_to_iterative_implementation (end)
+% subsection from_recursive_to_iterative_implementation (end)
 
 
-\subsubsection{Parallelization strategy} % (fold)
+\subsection{Parallelization strategy} % (fold)
 \label{ssub:parallelization_strategy}
 
 
@@ -67,7 +67,7 @@ From these observations, several strategies can be used to parallelize the k-d t
 Both strategies can be used in conjunction with each other. The parallel balance node task algorithm can be used to speed up the early iterations, where the amount of nodes in a tree level is small. As well as further parallelize the subtasks in later tree level iterations. This strategy also fit well to our choice of tree representation. One parallel operation can now take the tree representation, split it into subtrees, and balance each subtree. Everything can also be done in place, so the algorithm is as memory efficient as possible.
 
 
-% subsubsection parallelization_strategy (end)
+% subsection parallelization_strategy (end)
 
 
 \begin{figure}[ht!]
@@ -91,26 +91,17 @@ Our parallelization strategy stats that we have to balance one tree level after 
 
 The next step is how to split the tree level balance between the CUDA resources. As we observed in Section~\ref{ssub:parallelization_strategy}, the number of node in a tree level increases with the power of two as we go down the tree. The size of each balance process also decreased with a factor of two. From Fig~\ref{fig:tree_level_development} we see that a tree with $n$ elements, the task completely changes throughout the build process. First  only one node needs to be balanced, e.i only one parallel operation. At the end there are n different nodes to work on. The problem size also changes. At the top the problem size per node is $n$ and it goes towards $1$ as we increase the tree level.
 
-
 This varying problem sizes and subtasks, makes it hard to create a good work distribution between the CUDA resources. At the top part of the tree it is optimal to use many blocks to balance a node, but at the end it is desirable to balance many nodes inside every block. We choose a middle ground, to balance one node in one block. This means that there should be an overall good performance with a pick at the middle three levels.
 
 
-This means that we can parallelize each node balance in a block with up to 1024 theoretical threads.
-
-
-
-
-
-% subsubsection divide_work_on_cuda (end)
-
-
+% subsection divide_work_on_cuda (end)
 
 % TODO: Header must be improved
-\subsubsection{Parallelizing balance node} % (fold)
+\subsection{Parallelization of balance subtree} % (fold)
 \label{ssub:selecting_a_algorithm}
 
 
-Now that the overall parallelization is created, we can start investigate the node balance operation. We have already determent that the parallelization should be done in one block, which means that one operation is done per SM\@. In other words, the task can potentially be parallelized between 1024 theoretical threads. Lets start investigating different approaches.
+Now that the overall parallelization strategy is created, we can start investigate the main operation and time consuming operation. This is the process of balancing a subtree. We have already determent that the parallelization should be done in one block, which means that one operation is done per SM\@. In other words, the task can potentially be parallelized between 1024 theoretical threads. Lets start investigating different approaches.
 
 The main operation is to find a median. As we have seen in Section~\ref{sub:application_of_kd_trees_to_the_knn_problem}, many algorithms for finding median exist. Since we now want to implement the algorithm with CUDA, the environment has changed, and quick select may not be the best alternative anymore. The first problem with quick select is that it is recursive, which makes it hard to parallelize on CUDA\@. Therefor it may be profitable to look at other, more parallelization friendly, algorithms.
 
@@ -124,7 +115,7 @@ The existing linear algorithms for finding the median is mostly based on a more 
 \subsubsection{Radix select} % (fold)
 \label{ssub:radix_select}
 
-% subsubsection radix_select (end)
+% subsection radix_select (end)
 
 The radix select is based on a bitwise partitioning, much like radix sort~\cite[Chapter 8.3]{Cormen:2001}. In each step, elements are partitioned in two subgroups based on the current bit. Then the subgroup that contains the median is determined, and the search continue in that subgroup until the median is found.
 
@@ -180,7 +171,6 @@ Lets take a deeper look into Algorithm~\ref{alg:parallel_balance_subtree}.
 \end{algorithm}
 
 
-
 - Pseudocode
 - forklarting av cuda
 - diskutere minnebruk. shared memory
@@ -189,76 +179,25 @@ Lets take a deeper look into Algorithm~\ref{alg:parallel_balance_subtree}.
 
 
 
-% subsubsection our_implementation (end)
+% subsection our_implementation (end)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Tenkte denne kunne passe bra hos deg når man skal begynne å snakke om paralellisering av søket:-)
 % Denne seksjonen regner jeg med trenger en liten intro som binder den sammen med CUDA og hvorfor man ikke kan bruke rekursive funksjoner der.
 
-We can rewrite algorithm \ref{alg:recursive_knn_kd_tree_search} into a iterative algorithm by using a stack. Algorithm \ref{alg:iterative_knn_kd_tree_search} shows how this can be done.
-
-\begin{algorithm}
-\caption{Iterative kNN k-d tree search}
-\label{alg:iterative_knn_kd_tree_search}
-\begin{algorithmic}
-    \Procedure{Iterative-kNN-KD-Tree}{$K, r, q$}
-        \State \text{Let $S$ be a stack for collecting tree nodes}
-
-        \State $i \gets 2$
-
-        \While{$!S.empty$ \textbf{or} $r$ != NIL}
-            \If{$r$ = NIL}
-                \State $r \gets S.pop$
-                \State $i \gets r.dimension$
-
-                \If{$r.dx^2 < K.max$} \Comment{Can there be closer points in the other subtree?}
-                    \State $r \gets r.other$
-                \Else
-                    \State $r \gets \text{NIL}$
-                \EndIf
-            \Else
-                \State $d \gets \text{Distance}(r, q)$
-
-                \If{$d < K.max$} \Comment{Is $r$ closer to $q$ than the current k best points?}
-                    \State $r.distance \gets d$
-                    \State \text{Insert}($K, r$)
-                \EndIf
-
-                \State $i \gets (i + 1) \bmod k$ \Comment{k = 3 for a three dimensional k-d tree}
-
-                \State $r.dimention \gets i$
-                \State $r.dx \gets r.x[i] - q.x[i]$
-
-                \If{$r.dx > 0$}  \Comment{Select $t$ and $o$ so we traverse towards closest point first}
-                    \State $t \gets r.left$, $r.other \gets r.right$
-                \Else
-                    \State $t \gets r.right$, $r.other \gets r.left$
-                \EndIf
-
-                \State \text{Push}($S, r$)
-                \State $r \gets t$
-            \EndIf
-
-        \EndWhile
-    \EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-The algorithm works in the same way as the recursive algorithm, but adds a stack, $S$, called the s-stack, and a while loop in order to handle the tree traversal iteratively. While there is a element assigned to the root variable, $r$, the algorithm will traverse down the target branch, updating the dimension, $i$, calculating the distance, $dx$, determining the target, $t$, and other, $o$, child node. then it will collect $r$, $o$, $i$ and $dx$ into one element, and push it on the s-stack. Finally the root variable is assigned to the target child, or NIL if we have reached the end of a branch.
-
-While there still is elements in the s-stack, but $r$ is assigned to NIL, we are traversing back up a branch. While this is happening, the algorithm pops elements from the s-stack, determines if they should be added to the k-heap, before it determines if it need to investigate the other branch of this node. If that is the case, the other node is assigned to $r$, and the algorithm will traverse down this subtree using the previously stated rules.
 
 
-\subsubsection{Results} % (fold)
+
+\subsection{Results} % (fold)
 \label{ssub:results}
 
-% subsubsection results (end)
+% subsection results (end)
 
 
-\subsubsection{Solution} % (fold)
+\subsection{Solution} % (fold)
 \label{ssub:solution}
 
-% subsubsection solution (end)
+% subsection solution (end)
 
 % It is hard to use all the parallel power of cuda in this algorithm. The reason is that the problem is divided in three different types; partition one huge list, partition some middle sized list and partition many small lists. This is the reason why we have chosen to use three different implementation of k'th order statistic. The constant time penalties of the two algorithms we have chosen give us a clear indication the radix select is best on large lists while quick select is best on small lists.
 
@@ -277,7 +216,7 @@ While there still is elements in the s-stack, but $r$ is assigned to NIL, we are
 
 % Tuning the algorithm to alternate between radix select and quick select, eliminates this problem, as is visible in the graph for GPU v1.1. This removes the penalty for calculating the median at unsuitable problem sizes, giving an build time of ~2.4 seconds for 14 million points, compared to the ~9 seconds required by the serial implementation, or the ~5.2 seconds required by the old parallel implementation.
 
-% % subsubsection selecting_a_algorithm (end)
+% % subsection selecting_a_algorithm (end)
 % Memory usage:
 
 % To analyses the space complexity of the k-d tree build and search algorithm, we have made an theoretical calculation of both algorithms GPU memory consumption, and tested it against results from a GeForce 560ti and a Nvidia grid K520 (amazon web service delved).
