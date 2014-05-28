@@ -137,10 +137,10 @@ Our radix select is a slightly modified version in three ways. We want to solve 
 \label{ssub:our_implementation}
 
 
-Our implementation is based around three different operations that call each other. First we launch a CUDA kernel for each tree level, then the kernel partition the subtrees into different blocks, and the subtree gets balanced. The two first operations is just a partitioning and dividing of resources, as we have talked about in the previous sections. The interesting and time consuming operation is the last one, Algorithm~\ref{alg:parallel_balance_subtree}, the balance subtree operation.
+Our implementation is based around three different operations that call each other. First we launch a CUDA kernel for each tree level, then the kernel partition the subtrees into different blocks, and the subtree gets balanced. The two first operations is just a partitioning and dividing of resources, as we have talked about in the previous sections. The complete implementation can be found in Appendix~\ref{sec:paralell_k_d_tree_build}. The interesting and time consuming operation is to balance a subtree and is what to be addressed in this section.
 
 
-Lets take a deeper look into Algorithm~\ref{alg:parallel_balance_subtree}. The code only runs inside a block, which means we have a uniform context with synchronizable threads. The algorithm is based around a repeat-until loop, which basically do a radix select. The loop keeps track of a partition array. This array is then sliced in to by giving each thread a portion of the array, then each thread counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation \citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is iterated or when the partition size is one. The last step partitions the array, such that the median is in the center with lesser elements on the left and bigger on the right.
+Lets take a deeper look into the Algorithm~\ref{alg:parallel_balance_subtree}, that describes the main implementation details in the balance subtree operation. The algorithm only runs inside a block, which means we have a uniform environment with synchronizable threads. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation \citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
 
 \begin{algorithm}[h]
 \caption{Parallel balance of a subtree}
@@ -174,7 +174,7 @@ Some key elements, in regard of CUDA\@, is wort highlighting. In CUDA thread ins
 
 An other aspect of CUDA is the memory hierarchy. One should always use the fastest and most subtable memory. In our case, this include the shared memory, which is a fast memory shared between all threads in a block. The downside is the memory size, it may not be enough space to store our subtree. Although we may not be able to store the hole subtree, there are some date we can put in the shared memory. The zero counter array, shown as $Z(t)$ in Algorithm~\ref{alg:parallel_balance_subtree}, is a perfect candidate. Every thread only use one integer and it is shared between all threads throughout the execution. It will therefore cause a big impoverishment.
 
-
+The  complete algorithm can be found in Appendix~\ref{sec:multiple_radix_select}.
 
 
 
@@ -191,24 +191,24 @@ An other aspect of CUDA is the memory hierarchy. One should always use the faste
 \label{ssub:further_development}
 
 
-Now that a parallel implementation of the k-d three is ready, lets take a step back and look at our RQ~\ref{rq:parallel_build}. The possibility of parallelization the build algorithm is already achieved, but does it give a respectable speedup from the CPU version. Is it possible to improve the results even further? The best way to investigate this questions is to set up a test, analyze the results and find weaknesses to improve.
+Now that a parallel implementation of the k-d three is ready, lets take a step back and look at our RQ~\ref{rq:parallel_build}. The possibility of parallelizing the build algorithm is achieved, but it is possible to increase the speedup. Are there weaknesses in the code that needs improvement? The best way to investigate these questions is to set up a test, analyze the results.
 
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=100mm]{../gfx/the_jumps.png}
 
-\caption{Timing results for k-d tree build algorithm. (GPU v1.0 vs CPU)}
+\caption{Timing results from a intermediate version of the parallel k-d tree build algorithm.}
 \label{fig:gpuv1_vs_cpu}
 \end{figure}
 
 
-With the test setup as described in Section~\ref{sec:test_environment}, the current version of the algorithm gave results as shown in Figure~\ref{fig:gpuv1_vs_cpu}. The most interesting observation are the big jumps. If one look closely these jumps happens every time the problem size exceeds a power of two, as for example when the size passes 8388608 the timing increases from $2703 ms$ to $4335 ms$. To inveterate this characteristic even further, Table~\ref{tbl:nvprc_balance_branch}, was created. It shows how long time each tree level takes, and how the different tree levels vary throughout the build process.
+With the test setup as described in Section~\ref{sec:test_environment}, the current version of the algorithm gave results as shown in Figure~\ref{fig:gpuv1_vs_cpu}. The most interesting observation are the big jumps in the graph. If one look closely these jumps happens every time the problem size exceeds a power of two, as for example when the size passes $8388608$ the timing increases from $2703 ms$ to $4335 ms$. To inveterate this characteristic even further, Table~\ref{tbl:nvprc_balance_branch}, can be used. It shows how long time each tree level takes, and how the different tree level operations varies throughout the build process.
 
-\begin{table}[c]
+\begin{table}[ht]
 \centering
     \begin{tabular}{|l|l|l|l|}
         \hline
-        \textbf{Tree level} & \textbf{Time [ms]} & \textbf{Number of subtrees} & \textbf{Length of subtree}\\ \hline
+        \textbf{Tree level} & \textbf{Time [ms]} & \textbf{Subtrees} & \textbf{Size}\\ \hline
         1          & 52       & 1                  & 1000000      \\ \hline
         2          & 26       & 2                  & 500000       \\ \hline
         3          & 13       & 4                  & 250000       \\ \hline
@@ -229,23 +229,23 @@ With the test setup as described in Section~\ref{sec:test_environment}, the curr
         18         & 389      & 131072             & 7            \\ \hline
         19         & 768      & 262144             & 3            \\ \hline
     \end{tabular}
-    \caption{Development of a k-d tree build with a million points.}
+    \caption{Development of a k-d tree build with a million points, showing how the different tree level operations varies throughout the build process.}
     \label{tbl:nvprc_balance_branch}
 \end{table}
 
-The table shows the weakness of out algorithm, namely how we choose to divide the CUDA resources in Section~\ref{ssub:divide_work_on_cuda}. It performs badly when the problem size or the number of subtrees is huge. The potential for parallelizing the workload for the first and last iterations is not being fully utilized. This is due to the implementation forcing one version of the radix select algorithm to work on all problem sizes. This is not optimal for dividing CUDA resources, and as a result, we get high penalties when the problem size reaches unsuitable values.
+The table reviles some weaknesses of our algorithm, that is based around how the CUDA resources was divided in Section~\ref{ssub:divide_work_on_cuda}. It performs badly when the problem size or the number of subtrees is relatively huge. The potential for parallelizing the workload for the first and last iterations is not being fully utilized. This is due to the implementation forcing one version of the radix select algorithm to work on all problem types. This is not optimal for dividing CUDA resources, and as a result, we get high penalties when the problem reaches unsuitable values.
 
-This can also explain the big jumps around sizes with values of a power of two. The observation correlates perfectly with the tree hight, since the hight of a binary tree is the binary logarithm of the tree size. The jump happens when the tree hight is increased. This increase hits our implementation at it's weakest.
+This can also explain the big jumps. The observation correlates perfectly with the tree hight, since the hight of a binary tree is the binary logarithm of the tree size. It implies that the jumps happens when the tree hight is increased and a new tree level needs to be balanced. This increase hits our implementation at it's weakest.
 
 Tuning the algorithm to alternate between different algorithms to balance a subtree, eliminates this problem. This removes the penalty for calculating the median at unsuitable problem sizes. As the are two unstable situation, two different improvements are needed.
 
-Firstly the tree levels with few subtrees and many elements is addressed. Our current implementation only used one block, which means we are only able to use one SM to balance the subtree. This can be solved by creating a new version that uses all blocks at a time. Big subtrees should then be processed fast, but since all blocks are used only one subtree can be balanced at a time.
+Firstly the tree levels with few subtrees and many elements is addressed. Our current implementation only used one block per subtree, which means we are only able to use one SM to balance the subtree. This can be solved by creating a new version that uses all blocks at a time. Big subtrees should then be processed fast, but we get a drawback. Since all blocks are used to balance one subtree, only one subtree can be balanced at a time.
 
 The deep and specific implementation detail will not be fully discussed, but can be found in Appendix~\ref{sec:radix_select}. The overall strategy is pretty similar to the other radix select implementation, except that the thread synchronization has to be done between kernel launches. In an implementation point of view this means that half the code must be implemented on the CPU and the other half on the GPU\@.
 
-The other improvement is to address the other weakness that we found, namely the instance where there are many small subtrees. It we look at our current test,  Table~\ref{tbl:nvprc_balance_branch}, the problems in hand is in the  bottom section. At level $18$ there are for example $131072$ different subtask with only a median size if $7$. The previous implementation divided all these subtask between typically $8-32$ available SM on a GPU\@. Then the algorithm have uses to many cores to balance a subtree of only $7$ elements.
+The other improvement is to address the other weakness, namely the instance where there are many small subtrees. If one look at the current test results,  Table~\ref{tbl:nvprc_balance_branch}, the problems in hand is in the bottom section. For instance, at level $18$ there are $131072$ different subtask with only an average size of $7$. The previous implementation divided all these subtask between a small number of SM, typically $8-32$ on current NVIDIA GPUs\@. Then the algorithm uses to many cores to balance a subtree of only $7$ elements, which is an extreme bad way of dividing resources.
 
-The solution is to let one thread handle one subproblem. That way the CUDA resources is divided in a more suitable manner. This way each thread is responsible for it's own subtree and the need to communicate to other threads is no longer needed. The reasons for not using our serial implementation, Algorithm~\ref{alg:seriel_tree_build}, is therefore gone. Only some minor details, subtask dividing and data splitting is needed, as the implementation in Appendix~\ref{sec:parallel_quick_select} shows.
+The solution is to let one thread handle a subtree. That way the CUDA resources is divided in a more suitable manner. This way each thread is responsible for it's own subtree and the need to communicate between other threads is no longer needed. The reasons for not using our serial implementation, Algorithm~\ref{alg:seriel_tree_build}, is therefore gone and we can therefore use it in our parallelization. Only some minor details, subtask dividing and data splitting is needed, as the implementation in Appendix~\ref{sec:parallel_quick_select} shows.
 
 
 
