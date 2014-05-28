@@ -143,7 +143,7 @@ Our implementation is based around three different operations that call each oth
 Lets take a deeper look into the Algorithm~\ref{alg:parallel_balance_subtree}, that describes the main implementation details in the balance subtree operation. The algorithm only runs inside a block, which means we have a uniform environment with synchronizable threads. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation \citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
 
 \begin{algorithm}[h]
-\caption{Parallel balance of a subtree}
+\caption{Parallel subtree balance}
 \label{alg:parallel_balance_subtree}
 \begin{algorithmic}
     \Require{A subtree $S$ of length $n$, and dimension $d$}
@@ -181,9 +181,6 @@ The  complete algorithm can be found in Appendix~\ref{sec:multiple_radix_select}
 % subsection our_implementation (end)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Tenkte denne kunne passe bra hos deg når man skal begynne å snakke om paralellisering av søket:-)
-% Denne seksjonen regner jeg med trenger en liten intro som binder den sammen med CUDA og hvorfor man ikke kan bruke rekursive funksjoner der.
-
 
 
 
