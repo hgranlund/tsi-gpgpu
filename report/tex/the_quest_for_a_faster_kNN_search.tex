@@ -17,9 +17,9 @@
 
 
 \section{Application of k-d trees to the kNN problem} % (fold)
-\label{sub:application_of_kd_trees_to_the_knn_problem} 
+\label{sub:application_of_kd_trees_to_the_knn_problem}
 
-A common strategy when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure especially suited for fast querying. This strategy trades the additional time required building an data structure for increased performance on each query. In section \ref{sub:investigation_of_a_brute_force_approach_based_on_garcia} we developed an optimized parallel brute force algorithm for performing kNN queries on a large point cloud. In this section we will investigate the possibility of improving on the brute force algorithm by using the k-d tree data structure.
+A common strategy when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure especially suited for fast querying. This strategy trades the additional time required building an data structure for increased performance on each query. In Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia} we developed an optimized parallel brute force algorithm for performing kNN queries on a large point cloud. In this section we will investigate the possibility of improving on the brute force algorithm by using the k-d tree data structure.
 
 \begin{myrq}
 \label{rq:serial-kd-tree}
@@ -33,8 +33,8 @@ A brief argument for why k-d trees is well suited for kNN query operations is gi
 A large part of this thesis is devoted to applying k-d trees to the kNN problem. The reader might ask themselves why this is so. Other possible data structures exist which is optimized for querying in geometrical data. Why choose to investigate k-d trees in particular?
 
 Part of the explanation has to do with the scope and time resources available for the work in this thesis. Performing a full analysis and parallelization of every possible data structure, and their associated query algorithms, would just not be feasible within our time frame. That said, k-d trees is a very attractive data structure for our use case.
-A usual strategy, when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure especially suited for fast querying. When choosing this strategy, you are trading of the additional time penalty of building the data structure, for increased performance on each query, hopefully offsetting the build-time penalty. When considering the needs of TechnoSoft Inc, as described in Section~\ref{a_short_introduction_to_the_kNN_algorithm}, this strategy seems like a good fit.
-A usual strategy, when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure especially suited for fast querying. When choosing this strategy, you are trading of the additional time penalty of building the data structure, for increased performance on each query, hopefully offsetting the build-time penalty. When considering the needs of TechnoSoft Inc, as described in section \ref{a_short_introduction_to_the_kNN_algorithm}, this strategy seems like a good fit.
+
+\begin{itemize}
     \item k-d trees are easy to understand and implement, leaving more time to throughly investigate parallelization of the algorithms.
     \item k-d trees are a very minimal data structure, and balanced k-d trees are complete binary trees. This makes reducing the amount of additional memory required in addition to the 3-d points a relative simple task, something that is important, considering the memory bounds on GPUs, and the time penalty associated with moving data from system memory to GPU memory.
     \item k-d trees are well adapted to performing associative queries, where the query is for a point that is not equal to, but close to the query point.
@@ -55,7 +55,7 @@ Let us have a look at an example using data for two dimensions. Figure~\ref{fig:
 
 \begin{figure}[ht!]
     \centering
-    \includegraphics[width=100mm]{../gfx/kd_tree_illustration_graph.png}
+    \includegraphics[width=120mm]{../gfx/kd_tree_illustration_graph.png}
     \caption{A set of points on a plane, with a possible k-d tree indicated.}
     \label{fig:kd_tree_2d_plane}
 \end{figure}
@@ -63,15 +63,15 @@ Let us have a look at an example using data for two dimensions. Figure~\ref{fig:
 The corresponding k-d tree is shown in Figure~\ref{fig:kd_tree_2d}. Note that lower values in each level are placed in the left branches, and higher values are placed in the right branches.
 
 \begin{figure}[ht!]
-\centering
-\includegraphics[width=100mm]{../gfx/kd_tree_illustration_tree.png}
-\caption{Tree representation of the points in Figure~\ref{fig:kd_tree_2d_plane}.}
-\label{fig:kd_tree_2d}
+    \centering
+    \includegraphics[width=120mm]{../gfx/kd_tree_illustration_tree.png}
+    \caption{Tree representation of the points in Figure~\ref{fig:kd_tree_2d_plane}.}
+    \label{fig:kd_tree_2d}
 \end{figure}
 
 By extending this example with three fixed dimensions for the spatial dimensions, x, y, and z, we get a k-d tree suitable for storing point cloud data.
 
-It it possible to construct several algorithms for building k-d trees from a set of points, and one simple approach is using a recursive function. Algorithm~\ref{alg:seriel_tree_build} shows pseudocode for such a simple tree building algorithm. In the pseudocode, we have chosen to represent the different dimensions as a natural number. This means that x is represented by 0, y is represented by 1, z is represented by 2 and so on. Given a set of point, $P$, in $k$ space, and a initial split dimension $i$, it constructs a balanced k-d tree.
+It it possible to construct several algorithms for building k-d trees from a set of points, and one simple approach is using a recursive function. Algorithm \ref{alg:seriel_tree_build} shows pseudocode for such a simple tree building algorithm. In the pseudocode, we have chosen to represent the different dimensions as a natural number. This means that x is represented by 0, y is represented by 1, z is represented by 2 and so on. Given a set of point, $P$, in $k$ space, and a initial split dimension $i$, it constructs a balanced k-d tree.
 
 \begin{algorithm}
 \caption{Recursive k-d tree build}
@@ -98,15 +98,15 @@ It it possible to construct several algorithms for building k-d trees from a set
 
 Algorithm~\ref{alg:seriel_tree_build} starts by checking if there is any more points left in $P$. If not, it returns NIL as an end of branch marker. If there still is points left, the algorithm selects the median point, $m$, as the root node. Then it sorts all remaining points into a collection of points lower than the median, $L$, and higher than the median, $H$. The dimension, $i$, is incremented, and the Build-KD-Tree function is called recursively on both collections of points. Finally the root node is returned, so it can be assigned as the child of its parent node, or be used as a global root node.
 
-It is worth to note that the performance of this k-d tree build algorithm is sensitive to the choice of a median finding algorithm, since we will be querying for the median \BigO{n} times. Choosing to just sorting the collection $P$, and selecting the median from the middle of the sorted collection, will not give optimal results. Fortunately, several \BigO{n} median selecting algorithms exist\cite[Get chapter citation]{Cormen:2001}, quickselect, being the choice for our initial implementations. This gives a algorithm with a time complexity of \BigO{k*n*log(n)}\cite{Friedman:1977}.
+It is worth to note that the performance of this k-d tree build algorithm is sensitive to the choice of a median finding algorithm, since we will be querying for the median \BigO{n} times. Choosing to just sorting the collection $P$, and selecting the median from the middle of the sorted collection, will not give optimal results. Fortunately, several \BigO{n} median selecting algorithms exist\cite{Cormen:2001} (Get chapter citation), quickselect, being the choice for our initial implementations. This gives a algorithm with a time complexity of \BigO{k*n*log(n)}\cite{Friedman:1977}.
 
-A final note about algorithm \ref{alg:seriel_tree_build}, is that it does not handles points with duplicate values in one dimension. If the algorithm where to be feed with a point collection where all points had the same value for x, it would not be able to handle it, since such a point does not explicitly belong in $L$ or $H$. Several modifications can be made to handle this case. We can choose to place all conflicting median points, exept one, in either $L$ or $H$. The problem with this solution, is that we are not guaranteed to get a balance tree. If we where to have a set of points, where all points where tha same, we would get a tree at all, but just one long branch of length n. Another strategy is to try to place the conflicting medians, equally in $L$ and $H$. This way the median we select will be the midmost element in the point collection, retaining the balance in the finished k-d tree. Given that we consider that duplicate median points can be located in both subtrees of a node, this will not affect search operations on the tree, as we will see later.
+A final note about Algorithm~\ref{alg:seriel_tree_build}, is that it does not handles points with duplicate values in one dimension. If the algorithm where to be feed with a point collection where all points had the same value for x, it would not be able to handle it, since such a point does not explicitly belong in $L$ or $H$. Several modifications can be made to handle this case. We can choose to place all conflicting median points, exept one, in either $L$ or $H$. The problem with this solution, is that we are not guaranteed to get a balance tree. If we where to have a set of points, where all points where tha same, we would get a tree at all, but just one long branch of length n. Another strategy is to try to place the conflicting medians, equally in $L$ and $H$. This way the median we select will be the midmost element in the point collection, retaining the balance in the finished k-d tree. Given that we consider that duplicate median points can be located in both subtrees of a node, this will not affect search operations on the tree, as we will see later.
 % subsection building_k_d_trees_for_point_cloud_data (end)
 
 \subsection{Querying the k-d tree} % (fold)
 \label{sub:querying_the_k_d_tree}
 
-With a k-d tree we can perform efficient searches for the closest point to a given point in \BigO{n*log(n)} average time \cite{Friedman:1977}. By maintaining a collection of the k closest points during execution of the query, we can even perform kNN searches. An example of a kNN search algorithm is shown in listing \ref{alg:recursive_knn_kd_tree_search}.
+With a k-d tree we can perform efficient searches for the closest point to a given point in \BigO{n*log(n)} average time\cite{Friedman:1977}. By maintaining a collection of the k closest points during execution of the query, we can even perform kNN searches. An example of a kNN search algorithm is shown in Algorithm~\ref{alg:recursive_knn_kd_tree_search}.
 
 (Something about how searching works in the general sense?)
 
@@ -160,13 +160,13 @@ After recursively investigating the target subtree, we ask if our estimates in t
 
 In order to gain some real world insight into the performance characteristics of k-d tree building and querying, a serial implementation of the build and query algorithm was made. This implementation is available in Appendix X. These two implementations where then subjected to several tests, using test setup Y. All tests were performed on a set of randomly generated points 3-d points, with the number of points ranging from $10^5$ to $1.41*10^7$. The raw data from these tests are included in Appendix X. The result of these test are summed up in the following figures.
 
-Figure \ref{fig:serial-build} shows the timing results for the recursive k-d tree build algorithm.
+Figure~\ref{fig:serial-build} shows the timing results for the recursive k-d tree build algorithm.
 
 \begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/serial-build.png}
-\caption{Timing results for recursive k-d tree building}
-\label{fig:serial-build}
+    \centering
+    \includegraphics[width=120mm]{../gfx/serial-build.png}
+    \caption{Timing results for recursive k-d tree building}
+    \label{fig:serial-build}
 \end{figure}
 
 We observe that constructing a k-d tree for a large number of points is a costly operation. Given a tree of size $1.41^7$ the algorithm uses nearly $9$ seconds to construct the tree. We also note that the timing results seem to scale linearly in relation to the number of points. This relates nicely to calculated time complexity of the algorithm.
@@ -174,15 +174,15 @@ We observe that constructing a k-d tree for a large number of points is a costly
 Figure \ref{fig:serial-query} shows the timing results for querying a k-d tree of a given size. The k-d tree is queried for one point with $k=1$. Since we are interested in investigating the average performance, $10^5$ consecutive queries was timed, and the average value for one query was calculated.
 
 \begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/serial-query.png}
-\caption{Timing results for mean query time with k equal to one}
-\label{fig:serial-query}
+    \centering
+    \includegraphics[width=120mm]{../gfx/serial-query.png}
+    \caption{Timing results for mean query time with k equal to one}
+    \label{fig:serial-query}
 \end{figure}
 
 We see that querying the k-d tree is very fast on average. Querying for one point in a tree of size $1.41^7$ takes about $0.0014$ milliseconds. It has to be taken into account though, that a query with $k=1$ will give the best query time, since the time complexity of the query algorithm scales with k. Still, for queries with a low $k$, we should expect good performance. The graph also seems to scale with the logarithm of the number of points, as expected by the time complexity calculation.
 
-In order to try to answer RQ \ref{rq:serial-kd-tree}, we compare the timing results gained from the fastest brute force algorithm developed in section \ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}. Figure \ref{fig:brute-force-vs-serial-build-query} compare the average time required for building a k-d tree of a given size, and performing a single $k=1$ query, to the time required to compute the same result with the fastest brute force algorithm obtained in section \ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}.
+In order to try to answer RQ~\ref{rq:serial-kd-tree}, we compare the timing results gained from the fastest brute force algorithm developed in Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}. Figure~\ref{fig:brute-force-vs-serial-build-query} compare the average time required for building a k-d tree of a given size, and performing a single $k=1$ query, to the time required to compute the same result with the fastest brute force algorithm obtained in Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}.
 
 \begin{figure}[ht!]
 \centering
@@ -193,13 +193,13 @@ In order to try to answer RQ \ref{rq:serial-kd-tree}, we compare the timing resu
 
 In this comparison, the k-d tree based algorithm does not seem like a good option. When performing just one query, the additional time required to build the k-d tree heavily outweighs the benefit of the improved query time, compared to the brute force solution. This result is to be expected, since we are not really utilizing the benefit of the k-d tree, but it is still an important point that a brute force algorithm can be very efficient for certain use-cases.
 
-Let us finally look at some results more closely related to the use-case given by TSI. Figure \ref{fig:brute-force-vs-serial-build-n-queries} does the same comparison as figure \ref{fig:brute-force-vs-serial-build-query}, but instead of comparing the time taken to perform one query, $n$ repeated queries are performed, with $n$ being the size of the k-d tree.
+Let us finally look at some results more closely related to the use-case given by TSI\@. Figure~\ref{fig:brute-force-vs-serial-build-n-queries} does the same comparison as Figure~\ref{fig:brute-force-vs-serial-build-query}, but instead of comparing the time taken to perform one query, $n$ repeated queries are performed, with $n$ being the size of the k-d tree.
 
 \begin{figure}[ht!]
-\centering
-\includegraphics[width=120mm]{../gfx/brute-force-vs-serial-build-n-queries.png}
-\caption{Comparison of timing of n queries with k equal to one with fast brute force and recursive k-d tree based algorithms}
-\label{fig:brute-force-vs-serial-build-n-queries}
+    \centering
+    \includegraphics[width=120mm]{../gfx/brute-force-vs-serial-build-n-queries.png}
+    \caption{Comparison of timing of n queries with k equal to one with fast brute force and recursive k-d tree based algorithms}
+    \label{fig:brute-force-vs-serial-build-n-queries}
 \end{figure}
 
 We observe that in this use-case, the k-d tree based approach have much better results than the brute force based approach. Now the k-d tree only have to be built once, but we benefit from the decreased query time in all $n$ queries. Performing $n$ queries on a point cloud of size $1.41^7$ with the brute force based algorithm takes about $9.7*10^5$ seconds, or about 11 days. With the recursive k-d based algorithm, the same operation can be calculated in just over a minute. Considering the needs of TSI, it seem that this approach is worth developing further into an parallel algorithm.
@@ -229,16 +229,14 @@ In the next sections we will address these challenges, along with others, and de
 
 % section development_of_a_parallel_k_d_search_algorithm (end)
 
-\subsection{Cuda Optimizations}
+\section*{Cuda Optimizations}
 
 \begin{enumerate}
-\item 32 threads in a warp, occupasity,
-%see http://docs.nvidia.com/cuda/cuda-c-best-practices-guide/#occupancy
-\item Aritmetic optimalisation
+\item 32 threads in a warp
 \item Number of threads and blocks. Calaculate on each lounch
 \item divergence
 \item memory placement
-\item unrolling.
+\item
 \end{enumerate}
 
 \cleardoublepage
