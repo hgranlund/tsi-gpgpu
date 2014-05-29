@@ -137,12 +137,14 @@ Our radix select is a slightly modified version in three ways. We want to solve 
 \label{ssub:our_implementation}
 
 
+ % TODO: ta med bigO calculasjon på hele algorithmen.? eller skal vi ha det  i result delen?
+
 Our implementation is based around three different operations that call each other. First we launch a CUDA kernel for each tree level, then the kernel partition the subtrees into different blocks, and the subtree gets balanced. The two first operations is just a partitioning and dividing of resources, as we have talked about in the previous sections. The complete implementation can be found in Appendix~\ref{sec:paralell_k_d_tree_build}. The interesting and time consuming operation is to balance a subtree and is what to be addressed in this section.
 
 
 Lets take a deeper look into the Algorithm~\ref{alg:parallel_balance_subtree}, that describes the main implementation details in the balance subtree operation. The algorithm only runs inside a block, which means we have a uniform environment with synchronizable threads. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation \citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
 
-\begin{algorithm}[h]
+\begin{algorithm}[ht]
 \caption{Parallel subtree balance}
 \label{alg:parallel_balance_subtree}
 \begin{algorithmic}
