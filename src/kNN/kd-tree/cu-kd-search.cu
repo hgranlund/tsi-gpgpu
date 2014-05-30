@@ -218,12 +218,13 @@ void populateTrivialResult(int n_qp, int k, int n_tree, int *result)
     }
 }
 
-__global__
-void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, struct KPoint *k_stack_ptr, struct SPoint *s_stack_ptr)
+template<int stack_size> __global__
+void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tree, int k, struct KPoint *k_stack_ptr)
 {
 
+    SPoint stack[stack_size];
+
     int tid = threadIdx.x,
-        stack_size = getSStackSize(n_tree),
         block_step,
         block_offset;
 
@@ -231,12 +232,10 @@ void dQueryAll(struct Point *query_points, struct Node *tree, int n_qp, int n_tr
 
     query_points += block_offset;
     k_stack_ptr += block_offset * k;
-    s_stack_ptr += (blockIdx.x * blockDim.x * stack_size );
-    s_stack_ptr += (threadIdx.x * stack_size);
 
     while (tid < block_step)
     {
-        cuKNN(query_points[tid], tree, n_tree, k, s_stack_ptr, k_stack_ptr + (tid * k));
+        cuKNN(query_points[tid], tree, n_tree, k, stack, k_stack_ptr + (tid * k));
         tid += blockDim.x;
     }
 }
@@ -278,6 +277,27 @@ int nextPowerOf2___(int x)
     return ++x;
 }
 
+void templateQueryAll(struct Point *d_query_points, struct Node *d_tree, int queries_in_step, int n_tree, int k, int stack_size, int numBlocks, int numThreads, struct KPoint *d_k_stack)
+{
+    if (stack_size <= 20 )
+    {
+        dQueryAll<20> <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_k_stack);
+    }
+    else if (stack_size <= 25)
+    {
+        dQueryAll<25> <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_k_stack);
+    }
+    else if (stack_size <= 30)
+    {
+        dQueryAll<30> <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_k_stack);
+    }
+    else
+    {
+        dQueryAll<35> <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_k_stack);
+    }
+}
+
+
 void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int n_tree, int k, int *h_result)
 {
     int numBlocks, numThreads, queries_in_step, queries_done, stack_size;
@@ -308,7 +328,6 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     queries_in_step = nextPowerOf2___(++queries_in_step) >> 1;
     getThreadAndBlockCountForQueryAll(queries_in_step, numBlocks, numThreads);
 
-
     h_k_stack = (KPoint *) malloc(queries_in_step * k * sizeof(KPoint));
     checkCudaErrors(cudaMalloc(&d_k_stack, queries_in_step * k  * sizeof(KPoint)));
     checkCudaErrors(cudaMalloc(&d_stack, numThreads * numBlocks * stack_size * sizeof(SPoint)));
@@ -322,7 +341,7 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
         }
         checkCudaErrors(cudaMemcpy(d_query_points, h_query_points, queries_in_step * sizeof(Point), cudaMemcpyHostToDevice));
 
-        dQueryAll <<< numBlocks, numThreads>>>(d_query_points, d_tree, queries_in_step, n_tree, k, d_k_stack, d_stack);
+        templateQueryAll(d_query_points, d_tree, queries_in_step, n_tree, k, stack_size, numBlocks, numThreads, d_k_stack);
 
         checkCudaErrors(cudaMemcpy(h_k_stack, d_k_stack, queries_in_step * k * sizeof(KPoint), cudaMemcpyDeviceToHost));
 
@@ -343,6 +362,5 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
     free(h_k_stack);
     checkCudaErrors(cudaFree(d_query_points));
     checkCudaErrors(cudaFree(d_k_stack));
-    checkCudaErrors(cudaFree(d_stack));
     checkCudaErrors(cudaFree(d_tree));
 }
