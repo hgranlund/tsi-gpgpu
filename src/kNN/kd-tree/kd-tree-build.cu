@@ -110,7 +110,7 @@ __device__ __host__
 void pointConvert(struct Node &p1, struct Point &p2)
 {
     p1.p[0] = p2.p[0], p1.p[1] = p2.p[1], p1.p[2] = p2.p[2];
-#if ADD_POINT_ID
+#ifdef ADD_POINT_ID
     p1.id = p2.id;
 #endif
 }
