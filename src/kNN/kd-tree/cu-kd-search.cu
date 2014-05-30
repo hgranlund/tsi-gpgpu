@@ -312,6 +312,8 @@ void cuQueryAll(struct Point *h_query_points, struct Node *h_tree, int n_qp, int
         return;
     }
 
+    checkCudaErrors( cudaDeviceSetCacheConfig(cudaFuncCachePreferL1));
+
     checkCudaErrors(cudaMalloc(&d_tree, n_tree * sizeof(Node)));
     checkCudaErrors(cudaMemcpy(d_tree, h_tree, n_tree * sizeof(Node), cudaMemcpyHostToDevice));
 
