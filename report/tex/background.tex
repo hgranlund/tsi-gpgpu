@@ -1,8 +1,7 @@
 %!TEX root = ./main.tex
 \chapter{Background}
 
-\section{Introduction to the real world problem} % (fold)
-\label{sub:introduction_to_the_real_world_problem}
+The purpose of this chapter is to cover some background material for the research presented in this thesis. A introduction to the kNN problem is given, and its relation to the problem of associative retrieval, all-kNN, and q-kNN is discussed. A presentation of common parallel programming 
 
 
 \section{A short introduction to the kNN algorithm} % (fold)
@@ -10,7 +9,7 @@
 
 \cite{Garcia2010} In this paper a good introduction to kNN, and some relevant citations are made.
 
-Include a transition into the TSI usecase. Fixed 3D points, large volume of repeated queries on large point cloud.
+Include a transition into the TSI use-case. Fixed 3D points, large volume of repeated queries on large point cloud.
 
 % section a_short_introduction_to_the_kNN_algorithm (end)
 
@@ -23,43 +22,33 @@ Include a transition into the TSI usecase. Fixed 3D points, large volume of repe
 \section{A short introduction to GPU programming and CUDA} % (fold)
 \label{sub:a_short_introduction_to_gpu_programming_and_cuda}
 
-Moore's law has been a gift to all programmers the past 50 years. The law predicts that performance of integrated circlets would double every two years. Resulting in automatically faster algorithms without any reimplementations. However, since the so called Power Wall in 2002, the world has been changing. The performance boost  in processors, and verification of Moore's law, is no longer limited to a single processor core, but to multiple cores. As a result, all programs and algorithms has to be rewritten to follow the multi-core evolution.
-
-
+Moore's law has been a gift to all programmers the past 50 years. The law predicts that performance of integrated circlets would double every two years. Resulting in automatically faster algorithms without any reimplementation. However, since the so called Power Wall in 2002, the world has been changing. The performance boost  in processors, and verification of Moore's law, is no longer limited to a single processor core, but to multiple cores. As a result, all programs and algorithms has to be rewritten to follow the multi-core evolution.
 
 Since the Power Wall a lot of work have been done regarding parallel programming tools, like OpenMP, CUDA, MPI and OpenCl. These tool have a varied types of supported architectures. OpenMP supports a shared memory architecture, where all cores have access to the same memory. It is an implementation of multi threading, whereby a master thread divide the workload to different forked slave threads. MPI (Message Passing Interface) is a library specification for message passing, and is proposed as a standard by a broadly based committee of vendors, implementors and users. It is mostly used for communication between processors running in a distributed memory system, as most supercomputer clusters are designed today. MPI is therefore the most used parallel computer method used on supercomputer clusters today.
 % An application build on both OpenMp and MPI are called a hybrid. They are used on systems that use distributed memory across different nodes, where each node uses a shared memory architecture.  These applications use MPI to send data to each node and OpenMP on individually nodes.
 
-
 Although supercomputers are fast and can have thousands of cores, they are highly expensive and are not accessible for a normal consumers. Out of the current consumer level products, GPU's represent the most extreme in parallelized hardware. NVIDIA GeForce GTX 000, for example, can execute 23,040 threads in parallel, and in practice requires at least 15,000 threads to reach full performance \citep{karras2012}. The reason GPU's have such a massive amount of parallelized threads is that each thread is very lightweight. The benefit is that together they can achieve extremely high instruction throughput. This makes the GPU perfect for high performance computing.
-
 
 \subsection{General-purpose computing on graphics processing units} % (fold)
 \label{ssub:general_purpose_computing_on_graphics_processing_units}
 
-
 The GPU's extreme properties, and the highly increasing interest in multi core systems, have also made the General-purpose computing on graphics processing units (GPGPU) programming landscape rapidly evolve. GPGPU is the utilization of GPU in applications, to perform heavy computation, that is normally handled by the CPU\@. The preveous mentioned parallel programming tools, OpenMp and MPI, are not  directely desiged for GPU programming, and several new programming approaches have appeared. Two widely used approaches are Compute Unified Device Architecture (CUDA) and The Open Compute Language (OpenCL).
-
 
 OpenCl is a low-level framework for heterogeneous computing for both CPU and GPU's. It includes a programming language, based on C99, for writing kernels. Kernels are methods that executes on the GPU\@. It also includes an API that are used to define and control the platform.
 
 In contrast to the open OpenCL, the dominant proprietary framework CUDA\@, is only desiged for GPU programming. It is, as OpenCL, based on a programming language and a programming interface. Science CUDA is created by the vendor, it is developed in close proximity with the hardware.
 
 For a deep and thoroughly survey of GPGPU programming, techniques and applications take a look at John D. Owens article from 2007 \citep{Owens:2007:ASO}.
-
 % subsection general_purpose_computing_on_graphics_processing_units (end)
 
 \subsection{NVIDIA GPU architecture} % (fold)
 \label{ssub:nvidia_gpu_architecture}
-
 
 The biggest difference between GPU and CPU's are there main objective. The CPU is optimized for low latency, while the GPU is optimized for high throughput. For a chip to achieve low latency it needs to have ha huge amount of cache available, which makes it harder to fit a lot of cores. To get high throughout a lot of cores or ALUs are needed. The GPU has therefore a small control unit and cache, but is packed with cores. Basically we can say that the difference is how the transistors are used. The GPU has more transistors dedicated to computation, then the CPU\@.
 
 At the hardware level, a NVIDIA GPU is build around a scalable array of multithreaded Streaming Multiprocessors (SMs). A multiprocessor are designed to execute hundreds of threads concurrently. It is organized according to an architecture called SIMT (Single-Instruction, Multiple-Thread), where each SMs creates, manages, schedules and executes parallel threads in groups of 32. This is called a warp. Threads composing in a warp starts at the same program address, but they have their own register state and instruction address, and is therefore free to branch and execute independently \citep{cuda_programming_guide}.
 
 An other impotent part of the GPU architecture is the memory hierarchy. Global memory is bottom-most part of this hierarchy and is analogous to RAM on the CPU\@. The global memory can be used to transfer memory to and from the host CPU\@. Each SM contains a fast shared memory, which is shared across each thread in the SM\@. The threads also have their own 32-bit registers. There also exists other types of memory, called constant memory and texture memory. Compared to the CPU, the peak floating-point capability and memory bandwidth of the GPU, is an order of magnitude higher \citep{Liangcu}.
-
-
 % subsection nvidia_gpu_architecture (end)
 
 \subsection{CUDA programming model} % (fold)
@@ -68,7 +57,6 @@ An other impotent part of the GPU architecture is the memory hierarchy. Global m
 The CUDA programming model is designed to make the heterogeneous GPU+CPU programming easier. The GPU works as a computation accelerator for the CPU, and the programming model should therefore be an easy bridge between the two. CUDA have created this bridge based on a runtime library, compiler and C language extensions. The C language extensions enables the programmer to create and launch methods on the GPU, through the runtime library. These methods are called kernels.
 
 A CUDA program is is based on a data-parallel behavior, where threads is running in parallel. The execution of a kernel is organized as a grid of blocks consisting of threads. When a kernel grid is launched, on the host CPU, blocks of the grid is enumerated and distributed among the SMs. The blocks then executes concurrently on individual SMs. As blocks terminates, new blocks are added. Only threads in a block can communicate with each other, by creating synchronization walls. They can also communicate through the fast shared memory, that is located on each individual SM\@. Each block and thread have their own id, which often is used to determines what portion of data the thread should process.
-
 
 % Maybe we should write about have to optimize parallel programs:
 % 1. find a good serial algorithm
@@ -80,6 +68,4 @@ A CUDA program is is based on a data-parallel behavior, where threads is running
 %     *. optimize arithmetic operations.
 
 % subsection cuda_programming_model (end)
-
-
 \cleardoublepage
