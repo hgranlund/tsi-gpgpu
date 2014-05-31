@@ -1,22 +1,24 @@
 %!TEX root = ./main.tex
 \chapter{Introduction}
 
-Most software tools for KBE development is today based around special purpose Modeling frameworks like the AML KBE language developed by TechnoSoft Inc. While this approach has been very successful there are continuously requirements for extending the capabilities both regarding new functionality and computational performance. TechnoSoft would like to have certain algorithms sped up, by utilizing general-purpose computing on graphics processing units (GPGPU). The goal of the master thesis will be to implement a small library of GPGPU-enhanced algorithms that could be used in TechnoSoft applications. The technology to be investigated is NVIDIA http://www.nvidia.com/page/technologies.html including the CUDA architechure and OpenCL. Towards the end of the work with the master assignment, when algorithms for grid smoothing for CFD analysis are developed, the candidates will study if these algorithms are well suited for speed up by graphic processor implementation.
+In more recent years, the hardware developers have increased the performance of new systems by utilizing the power of parallel processing. The demand for better computer graphics has been a driving force for creating more powerful parallel computing hardware. Powerful graphics cards, which features a highly parallel architecture, is available on the consumer market to a relatively low price.
 
-The assignment includes:
+Unfortunately this parallel power is not automatically utilized by traditional algorithms written with sequential execution in mind. In addition, parallelization is not a magic bullet. It can deliver blisteringly fast execution when the type of problem permits it, but for many classes of problems, benefiting form parallel processing capabilities is not trivial, or even possible.
 
-A study of advantages offered by using GPGPU. How to best utilize the high capacity for parallel processing? What kind of problems can be sped up?
+Due to this need for different algorithms and specialized knowledge in order to harness the power of parallel execution, a lot of software is currently not benefiting from the possible performance of modern hardware. This is a point to be especially concerned with in engineering software, where complex, time consuming computations is commonplace.
 
-An evaluation of suitable GPGPU tools. Should development be based on OpenCL or CUDA?
+In our thesis we have studied how to best the power of general processing of graphical processing units (GPGPU) in engineering software applications. We have studied this problem by developing faster, parallel algorithms for use in point cloud analysis software supplied by TechnoSoft Inc (TSI).
 
-An evaluation of GPGPU libraries like ViennaCL and cuBLAS.
+During the course of our work, we came to discover that some of the topics, initially envisioned to be significant for our research, was not that relevant for the work we ended up doing. At the same time, new possibilities arose that was not accounted for during drafting of the assignment text. 
 
-Select engineering algorithms for test applications, in cooperation with the advisers, that are well suited and relevant for speed up by implementation on the graphic processor.
+Early on it became clear that TSI had a very concrete engineering algorithm problem, related to point cloud analysis. Since it would be mutually beneficial for us and TSI to focus more on in-depth parallelization of algorithms related to this problem, we choose, in collaboration with our thesis advisors, we therefore choose to divert some from the original assignment.
 
-Extensive performance testing of different implementations on different problem sizes and hardware. Are we getting good speed up on real life problems and hardware, or is the overhead associated with parallel computing hampering performance?
+The original assignment focused on a broader, more literary focused study of comparing GPGPU tools, libraries and general techniques, with the addition of testing some of the studied techniques on select engineering algorithms. By making the engineering algorithm problem supplied by TSI the focus of our thesis, the work became more rooted in the real world. Just describing possible solutions and techniques would no longer be an option, every algorithm had to be implemented, parallelized, optimized, and tested in such a way that it could be used in a real world application. Studying and comparing GPGPU tools, libraries and general techniques would still be important, but more driven by the demand on the real world problem, instead of being an attempt of giving an exhaustive comparison of available GPGPU resources for engineering applications.
 
+This change of focus does probably mean that we have lost some of the scope originally intended, but we believe strongly that the depth and quality of the results we have been able to achieve, by focusing on building and implementing algorithms for a real world problem, is far superior than what would have been possible to achieve by focusing on the more broad, literary approach.
 
+Let us take a moment and go through how the changes noted above affect the original assignment text. The original text specified that the assignment would include a study of how to best utilize the high capacity for parallel processing. As a general topic, this is covered in short as a part of the background section. More so, this topic is covered indirectly as part of our work with the different algorithms for the problem supplied by TSI. For every step of development, this problem is addressed in direct relation to the current algorithm. This means that our coverage of this topic is more specific for our problem, but we believe that many of the techniques used in our implementations could be used on other problems.
 
-Cover the assignment, and the changes made during our work. Changes made during the course of our work is mentioned, and our new specification is defined.
+An evaluation of GPGPU libraries like ViennaCL and cuBLAS was also expected to be relevant for the thesis, but this proved to be entirely irrelevant for the particular problem we studied, since we ended up not being able to rely on any prefabricated GPGPU library. This could be an interesting topic to study related to a problem where such libraries could be applied, but in our work, a comparison of GPGPU libraries ended up being left out.
 
-We move on to give a presentation of the problem given by TSI.
+Unfortunately the grid smoothing algorithms for CFD analysis was developed in time to be a part of our work, so this part of the assignment was left out as well.
