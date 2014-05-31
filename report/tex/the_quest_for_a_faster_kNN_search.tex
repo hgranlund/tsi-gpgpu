@@ -6,7 +6,109 @@
 
 \section{A short evaluation of OpenCL and CUDA} % (fold)
 \label{sub:a_short_evaluation_of_opencl_and_cuda}
+As mentioned in section \ref{ssub:general_purpose_computing_on_graphics_processing_units}, there are two dominant frameworks for GPGPU programming, CUDA and OpenCL. They both have their strengths and weaknesses, and in order to determine which was the most suitable for our work, we performed a small evaluation of both. This evaluation was based on a short benchmark test, where a matrix multiplication application was developed in both frameworks. The development time for both the CUDA and OpenCL matrix multiplier was limited, in order to highlight any differences in ease of use, between the two frameworks.
 
+In addition, a quick analysis of available documentation for both frameworks was made, using common online search engines.
+
+In all our tests CUDA outperformed OpenCL. Although our tests were very limited in scope, they support the opinion that currently, CUDA is faster and better documented than OpenCL. If you don not need the portability offered by OpenCL, we would recommend using CUDA for GPGPU programming.
+
+\subsection{Matrix multiplication benchmark} % (fold)
+\label{sub:matrix_multiplication_benchmark}
+In order to compare the performance differences between CUDA and OpenCL, a simple matrix multiplication algorithm was implemented in both CUDA and OpenCL. These implementations where based on examples provided by NVIDIA ans AMD. In order to establish a baseline, to which the CUDA and OpenCL results could be compared, additional implementations of the matrix multiplication algorithm was made, as both a naive serial implementation in C and a highly optimized implementation using the Automatically Tuned Linear Algebra Software (ATLAS\cite{atlas}) implementation of BLAS. Finally, a highly optimized CUDA implementation was made using the cuBLAS\cite{cublas} library.
+
+The test algorithm multiplies two square matrices of size NxN. This is an interesting problem to use for performance benchmarking for a number of reasons:
+
+\begin{itemize}
+    \item Matrix multiplication is often used as a subroutine in more advanced mathematical algorithms.
+    \item Matrix multiplication can be parallelized over a large number of computational cores, making it suitable for GPGPU programming.
+    \item The mathematics of matrix multiplication is trivial, making it an easy to understand example problem.
+\end{itemize}
+
+The four implementations where tested on a desktop computer running 64-bit Ubuntu 13.04 with hardware as shown in table \ref{fig:hardware-spec-type-b}.
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{ | l | l |}
+    \hline
+    \textbf{Type} & \textbf{Hardware} \\ \hline
+    Processor & Intel Core i7-2600K CPU @ 3.40GHz x 8 \\ \hline
+    Graphics & GeForce GTX 560 Ti/PCIe/SSE2 \\ \hline
+    Memory & 7.8 GiB \\ \hline
+    \end{tabular}
+    \caption{Hardware configuration for test setup B}
+    \label{fig:hardware-spec-type-b}
+\end{table}
+
+The results are presented in Figure \ref{fig:matrix-multiplication-benchmark-results}
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/matrix-multiplication-benchmark-results.png}
+    \caption{Matrix multiplication benchmark results}
+    \label{fig:matrix-multiplication-benchmark-results}
+\end{figure}
+
+We see that the naive serial implementation quickly becomes unusable, due to a rapid increase in run time. The improvement gained by using ATLAS BLAS is very large compared to the naive implementation, although it cannot keep up with the run times achieved by the CUDA and OpenCL implementations.
+
+The difference between CUDA and OpenCL is quite small, compared to the naive and BLAS implementations, but the CUDA implementation is on average about twice as fast as the OpenCL implementation. This is quite a big difference, and this could be related to all tests being run on a NVIDIA graphics card. It might also have been caused by different quality between the NVIDIA and AMD examples.
+
+Looking at the results for the cuBLAS implementation, we can also see the impact of using a highly optimized library for GPGPU programming. The cuBLAS implementation is faster than using the basic CUDA example, indicating that proper use of libraries can be very beneficial.
+
+It is also important to note that this is a very small test. In order to be able to conclude if CUDA is indeed faster than OpenCL, one would have needed to implement a wide selection of algorithms and test them on several different hardware configurations. Although this test is non conclusive regarding this question, the results seem to support several older investigations, concluding that CUDA is faster than OpenCL. One notable example being A Comprehensive Performance Comparison of
+CUDA and OpenCL\cite{Fang11} by Janbin Fang et al.
+% subsection matrix_multiplication_benchmark (end)
+
+\subsection{A quick evaluation of available documentation} % (fold)
+\label{sub:a_quick_evaluation_of_available_documentation}
+
+When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the online documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables (all data from 16. Jan 2014).
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{ | l | l |}
+    \hline
+    \textbf{Query} & \textbf{No of Stackoverflow.com results} \\ \hline
+    Tagged OpenCL & 1935 \\ \hline
+    Tagged CUDA & 6137 \\ \hline
+    Open search OpenCL & 5818 \\ \hline
+    Open search CUDA & 16174 \\ \hline
+    \end{tabular}
+    \caption{Query results from Stackoverflow}
+    \label{fig:stackoverflow-terms-results}
+\end{table}
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{ | l | l |}
+    \hline
+    \textbf{Query} & \textbf{No of Google results} \\ \hline
+    opencl paralell programming & ~322000 \\ \hline
+    cuda paralell programming   & ~558000 \\ \hline
+    opencl gpgpu                & ~558000 \\ \hline
+    cuda gpgpu                  & ~816000 \\ \hline
+    opencl programming          & ~875000 \\ \hline
+    cuda programming            & ~2790000 \\ \hline
+    \end{tabular}
+    \caption{Query results from Google}
+    \label{fig:google-terms-results}
+\end{table}
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{ | l | l |}
+    \hline
+    \textbf{Query} & \textbf{No of Google Scholar results} \\ \hline
+    opencl paralell programming & ~7480 \\ \hline
+    cuda paralell programming   & ~17100 \\ \hline
+    opencl gpgpu                & ~5230 \\ \hline
+    cuda gpgpu                  & ~13500 \\ \hline
+    opencl programming          & ~8160 \\ \hline
+    cuda programming            & ~22700 \\ \hline
+    \end{tabular}
+    \caption{Query results from Google Scholar}
+    \label{fig:google-scholar-terms-results}
+\end{table}
+% subsection a_quick_evaluation_of_available_documentation (end)
 % section a_short_evaluation_of_opencl_and_cuda (end)
 
 
