@@ -108,10 +108,10 @@ While there still is elements in the s-stack, but $r$ is assigned to NIL, we are
 % subsection from_recursive_to_iterative_implementation (end)
 
 %TODO: Forandre header?
-\subsection{Our implementation} % (fold)
-\label{sub:our_implementation}
+\subsection{The implementation} % (fold)
+\label{sub:the_implementation}
 
-To convert our iterative search algorithm to CUDA should now be a trivial matter. The code itself does not need to be parallelized, as only one thread is used per query. Some key aspects is wort highlighting.
+To convert our iterative search algorithm to CUDA should now be a trivial matter. The code itself does not need to be parallelized, as only one thread is used per query. The final implementation can be found in Appendix~\ref{sec:cuda_k_d_tree_search} Some key aspects is wort highlighting.
 
 
 As we converted the algorithm from a recursive to a iterative stack based solution, a lot of the problematic divergence was taken avoided. But as shown in Algorithm~\ref{alg:iterative_knn_kd_tree_search}, there is steal some divergence. This is inevitable since the target subtree and other subtree needs to be treated differently. Although, there are possibilities to minimize the thread branching. If threads in a warp is traversing completely different parts of the tree, they will access different nodes. This is called data divergence. They will also be a minimal change for the threads to synchronize there target and other traversing. The solution is to let each warp search for points that are close in 3-d space, which will force the threads to traverse fore or less together. In our application, query for all points in the k-d tree, this is an easy task. When the k-d tree was build the points are, due to the data structure and the nature of a k-d tree, grouped together relatively to their position in space. The divergence will therefore be minimized if the points are fed to the search as they are placed in the k-d tree.
@@ -135,20 +135,35 @@ The two stacks in question is the k-stack and the transformed recursive stack, c
 In Figure~\ref{fig:stacks_and_shared_memory} the memory usage of each stack is compared to the available shared memory. Some basic assumptions and approximations have been done in regard to the data. Treads are only compared in multiples of $32$, since this is the warp size and is therefore the most optimal thread numbers. The value of $k$ is dependent on the problem in hand, and as our application only needs a value of $100$, that value is used. When it comes to the logarithm in the stack calculations, we have chosen $30$.  This is because it value is relatively constant and with a value of this type we support a \numprint{1e9} big k-d tree.
 
 
-Figure~\ref{fig:stacks_and_shared_memory} shows that the k-stack is not a suitable candidate. The reason is that with $k$ equals $100$ we can only launch one warp per thread. Even though only one warp is pick, the highly dependent and variably $k$ make the stack size to unpredictable. The stack however is looks really promising, with $64$ threads the memory usage is well below the limit.
+Figure~\ref{fig:stacks_and_shared_memory} shows that the k-stack is not a suitable candidate. Already at a thread count of $64$ the memory is used. The highly dependent and variably $k$ value also make the stack size unpredictable. The stack however looks really promising, with $64$ threads the memory usage is well below the limit. This also shows that local memory a suitable candidate, since it allocate memory from the same L1 chip as the shared memory.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=100mm]{../gfx/stack_speed.png}
+
+    \caption{Speed comparison between different stack memory types. The test are done with $k$ equals 10 and \numprint{1e6} queries per tree size. }
+    \label{tbl:stack_speed}
+\end{figure}
 
 
 
-based on kstack
+To decide what kind of memory is optimal for our stack, Figure~\ref{tbl:stack_speed} has been created. Surprisingly shared memory looks like the slowest alternative, even though the two other should be stored in global memory. Shared memory is synced between all threads in a block, and may have some of the blame for our results. One property of the stack is that it is completely thread local, meaning communication between threads is not needed. The extra, and wasted property of the shared memory may lead to to a decrease in latency, because data is synced between the threads.
+
+An other reason is that there is some kind of programming error, and some part of a stack was used by two threads. This would lead to a lot of write and read collisions, and cause a lot of time penalties. The programming error would also lead to wrongly results, which is not the case and the error possibility is ignored.
+
+Although global and local memory presumably is stored at the same place, the are some noticeable differences that can explain the time gap between them. The cache may be a noticeable factor. The cache is is placed on the same on-chip memory as the shared memory, and should therefore be equally fast. The difference is that cashing is not programmable and therefor not controlled be the programmer. However some properties in the local memory type may suggest that it is a more likely candidate to be cached.  The local memory is thread dependent and is not accessible to other threads or blocks as the global memory are. The compiler can therefor logically imply that the data is not modified by other threads and caching becomes mush more likely. Figure~\ref{fig:stacks_and_shared_memory}, also shows us that the cache can fit all stacks in a block, which correlates with the timing results. To enforce cache use even further CUDA gives a runtime function call to give more of the on-chip memory to caching.
+
+The discussion and results for the stack analysis shows that the stacks highly impact the timing results. This means that the k-stack is also a dominant  speed factor, as corresponds well to the k-stack tests that was performed. Two k-stack variants was tested. One that used a bobble sort\cite{Cormen:2001} like implementation. It works by always keeping a sorted list. An element is inserted by, from the bottom position, swapping it to the adjustment element until it is in the right place. The other method is based on a heap sort implementation, that is explained in Section~\ref{sub:querying_the_k_d_tree}. The timing difference between the two implementations was around $5$ times. The fastest one was of course the heap-sort variant, since it need to access mush less elements. The difference is the insertion time complexity, where the bobble variant is a \BigO{n} and the heap sort variant is a \BigO{log_2(n)}.
 
 
+\subsubsection{Open-MP} % (fold)
+\label{ssub:open_mp_version}
 
+The high impact the stack had on performance make an interesting question in regard to RQ~\ref{rq:parallel_query}. Could a parallel implementation in the CPU outperform the CPU version? When the latency effect, as the stacks showed, had such a huge impact on the performance. The CPU has a lot more cache then the GPU and would therefor not be affected that mush. The real question is whether the CUDA implementation manges to hide the latency problem by alternating between different warps.
 
+For this to be investigated properly, an OpenMP version of the k-d tree search has to be created. Parallelization wise this is not as different as in our CUDA discussion, and there are only some implementation details to address. The big discussions around what kind of memory to use or memory size can also be ignored, since the CPU has enough cache and the latency is not that important. The implementation can be found in Appendix~\ref{sec:open_mp_k_d_tree_search}.
 
-
-Memory --> stack  --> openmp
-p
-cpu vs opemp
+% subsubsection open_mp_version (end)
 
 
 % subsection our_implementation (end)
@@ -157,7 +172,6 @@ cpu vs opemp
 
 
 
-% subsection parallelization_strategy (end)
 
 
 
