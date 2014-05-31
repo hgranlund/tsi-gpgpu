@@ -118,9 +118,9 @@ As we converted the algorithm from a recursive to a iterative stack based soluti
 
 
 The transformation from a hidden recursive stack to a explicit stack makes a interesting question about where to store the new stack, especially
-since it definitely would have overfilled the local call stack space. This is data that are modifiable and thread independent, which means that the memory options are shared memory, texture memory and global memory. First of all, global memory is a working candidate. It has enough space, it is modifiable and accessible to all threads. The huge drawback is the access time, it takes around $400$ clock cycles(Trenger vi cite), and it would be beneficial to use some other kind of memory. Shared memory would be a perfect candidate, because the memory is fast and the need to communicate between blocks is nonexistent. The only needed drawback to address the the amount of data available in shared memory, which is default around $49 kb$ for each block on current NVIDIA GPU's.
+since it definitely would have overfilled the local call stack space. This is data that are modifiable and thread independent, which means that the memory options are shared memory, local memory and global memory. Local memory is the memory each thread dynamically can allocate from the heap. First of all, global memory is a working candidate. It has enough space, it is modifiable and accessible to all threads. The huge drawback is the access time, it takes around $400$ clock cycles(Trenger vi cite), and it would be beneficial to use some other kind of memory. Shared memory would be a perfect candidate, because the memory is fast and the need to communicate between blocks is nonexistent. The only drawback needed to address the the amount of data available in shared memory, which is default around $49 kb$ for each block on current NVIDIA GPU's. This is also a good approximation for how much local memory available.
 
-The two stacks in question is the k-stack and the transformed recursive stack, called stack from now on. Both stacks are memory wise dependent on number of threads, since each thread needs unique stacks. The stack is dependent on how many elements the inorder tree traversal needs to store. If one looks on how the algorithm handles the stack, one can see that elements are pushed on the way down, and poped when one traverse upwards.  This means that the stack never will be longer then the tree hight, which is the binary logarithm if the size. One stack elemtnt uses $16$ bytes of space, which means that the stack memory is s subset of $\Theta(16\log_2(n)T)$. Here $T$ represent the number of threads and $n$ is the k-d tree size. The k-stack depends on the number of closest neighbors, $k$, and one element uses $8$ bytes. This implies that it uses memory usage will look like, $\Theta(8kT)$.
+The two stacks in question is the k-stack and the transformed recursive stack, called stack from now on. Both stacks are memory wise dependent on number of threads, since each thread needs unique stacks. The stack is dependent on how many elements the inorder tree traversal needs to store. If one looks on how the algorithm handles the stack, one can see that elements are pushed on the way down, and poped when one traverse upwards.  This means that the stack never will be longer then the tree hight, which is the binary logarithm if the size. One stack element uses $16$ bytes of space, which means that the stack memory is s subset of $\Theta(16\log_2(n)T)$. Here $T$ represent the number of threads and $n$ is the k-d tree size. The k-stack depends on the number of closest neighbors, $k$, and one element uses $8$ bytes. This implies that it uses memory usage will look like, $\Theta(8kT)$.
 
 
 \begin{figure}[ht!]
@@ -137,6 +137,9 @@ In Figure~\ref{fig:stacks_and_shared_memory} the memory usage of each stack is c
 
 Figure~\ref{fig:stacks_and_shared_memory} shows that the k-stack is not a suitable candidate. The reason is that with $k$ equals $100$ we can only launch one warp per thread. Even though only one warp is pick, the highly dependent and variably $k$ make the stack size to unpredictable. The stack however is looks really promising, with $64$ threads the memory usage is well below the limit.
 
+
+
+based on kstack
 
 
 
