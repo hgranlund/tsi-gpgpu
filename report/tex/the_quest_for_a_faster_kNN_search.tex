@@ -6,15 +6,15 @@
 
 \section{A short evaluation of OpenCL and CUDA} % (fold)
 \label{sub:a_short_evaluation_of_opencl_and_cuda}
-As mentioned in section \ref{ssub:general_purpose_computing_on_graphics_processing_units}, there are two dominant frameworks for GPGPU programming, CUDA and OpenCL. They both have their strengths and weaknesses, and in order to determine which was the most suitable for our work, we performed a small evaluation of both. This evaluation was based on a short benchmark test, where a matrix multiplication application was developed in both frameworks. The development time for both the CUDA and OpenCL matrix multiplier was limited, in order to highlight any differences in ease of use, between the two frameworks.
+As mentioned in Section~\ref{ssub:general_purpose_computing_on_graphics_processing_units}, there are two dominant frameworks for GPGPU programming, CUDA and OpenCL\@. They both have their strengths and weaknesses, and in order to determine which was the most suitable for our work, we performed a small evaluation of both. This evaluation was based on a short benchmark test, where a matrix multiplication application was developed in both frameworks. The development time for both the CUDA and OpenCL matrix multiplier was limited, in order to highlight any differences in ease of use, between the two frameworks.
 
 In addition, a quick analysis of available documentation for both frameworks was made, using common online search engines.
 
-In all our tests CUDA outperformed OpenCL. Although our tests were very limited in scope, they support the opinion that currently, CUDA is faster and better documented than OpenCL. If you don not need the portability offered by OpenCL, we would recommend using CUDA for GPGPU programming.
+In all our tests CUDA outperformed OpenCL\@. Although our tests were very limited in scope, they support the opinion that currently, CUDA is faster and better documented than OpenCL\@. If you don not need the portability offered by OpenCL, we would recommend using CUDA for GPGPU programming.
 
 \subsection{Matrix multiplication benchmark} % (fold)
 \label{sub:matrix_multiplication_benchmark}
-In order to compare the performance differences between CUDA and OpenCL, a simple matrix multiplication algorithm was implemented in both CUDA and OpenCL. These implementations where based on examples provided by NVIDIA ans AMD. In order to establish a baseline, to which the CUDA and OpenCL results could be compared, additional implementations of the matrix multiplication algorithm was made, as both a naive serial implementation in C and a highly optimized implementation using the Automatically Tuned Linear Algebra Software (ATLAS\cite{atlas}) implementation of BLAS. Finally, a highly optimized CUDA implementation was made using the cuBLAS\cite{cublas} library.
+In order to compare the performance differences between CUDA and OpenCL, a simple matrix multiplication algorithm was implemented in both CUDA and OpenCL\@. These implementations where based on examples provided by NVIDIA ans AMD\@. In order to establish a baseline, to which the CUDA and OpenCL results could be compared, additional implementations of the matrix multiplication algorithm was made, as both a naive serial implementation in C and a highly optimized implementation using the Automatically Tuned Linear Algebra Software (ATLAS\cite{atlas}) implementation of BLAS\@. Finally, a highly optimized CUDA implementation was made using the cuBLAS\cite{cublas} library.
 
 The test algorithm multiplies two square matrices of size NxN. This is an interesting problem to use for performance benchmarking for a number of reasons:
 
@@ -24,22 +24,22 @@ The test algorithm multiplies two square matrices of size NxN. This is an intere
     \item The mathematics of matrix multiplication is trivial, making it an easy to understand example problem.
 \end{itemize}
 
-The four implementations where tested on a desktop computer running 64-bit Ubuntu 13.04 with hardware as shown in table \ref{fig:hardware-spec-type-b}.
+The four implementations where tested on a desktop computer running 64-bit Ubuntu 13.04 with hardware as shown in Table~\ref{fig:hardware-spec-type-b}.
 
 \begin{table}[ht]
 \centering
     \begin{tabular}{ | l | l |}
     \hline
-    \textbf{Type} & \textbf{Hardware} \\ \hline
-    Processor & Intel Core i7-2600K CPU @ 3.40GHz x 8 \\ \hline
-    Graphics & GeForce GTX 560 Ti/PCIe/SSE2 \\ \hline
-    Memory & 7.8 GiB \\ \hline
+    \textbf{Type} & \textbf{Hardware}                       \\ \hline
+    Processor     & Intel Core i7-2600K CPU @ 3.40GHz x 8   \\ \hline
+    Graphics      & GeForce GTX 560 Ti/PCIe/SSE2            \\ \hline
+    Memory        & 7.8 GiB                                 \\ \hline
     \end{tabular}
     \caption{Hardware configuration for test setup B}
     \label{fig:hardware-spec-type-b}
 \end{table}
 
-The results are presented in Figure \ref{fig:matrix-multiplication-benchmark-results}
+The results are presented in Figure~\ref{fig:matrix-multiplication-benchmark-results}
 
 \begin{figure}[ht!]
     \centering
@@ -54,24 +54,24 @@ The difference between CUDA and OpenCL is quite small, compared to the naive and
 
 Looking at the results for the cuBLAS implementation, we can also see the impact of using a highly optimized library for GPGPU programming. The cuBLAS implementation is faster than using the basic CUDA example, indicating that proper use of libraries can be very beneficial.
 
-It is also important to note that this is a very small test. In order to be able to conclude if CUDA is indeed faster than OpenCL, one would have needed to implement a wide selection of algorithms and test them on several different hardware configurations. Although this test is non conclusive regarding this question, the results seem to support several older investigations, concluding that CUDA is faster than OpenCL. One notable example being A Comprehensive Performance Comparison of
+It is also important to note that this is a very small test. In order to be able to conclude if CUDA is indeed faster than OpenCL, one would have needed to implement a wide selection of algorithms and test them on several different hardware configurations. Although this test is non conclusive regarding this question, the results seem to support several older investigations, concluding that CUDA is faster than OpenCL\@. One notable example being A Comprehensive Performance Comparison of
 CUDA and OpenCL\cite{Fang11} by Janbin Fang et al.
 % subsection matrix_multiplication_benchmark (end)
 
 \subsection{A quick evaluation of available documentation} % (fold)
 \label{sub:a_quick_evaluation_of_available_documentation}
 
-When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the online documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables (all data from 16. Jan 2014).
+When we where installing CUDA and OpenCL, and implementing our test algorithms, we where reliant on the online documentation available for the two GPGPU frameworks. Our subjective experience was that finding good documentation for CUDA was a lot easier than for OpenCL\@. In order to investigate this, we made a series of queries for pages related to CUDA and OpenCL on Google, Google scholar and Stackoverflow.com (a popular programming QA site). The results are shown in the following tables (all data from 16. Jan 2014).
 
 \begin{table}[ht]
 \centering
     \begin{tabular}{ | l | l |}
     \hline
-    \textbf{Query} & \textbf{No of Stackoverflow.com results} \\ \hline
-    Tagged OpenCL & 1935 \\ \hline
-    Tagged CUDA & 6137 \\ \hline
-    Open search OpenCL & 5818 \\ \hline
-    Open search CUDA & 16174 \\ \hline
+    \textbf{Query}     & \textbf{No of Stackoverflow.com results}    \\ \hline
+    Tagged OpenCL      & 1935                                        \\ \hline
+    Tagged CUDA        & 6137                                        \\ \hline
+    Open search OpenCL & 5818                                        \\ \hline
+    Open search CUDA   & 16174                                       \\ \hline
     \end{tabular}
     \caption{Query results from Stackoverflow}
     \label{fig:stackoverflow-terms-results}
@@ -81,13 +81,13 @@ When we where installing CUDA and OpenCL, and implementing our test algorithms, 
 \centering
     \begin{tabular}{ | l | l |}
     \hline
-    \textbf{Query} & \textbf{No of Google results} \\ \hline
-    opencl paralell programming & ~322000 \\ \hline
-    cuda paralell programming   & ~558000 \\ \hline
-    opencl gpgpu                & ~558000 \\ \hline
-    cuda gpgpu                  & ~816000 \\ \hline
-    opencl programming          & ~875000 \\ \hline
-    cuda programming            & ~2790000 \\ \hline
+    \textbf{Query} & \textbf{No of Google results}  \\ \hline
+    opencl paralell programming & 322000            \\ \hline
+    cuda paralell programming   & 558000            \\ \hline
+    opencl gpgpu                & 558000            \\ \hline
+    cuda gpgpu                  & 816000            \\ \hline
+    opencl programming          & 875000            \\ \hline
+    cuda programming            & 2790000           \\ \hline
     \end{tabular}
     \caption{Query results from Google}
     \label{fig:google-terms-results}
@@ -98,12 +98,12 @@ When we where installing CUDA and OpenCL, and implementing our test algorithms, 
     \begin{tabular}{ | l | l |}
     \hline
     \textbf{Query} & \textbf{No of Google Scholar results} \\ \hline
-    opencl paralell programming & ~7480 \\ \hline
-    cuda paralell programming   & ~17100 \\ \hline
-    opencl gpgpu                & ~5230 \\ \hline
-    cuda gpgpu                  & ~13500 \\ \hline
-    opencl programming          & ~8160 \\ \hline
-    cuda programming            & ~22700 \\ \hline
+    opencl paralell programming & 7480                    \\ \hline
+    cuda paralell programming   & 17100                   \\ \hline
+    opencl gpgpu                & 5230                    \\ \hline
+    cuda gpgpu                  & 13500                   \\ \hline
+    opencl programming          & 8160                    \\ \hline
+    cuda programming            & 22700                   \\ \hline
     \end{tabular}
     \caption{Query results from Google Scholar}
     \label{fig:google-scholar-terms-results}
@@ -205,8 +205,8 @@ It is worth to note that the performance of this k-d tree build algorithm is sen
 A final note about Algorithm~\ref{alg:seriel_tree_build}, is that it does not handles points with duplicate values in one dimension. If the algorithm where to be feed with a point collection where all points had the same value for x, it would not be able to handle it, since such a point does not explicitly belong in $L$ or $H$. Several modifications can be made to handle this case. We can choose to place all conflicting median points, exept one, in either $L$ or $H$. The problem with this solution, is that we are not guaranteed to get a balance tree. If we where to have a set of points, where all points where tha same, we would get a tree at all, but just one long branch of length n. Another strategy is to try to place the conflicting medians, equally in $L$ and $H$. This way the median we select will be the midmost element in the point collection, retaining the balance in the finished k-d tree. Given that we consider that duplicate median points can be located in both subtrees of a node, this will not affect search operations on the tree, as we will see later.
 % subsection building_k_d_trees_for_point_cloud_data (end)
 
-\subsection{Querying the k-d tree} % (fold)
-\label{sub:querying_the_k_d_tree}
+\subsection{Querying the k-d tree}  % (fold)
+\label{sub:querying_the_k_d_tree} 
 
 With a k-d tree we can perform efficient searches for the closest point to a given point in \BigO{n*log(n)} average time\cite{Friedman:1977}. By maintaining a collection of the k closest points during execution of the query, we can even perform kNN searches. An example of a kNN search algorithm is shown in Algorithm~\ref{alg:recursive_knn_kd_tree_search}.
 
@@ -241,7 +241,7 @@ In our example $K$ is a data structure with some special properties, called the 
             \State $t \gets r.right$, $o \gets r.left$
         \EndIf
 
-        \State \text{kNN-KD-Tree}($K, t, q, i'$)
+        \State \text{kNN-KD-Tree} ($K, t, q, i'$)
 
         \If{$dx^2 < K.max$} \Comment{Can there be closer points in the other subtree?}
             \State \text{kNN-KD-Tree}($K, o, q, i'$)
@@ -310,9 +310,9 @@ Despite these initial positive results, some problems are apparent from our init
 
 The k-d tree building algorithm is very slow. Given that we want to perform kNN queries on larger point clouds than $1.41^7$, finding an efficient parallelization of this algorithm would be very beneficial. This is not as trivial as it might seem, as tree-based algorithms do not lend themselves very well to trivial parallelization.
 
-When scaling the number of repeated queries from one to $n$ we observed the huge impact a seemingly small change in the time required for performing one query had on the time needed to compute the entire result. A change from several milliseconds to a fraction of a milliseconds might seem trivial, but given enough repeated queries, this was the difference between minutes and days of computation time. Will we be able to keep the query time down when increasing the value of $k$, and moving the computation over to the GPU, which generally has a slower clock cycle than the CPU?
+When scaling the number of repeated queries from one to $n$ we observed the huge impact a seemingly small change in the time required for performing one query had on the time needed to compute the entire result. A change from several milliseconds to a fraction of a milliseconds might seem trivial, but given enough repeated queries, this was the difference between minutes and days of computation time. Will we be able to keep the query time down when increasing the value of $k$, and moving the computation over to the GPU, which generally has a slower clock cycle than the CPU\@?
 
-Finally all our k-d tree algorithm are based on recursion, which is not usually a good choice for handling large volumes of data on the GPU.
+Finally all our k-d tree algorithm are based on recursion, which is not usually a good choice for handling large volumes of data on the GPU\@.
 
 In the next sections we will address these challenges, along with others, and develop a parallel algorithm for performing kNN queries based on k-d trees.
 % subsection testing_a_serial_k_d_tree_based_knn_solver (end)
@@ -338,7 +338,8 @@ In the next sections we will address these challenges, along with others, and de
 \item Number of threads and blocks. Calaculate on each lounch
 \item divergence
 \item memory placement
-\item
+\item Improve utiliti methods like: accumulateindex, minReduce.
+\item Forloop Unrolling.
 \end{enumerate}
 
 \cleardoublepage
