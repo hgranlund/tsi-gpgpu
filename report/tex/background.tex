@@ -8,7 +8,7 @@ The purpose of this chapter is to cover some background material for the researc
 
 The k-nearest neighbors (kNN) search problem, is, in short, the problem of locating the k closest neighbors to a given query point, with k being some positive natural number. This is intuitively a quite simple problem to grasp, and for most of our purposes an intuitive understanding of the problem will be sufficient, but let us start by looking a bit closer at the properties of kNN search in general.
 
-If we consider $p$ to be a point in n-dimensional space so that $p = [x_1, x_2,\dots{\dots}, x_n]$. Given a set of size $m$, consisting of such points $S = [p_1, p_2,\dots{\dots}, p_m]$, a additional query point $q$, also in n-dimensional space, and some distance metric $D = f(p, q)$, the kNN problem is to find k points in $S$, such that the sum of distances in relation to $q$ is minimized.
+If we consider $p$ to be a point in d-dimensional space so that $p = [x_1, x_2,\dots, x_d]$. Given a set of size $m$, consisting of such points $S = [p_1, p_2,\dots, p_m]$, a additional query point $q$, also in n-dimensional space, and some distance metric $D = f(p, q)$, the kNN problem is to find k points in $S$, such that the sum of distances in relation to $q$ is minimized. We introduce the term reference points to be the set $S$, to differentiate it from the query points $Q$. 
 
 It is worth to note that since we are not limited, either in the number of dimensions, or distance metric we choose, the kNN problem is applicable in many different situations. If we e.g.\ wanted to construct a system for finding beer with similar flavor to one beer we just tasted, we could build a database of different beers, categorized by flavor dimensions like bitterness, maltiness, sweetness, and so on. Then, to find beers similar in flavor to the one we just tasted, we would perform a kNN query on this database, using a suitable distance metric, and the beer we just tasted as our query point.
 
@@ -18,7 +18,7 @@ When wanting to query point cloud data, we can make some simplifications to this
 
 When studying points clouds, it can be interesting to study the closest points to all points in the point cloud. In order to compute this, you would simply perform kNN queries, using all the points in the point cloud as query points. In order to refer to this variant of the kNN search problem, we will use all-kNN\@.
 
-Another similar variant is application of the kNN algorithm to a set of query points of size q. In this version of the problem, you are not limited to the query point set being the points in the point cloud, it can be any set of three dimensional points. We will refer to this problem variant as q-kNN, and note that all-kNN is a subproblem of q-kNN\@.
+Another similar variant is application of the kNN algorithm to a set of query points of size q. In this version of the problem, you are not limited to the query point set being the points in the point cloud, it can be any set of three dimensional points. We will refer to this problem variant as Q-kNN, and note that all-kNN is a subproblem of Q-kNN\@.
 % section a_short_introduction_to_kNN_search_problem (end)
 
 \section{A short introduction to relevant parallel programming principles} % (fold)
