@@ -109,7 +109,7 @@ While there still is elements in the s-stack, but $r$ is assigned to NIL, we are
 % subsection from_recursive_to_iterative_implementation (end)
 
 %TODO: Forandre header?
-\subsection{The implementation} % (fold)
+\subsection{CUDA implementation} % (fold)
 \label{sub:the_implementation}
 
 To convert our iterative search algorithm to CUDA should, because of Algorithm~\ref{alg:iterative_knn_kd_tree_search}, be a trivial matter. The code itself does not need to be parallelized, as only one thread is used per query. The final implementation can be found in Appendix~\ref{sec:cuda_k_d_tree_search}. However, some key aspects is wort highlighting.
@@ -127,15 +127,15 @@ The two stacks in question is the k-stack and the transformed recursive stack, c
 \centering
 \includegraphics[width=100mm]{../gfx/shared_memory_and_stack.png}
 
-\caption{The stacks memory usage compared to the amount of shared memory.}
+\caption{The stacks memory usage, compared to the amount of shared memory. Here $k$ was sat to $100$.}
 \label{fig:stacks_and_shared_memory}
 \end{figure}
 
 
-In Figure~\ref{fig:stacks_and_shared_memory} the memory usage of each stack is compared to the available shared memory. Some basic assumptions and approximations have been done in regard to the data. Treads are only compared in multiples of $32$, since this is the warp size and is therefore the most optimal thread numbers. The value of $k$ is dependent on the problem in hand, and as our application only needs a value of $100$, that value is used. When it comes to the logarithm in the stack calculations, we have chosen $30$.  This is because the value is relatively constant and with a value of $30$ a tree with \numprint{1e9} elements are supported. This means that we are way within the limits of our application.
+In Figure~\ref{fig:stacks_and_shared_memory} the memory usage of each stack is compared to the available shared memory. Some basic assumptions and approximations have been done in regard to the data. Treads are only compared in multiples of $32$, since this is the warp size and is therefore the most optimal thread numbers. The value of $k$ is dependent on the problem in hand, and as our application only needs a value of $100$, so that value is used. 
 
 
-Figure~\ref{fig:stacks_and_shared_memory} shows that the k-stack is not a suitable candidate. Already at a thread count of $64$ the memory is filled up. The highly dependent and variably $k$ value also make the stack size unpredictable. The s-stack however looks really promising, with $64$ threads the memory usage is well below the limit.
+Figure~\ref{fig:stacks_and_shared_memory} shows that the k-stack is not a suitable candidate. Already at a thread count of $64$ the memory is filled up. The highly dependent and variably $k$ value also make the stack size unpredictable. The s-stack however looks really promising, with $64$ threads the memory usage is well below the limit. The memory size has also a relatively low asymptotic growth, \BigO{log(n)}, in regard to the tree size.
 
 \begin{figure}[ht!]
     \centering
