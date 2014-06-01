@@ -24,6 +24,60 @@ Another similar variant is application of the kNN algorithm to a set of query po
 \section{A short introduction to relevant parallel programming principles} % (fold)
 \label{sub:a_short_introduction_to_relevant_parallel_programming_principles}
 
+Parallel programming is programming targeting parallel computing, where sections of the program is executed simultaneously on multiple cores, processors, machines, or other suitable environments. We use the term parallelization to mean transformation of computational instructions intended for sequential execution to simultaneous, or parallel, execution.
+
+Parallelization can be introduced on several different levels in a computer, with bit-level parallelization, where bit level operations is parallelized within a processor as is the case for 64-bit, 32-bit, 16-bit, etc. processors, being a common low level form. In order to avoid confusion, this thesis is not concerned with such levels of parallelization, but will instead focus on higher level parallelization, related to developing and implementing algorithms in a regular programming language. We will also use the term parallel unit as a general term for a single computational unit in a theoretical parallel machine, with a unlimited number of parallel units.
+
+It is easy to grasp that parallelization can speed up the execution of a program. Given a problem where we want to add a one to every element in a list of numbers. In a sequential program we could go through the list of numbers, adding one to each element in each step. This would roughly take the time needed for adding one number to another, times the number of elements in the list. In out theoretical parallel machine, we can simply assign all the elements in the list to a different parallel unit and ask every unit to add one to its assigned number. This would take much less time than the sequential algorithm, just the time needed to add a number, since all numbers in the list is added at the same time.
+
+Adding one to the elements of a list is a trivial problem, and unfortunately not all problems can be parallelized as easy as this. Even simple problems can be hard to parallelize. Consider adding all the numbers together, instead of adding one to each one. This is a very similar problem, we still only has to add a number to all of the elements in the list. The problem is that we does not know what to add to a given element before all the previous elements has been added together. We could calculate the sub-sum of small subsections of the list in parallel, and then add the resulting sub-sums together in a sequential fashion, but then a part of our program does not execute in parallel. For many problems, we cannot entirely parallelize the execution, because some data has to be transfered between the threads. We need a way to let the parallel units communicate with each other.
+
+Communication is often a large factor in limiting the performance boost that can be harnessed from parallelization. It gives rise to implied sequential execution, since the parallel units have to wait for data from another unit. Communication is also often inherently slow, and carries a high overhead due to low transfer speeds. The possibility of minimizing the amount of communication is therefor a major factor in determining if a sequential algorithm can be successfully parallelized.
+
+\subsection{Shared memory architecture} % (fold)
+\label{sub:shared_memory_architecture}
+In a parallel computer using shared memory architecture (SMA), the different parallel units all share a global shared memory. The parallel units usually are different processors, often located within the same physical chip like a multi-core CPU. 
+
+This is the architecture used by most modern desktop computers. Different varieties exist, with separate processor cache for each processor core, shared cache or even a combination, with shared L2 cache and distributed L1 cache. From the point of view of this thesis, all these varieties would fall under the SMA classification.
+
+Shared memory is easy to work with and understand, and communication between different parallel units can be facilitated quite easily, and relatively fast, by reading and writing the same memory. The drawback is that the programmer must ensure that the different parallel units does not try to access the same memory at the same time or in the wrong order. SMA still works well for smaller parallel systems.
+% subsection shared_memory_architecture (end)
+
+\subsection{Distributed memory architecture} % (fold)
+\label{sub:distributed_memory_architecture}
+In a computer system using distributed memory architecture (DMA), each parallel unit contains both processor and memory. The processor can only access data from its own local memory, and if data is needed from another parallel unit, it has to be transfered from that units local memory into the memory of the unit in need of the data. DMA computer systems usually scales better, considering the number of parallel units, since one memory does not have to facilitate all parallel units. The drawback is that communication carries a higher overhead, since data has to be transferred between the different local memories of each unit.
+
+Computer systems using a distributed memory architecture does often more closely resemble many individual computers, working in parallel on the same problem, and communicating using specialized networking components.
+
+This is the architecture favored in todays supercomputers. Many varieties exist, especially concerning the network layout between the different machines. Since each individual parallel unit in such systems usually can be considered to be an individual computer, each unit often has a internal shared memory architecture, like desktop computer. This makes the entire system capable of harnessing the strength of both SMA and DMA, but increases the complexity that the programmer has to handle. As we will discover later in the text, GPUs are organized using an architecture with this kind of hybrid architecture.
+% subsection distributed_memory_architecture (end)
+
+\subsection{Parallel speedup} % (fold)
+\label{sub:parallel_speedup}
+Parallel speedup, or just speedup as it is often called, is a measure of how much faster a parallel algorithm is compared to its sequential counterpart.
+
+Let $T_s$ be the execution time of the sequential algorithm, and $T_p$ be the execution time of the parallel algorithm on a system with $p$ parallel units. The speedup $S_p$ is then defined as $S_p = T_s / T_p$.
+
+In the ideal situation, the relation between the speedup and the number of parallel units will be linear. Due to overhead related to possible communication, and the use of a more complex framework for the parallel code, this is usually not possible to achieve. We therefore have the parallel efficiency metric $E_p = S_p / p$, which describes how much is lost to such factors.
+
+Speedup and efficiency can be a good measure of how well the algorithm is parallelized, but it can not necessarily be used to determine if one parallel algorithm is faster than another. Parallelizing many inefficient brute-force algorithms can be done with excellent speedup and efficiency, but the resulting algorithm will often be considerably slower than the parallel version of a better sequential algorithm, or even just a better sequential algorithm. Parallelizing bad code will result in just as bad code, and thorough study of efficient algorithms should always be carried out before attempting any parallelization.
+% subsection parallel_speedup (end)
+
+\subsection{The APOD design cycle} % (fold)
+\label{sub:the_apod_design_cycle}
+In order to work efficiently with parallelization problems, many programmers adopt a work-flow similar to the APOD design cycle\citep[Assess, Parallelize, Optimize, Deploy]{cuda_c_best_practices_guide}. The cycle consists of four steps:
+
+\begin{enumerate}
+    \item \textbf{Assess:} Locate the parts of the code which take up most of the run-time. Re-writing an entire application for parallel execution is usually very hard and time consuming, if it is even possible. The best results for the user might be to just parallelize the one algorithm that is taking a long time to execute. Parallelization might not even be the answer, a faster sequential algorithm could also be a solution or part of the solution.
+
+    \item \textbf{Parallelize:} Investigate if any pre-written library of parallel functions could be used as part of, or the entire solution. Try to pinpoint which part of the code that can execute in parallel, and which part is dependent on communication. If the code is inherently dependent on communication, sequential alternatives, more suitable for parallelization, might be researched. Just not be tempted to use a inefficient algorithm because it is easy to parallelize.
+
+    \item \textbf{Optimize:} Dependent on the parallel computer system, programming language, and other tools you are using, a number of conventional optimization strategies might be applied. This should not be forgotten when writing parallel code.
+
+    \item \textbf{Deploy:} Run your application on real hardware, test thoroughly, and compare the results to the original. Did the parallelization actually increase the performance of the application? Deploy the code to potential users. They will benefit from the increased performance, and you will get feedback if any bugs exist.
+\end{enumerate}
+% subsection the_apod_design_cycle (end)
+
 % section a_short_introduction_to_relevant_parallel_programming_principles (end)
 
 \section{A short introduction to GPU programming and CUDA} % (fold)
