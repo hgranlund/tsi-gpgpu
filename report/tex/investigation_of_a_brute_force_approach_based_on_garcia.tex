@@ -1,0 +1,60 @@
+As a starting point, for our quest for a fast kNN search, our advisors gave us two papers by Garcia\citep{Garcia2008, Garcia2010}. These was the mosts referenced and recognized papers about kNN search on a GPU\@. It is therefore a natural way to start our quest. 
+
+Garcia's effort solves the kNN problem in a brute force fashion, and can therefore be used to solve our Q-kNN problem. These two papers is therefor a perfect introduction and drive our quest towards to new resource questions.  
+
+\begin{myrq}
+Can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.
+\label{rq:brute_force_performance}
+\end{myrq}
+
+\begin{myrq}
+Can a parallel brute force kNN algorithm be fast enough to solve the Q-kNN or All-kNN problem within reasonable time?
+\label{rq:brute_force_Q-kNN}
+\end{myrq}
+
+
+% \subsection{Garcia's effort} % (fold)
+\subsection{Garcia's path} % (fold)
+\label{sub:garcia_s_effort}
+ 
+Garcia's effort is based around a more mathematical version of our problem. A mathematician like to generalize a problem and make it a more uniform and accessible to other applications. For example, a mathematician does not make laws for only a 3-d space, but makes a more generalized version in the n-d space. In this case is is by widening the dimensions and not restricting the amounts of neighbors. In short, his problem is to find any number of closest neighbors in a space with any number of dimensions.  
+
+His solution is based around a brute force method. In terms of speedup this would be the best alternative to parallelize the kNN search, because the task can easily be divided into individual subtasks. The brute force, or exhaustive search, algorithm basically consists of three steps:
+
+\begin{enumerate}
+       \item Compute all distances between $q$ and all $m$ reference points in $S$.
+       \item Sort the distances.
+       \item Pick the $k$ shortest distances.
+\end{enumerate}   
+
+
+If this algorithm is to be used on $n$ query points the time complexity get an extinguishing, \BigO{nmd}. That sad, the parallelizable nature of the brute force method makes it a competing candidate for our kNN search.
+
+
+\subsection{Back on the right track} % (fold)
+\label{sub:back_on_the_right_rrack}
+
+
+Garcia's mathematical approach to the kNN problem is good and generic solution, but we need to take it back to our problem. Our problem, in regard to Garcia, is a more engineering-oriented problem. As engineers uses mathematical laws in a more specialized manner, we need to constrain Garcia's problem to fit our specifications. This include a 3-d space with a restricted number of $k$, as described in Section~\ref{a_short_introduction_to_kNN_search_problem}.
+
+
+%TODO: Finne en bedre overskrift
+\subsubsection{The implementation} % (fold)
+\label{ssub:the_implementation}
+
+
+ With the restrictions, as mentioned, there are a lot of improvements that could be done to the algorithm. For instance, with a dimension locked to three, the euclidean distance can be calculated in a mush easier fashion. Garcia, who has to take into account any number of dimensions, uses to vectors and cuBlas to calculate the distance. This makes a lot of extra complexity and memory transfer, that can be ignored on our case.
+
+ An other, and the most time reducing change, is the restriction on $k$. On a problem instance with a small dimension, the most time consuming operation in Garcia's algorithm is the sorting operation. For instance, on 
+
+% subsubsection the_implementation (end)
+
+
+
+% subsection back_on_the_right_rrack (end)
+
+\subsection{subsection name} % (fold)
+\label{sub:subsection_name}
+
+% subsection subsection_name (end)
+ % subsection garcia_s_effort (end) 
