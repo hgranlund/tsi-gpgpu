@@ -39,22 +39,123 @@ Garcia's mathematical approach to the kNN problem is good and generic solution, 
 
 
 %TODO: Finne en bedre overskrift
-\subsubsection{The implementation} % (fold)
-\label{ssub:the_implementation}
+% \subsubsection{The implementation} % (fold)
+% \label{ssub:the_implementation}
+
+First of all, Garcia's implementation only supports problem sizes up to $65535$, as our point clouds tends to be mush bigger, an expansion is necessary. The limitation of $65535$ is exactly the number of theoretical blocks a kernel is allowed to spawn. An expatiation is therefore only a implementation issue, and is solved by a general partitioning algorithm. In short, the algorithm splits a list into a number of partitions. In this case it is to partition the problem amongst different blocks, as visualized in Algorithm~\ref{alg:general_aspects_dividing}. The hole reimplementation of Garcia's algorithm can be found in Appendix~\ref{sec:brute_force_garcia}.
+
+\begin{algorithm}[ht]
+\caption{General conversion from \dots}
+\label{alg:general_aspects_dividing}
+\begin{algorithmic}
+    \Require{needs to be implemented}
+    \State Throw NotImplementedExeption().
+\end{algorithmic}
+\end{algorithm}
 
 
- With the restrictions, as mentioned, there are a lot of improvements that could be done to the algorithm. For instance, with a dimension locked to three, the euclidean distance can be calculated in a mush easier fashion. Garcia, who has to take into account any number of dimensions, uses to vectors and cuBlas to calculate the distance. This makes a lot of extra complexity and memory transfer, that can be ignored on our case.
+A lot of improvements can be done to the algorithm with the specialized case that we are working on. For instance, with the dimension locked to three, the euclidean distance can be calculated in a mush easier fashion. Garcia, who has to take into account any number of dimensions, uses to vectors and cuBlas to calculate the distance. This makes a lot of extra complexity and data bandwidth, that can be ignored on our case.
 
- An other, and the most time reducing change, is the restriction on $k$. On a problem instance with a small dimension, the most time consuming operation in Garcia's algorithm is the sorting operation. For instance, on 
 
+An other, and the most time reducing improvement, hos to to with the sorting step. On a problem instance with a small dimension, the most time consuming operation in Garcia's algorithm is the sorting operation. For instance, a search with $8$ dimensions, the sort occupies $62\%$ of the time. 
+
+\subsubsection{Bitonic sort} % (fold)
+\label{ssub:bitonic_sort}
+
+
+The best sorting algorithm today has a time complexity of \BigO{mlog(m)}, which is a high price to pay for getting the smallest values in a list.  One could, as Garcia mentions, use a sorting algorithm that sorts the list in a linear fashion, where the smallest elements are sorted first. However, this property often gives the soring algorithm a bad time complexity. For instance, the insertion sort\cite{Cormen:2001} has a time complexity of \BigO{m^2}, and if it was used in our problem the time complexity of finding the $k$ smallest points would be \BigO{mk}. Asymptotically his would give a better timing results in cases where $k$ was smaller then $log(m)$. To get a better understanding of these numbers lets look at an example. If we analyze a case with a $k$ of around $100$, as is a fitting number for our problem. To get a time improvement from the insertion sort, asymptoticly speaking, the problem size has to be bigger then $2^{100}$, which is a overwhelming $1.3e30$. We therefore think insertion sort is not the way to take.
+
+Graham Nolan discusses the possibility of improving Garcia's algorithm by using bitonic sort, and he stats that it gave an significant impact\citep{Nolan}. Bitonic sort is a known \BigO{mlog(m)} algorithm, and is based around a soring network. The network is a series of interleaving bitonic sequences. A sequence is bitonic if it monotonically increases an then monotonically decreases\cite{Cormen:2001}. An iterative version of the bitonic sort is described in Algorithm~\ref{alg:bitonic_sort}.
+
+\begin{algorithm}[ht]
+\caption{General resource partitioning in CUDA}
+\label{alg:bitonic_sort}
+\begin{algorithmic}
+    \Require{needs to be implemented}
+    \State Throw NotImplementedExeption().
+\end{algorithmic}
+\end{algorithm}
+
+% subsubsection bitonic_sort (end)
+
+\subsubsection{Min-reduce} % (fold)
+\label{ssub:min_reduce}
+
+Sorting the distances, with a \BigO{mlog(m)} operations, steal looks like a high price to pay to get the smallest values. Especially if $k$ is reasonably small. Why do we need to sort the list in the first place? Sorting is a very naive way to go. The problem it solves is also extremely general to our specific goal, to get the smallest $k$ values. An algorithm that is more suitable, and also highly parallelizable, is a reduce operation. A $\otimes$-reduction of an array $d[1 \dots m]$, where $\otimes$ as any associative operator, is the value
+
+     $$ y = d[1] \otimes d[2] \dots \otimes d[m].$$\cite{Cormen:2001}
+
+In serial this is a typical linear algorithm with time complexity \BigO{m}, as shown in Algorithm~\ref{alg:serial_reduce}. 
+
+\begin{algorithm}[ht]
+\caption{Serial $\otimes$-reduction}
+\label{alg:serial_reduce}
+\begin{algorithmic}
+    \State Let $\otimes$ be any associative operator.
+    \Function{Reduce}{$d, \otimes$}
+        \State $y \gets d[0]$
+        \For{$i \gets 1,\, m$}
+            \State $y \gets y \otimes d[i]$
+        \EndFor
+    \EndFunction
+\end{algorithmic}
+\end{algorithm}
+
+Since the operator $\otimes$ is associative, there is no difference in which way the values are calculated or if it's done on parallel. A tree based approach, like Figure~\ref{fig:paralell_reduce_operation}, could be used. Here each level do the associative operations in parallel, the results are combined as the tree level progresses, until only one element remains. The parallel equivalent to Algorithm~\ref{alg:serial_reduce} is therefore done in \BigO{log(n)} time. 
+
+% TODO: finne en tittle
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=50mm]{../gfx/min_reduce.png}
+
+\caption{A visualization of the parallel min-reduce operation.}
+\label{fig:paralell_reduce_operation}
+\end{figure}
+
+To solve our problem the associative operation has to be the minimal operator. A min-reduce algorithm is easy to implementation in CUDA, but it is hard to get fast. Some implementation techniques, like unrolling, sequential addressing and warp unrolling, described in Section~\ref{sec:cuda_optimizations}, is therefore necessary.   
+% subsubsection min_reduce (end)
+
+\subsubsection{Results} % (fold)
+\label{ssub:comparison}
+
+% subsubsection comparison (end)
+Now that we have 3 different implementations of the kNN brute force method, lets look at how they compete. Figure~\ref{fig:brute_force} shows the timing results with $k$ equals $10$. Garcia's algorithm lose mush time, because of the more general problem it solves. The generality also impacts the number of supported reference points, as the shorted graph implies. Graham Nolan's idea to improve the sorting algorithm gave a huge impact. It is almost five times faster then Garcia's implementation, shown in Table~\ref{tab:tabulated_results_from_brute_force}. Bitonic sort has a soring network that is based suited for lengths that is a power of two, which give some pits in the graph. Partitioning of the list amongst the CUDA blocks also moved the pits a bit around.  
+
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=100mm]{../gfx/brute_force.png}
+
+\caption{Three different kNN brute force implementations. The timing results is based on a $k$ equal to $10$.}
+\label{fig:brute_force}
+\end{figure}
+
+
+
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{ | l | l |l |l|}
+    \hline
+    \textbf{Reference points (m)} &\textbf{Garcia} & \textbf{Bitonic sort} & \textbf{Min-reduce}\\ \hline
+    \textbf{\numprint{6.0e5}} & $231.8ms$ & $48.1ms$& $3.3ms$\\ \hline
+    \textbf{\numprint{1.1e7}} & -& $1077.2ms$ & $54.2 ms$ \\ \hline
+    \end{tabular}
+    \caption{Some tabulated results from Figure~\ref{fig:brute_force}.}
+    \label{tab:tabulated_results_from_brute_force}
+\end{table}
+
+
+The big winner in this contest is the min-reduce version. It is $70$ times faster then Garcia and almost $15$ times faster then the bitonic version. Although min reduce is the big winner at a low k, lets not imply that it always is going to be the best alternative before some analysis are made.
+
+First of all, lets see whats happening asymptoticly when $k$ is increased.  Performing $k$ min-reduce operations takes \BigO{klog(m)} time, because one min-reduce has a time complexity of \BigO{log(m)}. If we increase $k$ towards $m$, the time complexity will go towards \BigO{mlog(m)}. This is the same time complexity as our bitonic sort. The asymptotic growth of the min-reduce variant will therefore not be any different then the bitonic sort variant, even though $k$ equals $m$. 
+
+
+The min-reduce naturally have more constant time penalties than the bitonic version, but if $k$ is reasonably small, the min-reduce method is highly superior.   
 % subsubsection the_implementation (end)
 
 
 
 % subsection back_on_the_right_rrack (end)
 
-\subsection{subsection name} % (fold)
-\label{sub:subsection_name}
-
-% subsection subsection_name (end)
  % subsection garcia_s_effort (end) 
