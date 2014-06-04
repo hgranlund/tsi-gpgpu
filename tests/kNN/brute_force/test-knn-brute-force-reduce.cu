@@ -1,5 +1,6 @@
 #include "kNN-brute-force-reduce.cuh"
 #include <knn_gpgpu.h>
+#include "kNN-brute-force-reduce.cuh"
 #include "test-common.cuh"
 
 
@@ -32,7 +33,7 @@ TEST(knn_brute_force_reduce, correctness)
 
     for (i = 0; i < iterations; i++)
     {
-        knn_brute_force_reduce(ref, ref_nb, query, dim, k, dist, ind);
+        knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
     }
 
     for (unsigned int i = 0; i < k; ++i)
@@ -81,7 +82,7 @@ TEST(knn_brute_force_reduce, timing)
 
     checkCudaErrors(cudaEventRecord(start, 0));
 
-    knn_brute_force_reduce(ref, ref_nb, query, dim, k, dist, ind);
+    knn_brute_force(ref, ref_nb, query, dim, k, dist, ind);
 
 
     checkCudaErrors(cudaEventRecord(stop, 0));

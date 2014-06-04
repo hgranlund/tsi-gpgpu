@@ -176,7 +176,7 @@ uint factorRadix2(uint *log2L, uint L)
     }
 }
 
-void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, int k, float *dist_host, int *ind_host)
+void knn_brute_force_bitonic_sort(float *ref_host, int ref_nb, float *query_host, int dim, int k, float *dist_host, int *ind_host)
 {
 
     unsigned int size_of_float = sizeof(float);

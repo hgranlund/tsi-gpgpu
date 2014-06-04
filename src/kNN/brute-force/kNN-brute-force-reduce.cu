@@ -1,6 +1,8 @@
 
 
 #include "kNN-brute-force-bitonic.cuh"
+#include "knn_gpgpu.h"
+#include "kNN-brute-force-reduce.cuh"
 // #include "../kernels/reduction.cuh"
 #include "reduction-mod.cuh"
 
@@ -42,8 +44,7 @@ __global__ void cuParallelSqrt(Distance *dist, unsigned int k)
     }
 }
 
-
-void knn_brute_force_reduce(float *h_ref, unsigned int ref_nb, float *h_query, unsigned int dim, unsigned int k, float *dist, int *ind)
+void knn_brute_force(float *h_ref, int ref_nb, float *h_query, int dim, int k, float *dist, int *ind)
 {
 
     float        *d_ref;
