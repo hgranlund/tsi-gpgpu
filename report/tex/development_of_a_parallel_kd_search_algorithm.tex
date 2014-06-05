@@ -159,8 +159,17 @@ An other reason is that there is some kind of programming error, and some part o
 Although global and local memory presumably is stored at the same place, the are some noticeable differences that can explain the time gap between them. The cache may be a factor. The cache is placed on the same on-chip memory as the shared memory, and should therefore be equally fast. The difference is that cashing is not programmable and therefor not controlled be the programmer. However some properties in the local memory may suggest that it is a more likely candidate to be cached. The local memory is thread dependent and is not accessible to other threads or blocks as the global memory are. The compiler can therefor logically imply that the data is not going to be modified by other threads and caching becomes mush more likely. Figure~\ref{fig:stacks_and_shared_memory}, also shows us that the cache can fit the hole s-stack in a block, which correlates with the timing results. To enforce cache use even further, CUDA gives a runtime option to enforce more of the on-chip memory to caching.
 
 
-% Må ha Skal vi ha noen diskusjon rundt k-stack. Denne m
-The discussion and results for the stack analysis shows that the stacks highly impact the timing results. This means that the k-stack is also a dominant  speed factor, as corresponds well to the k-stack tests that was performed. Two k-stack variants was tested. One that used a bobble sort\cite{Cormen:2001} like implementation. It works by always keeping a sorted list. An element is inserted by, from the bottom position, swapping it to the adjustment element until it is in the right place. The other method is based on a heap sort implementation, that is explained in Section~\ref{sub:querying_the_k_d_tree}. The timing difference between the two implementations was around $5$ times. The fastest one was of course the heap-sort variant, since it need less element retrievals. The difference is the insertion time, where the bobble variant is a \BigO{n} time complexity, while heap sort variant has a \BigO{log_2(n)}.
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=100mm]{../gfx/k_stack.png}
+
+    \caption{Timing results from two different k-stack implementations, with varying $k$ and \numprint{1e6} referance points. }
+    \label{tbl:k_stack}
+\end{figure}
+
+
+% Må ha Skal vi ha noen diskusjon rundt k-stack. 
+The discussion and results for the stack analysis shows that the stacks highly impact the timing results. This means that the k-stack is also a dominant  speed factor, as corresponds well to the k-stack tests, shown in Figure~\ref{tbl:k_stack}. Two k-stack variants was tested. One that used a bobble sort\cite{Cormen:2001} like implementation. It works by always keeping a sorted list. Elements are inserted by placing it at the end if the list, and swapping it to the adjustment element, until it is in the right place. The other method is based on a heap sort implementation, that is explained in Section~\ref{sub:querying_the_k_d_tree}. The difference is the insertion time, where the bobble variant is a \BigO{n} time complexity, while heap sort variant has a \BigO{log_2(n)}. Resulting in a almost $7$ times baster k-stack, with only a $k$ value of $100$, mostly because the max-heap variant needs lesser element retrievals. (TODO: Skrive om dette lite jaaaaa)
 
 
 \subsubsection{Open-MP} % (fold)
