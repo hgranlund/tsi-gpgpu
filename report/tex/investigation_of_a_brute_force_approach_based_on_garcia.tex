@@ -43,7 +43,7 @@ Garcia's mathematical approach to the kNN problem is good and generic solution, 
 First of all, Garcia's implementation only supports problem sizes up to $65535$, as our point clouds tends to be mush bigger, an expansion is therefore necessary. The limitation of $65535$ is exactly the number of theoretical blocks a kernel is allowed to spawn. An expatiation is therefore only a implementation issue, and is solved by a general partitioning algorithm. In short, the algorithm splits a list into a number of partitions. In this case, it is to partition the problem amongst different blocks, as visualized in Algorithm~\ref{alg:general_aspects_dividing}. The hole reimplementation of Garcia's algorithm can be found in Appendix~\ref{sec:brute_force_garcia}.
 
 \begin{algorithm}[ht]
-\caption{General conversion from \dots}
+\caption{General work distribution in CUDA}
 \label{alg:general_aspects_dividing}
 \begin{algorithmic}
 \State Let $L$ be any dividable work quantity of size $l$.
