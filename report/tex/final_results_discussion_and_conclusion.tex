@@ -6,20 +6,122 @@
 \section{Test environment} % (fold)
 \label{sec:test_environment}
 
+Test environment 1: GTX 560, i7 2600K, (RAM ?) Linux/OS graphics turned off.
+%Test environment 2: GTX 560, i7 2600K, Windows
+Test environment 3: AWS
+
+I should be noted that in our tests, we got noticeable better results, once the GPU was warmed up after a couple of runs. The cause of this phenomenon is not known to us.
 % section test_envorinment (end)
 
-\section{Results relevant for fastest possible execution} % (fold)
-\label{sub:results_relevant_for_fastest_possible_execution}
+\section{Final results} % (fold)
+\label{sec:final_results}
+During the development of our algorithms, we have presented many intermediate results, in order to argument for the design and implementation choices made. In this section, we will present our final results for the GPU parallelized brute force, GPU parallelized and CPU parallelized k-d tree based kNN algorithm.
 
-% section results_relevant_for_fastest_possible_execution (end)
+We wanted to test the performance of our algorithms as closely as possible to the TSI point cloud use-case. This meant exploring the performance of the algorithms for solving the All-kNN problem for point clouds in the order of magnitude $1e7$ and values of $k<=100$. As well as exploring the requirements stated by TSI, we wanted the test set to be able to run within reasonable time, since we wanted to be able to run the same tests for every major update to our implementation. To do this two test cases where set up.
 
-\section{Discussion of results} % (fold)
-\label{sub:discussion_of_results}
+Test case one, is concerned with exploring the performance of the algorithm, when solving the All-kNN problem for a large number of points $1e7<=n<=2e7$. We initially wanted to perform this test for several test series with $k$ varying from one to a hundred. Unfortunately, due to the size of $n$, this test ended up consuming all our system memory (RAM) for higher values of $k$, as well as being a very time consuming test set to run. To get around this limitation, we choose to restrict $k$ to one in this test set, just focusing on the performance related to scaling $n$.
 
-% section discussion_of_results (end)
+In order to explore the performance of the different algorithms when scaling $k$, we constructed a second set of tests. In test case two, several test-runs on point clouds ranging from $1e7<=n<=2e7$ is performed. Each with a different value for $1<=k<=100$, but instead for solving the All-kNN problem, we are solving the Q-kNN problem for $Q=10^6$. This way we where able to test the algorithm for the same range of $n$. Since the difference between the All-kNN problem and the Q-kNN problem is only concerned with the number of consecutive queries performed, the relative speed difference arising from changing the value of $k$ is the same.
 
-\section{Conclusion, and a note on possible further work} % (fold)
-\label{sub:conclusion_and_a_note_on_possible_further_work}
+All tests where performed on synthetic data, with a set of points uniformly distributed in a unit cube in the first octant.
 
-% section conclusion_and_a_note_on_possible_further_work (end)
-% section final_results_discussion_and_conclusion_ (end)
+Let us first look at the results for the GPU parallelized and CPU parallelized k-d tree based algorithm.
+
+Figure \ref{fig:v17-gtx-560} shows the performance of the GPU parallelized k-d tree based build and query algorithm. Since the query time and build time is shown as individual graphs, the total time for solving the All-kNN problem for a given problem size is the sum of the build and the query time.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/v17-gtx-560.png}
+    \caption{Timing results for k-d tree build and n query with k equal to one. Test performed on GTX 560.}
+    \label{fig:v17-gtx-560}
+\end{figure}
+
+As expected, both algorithms scale quite linearly, with some deviation, especially around $n=1,5e7$. We do not consider this deviation to be of statistical significance, and is most probably due to test machine running other processes during the test. The correlation between the build results and the query results, is also most probably explained by the build and query timing data being gathered from the same run of the program.
+
+In the final version of the GPU parallelized versions of the k-d tree algorithms we note that optimization of the original algorithm has managed to bring the query time for the All-kNN problem below the time needed for building the tree. We are, in other word, able to solve the kNN problem for all the points in the tree in about halve the time it takes to build the data structure. This is a big improvement compared to the initial parallel implementation, which ran substantially slower than the build algorithm.
+
+The results show that our implementation is able to solve the All-kNN problem, with $k=1$, for a point cloud of 20 million in about $6,7$ seconds.
+
+In figure \ref{fig:v17-gpu-variable-k} we sew how increasing $k$ affects our run time.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/v17-gpu-variable-k.png}
+    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+    \label{fig:v17-gpu-variable-k}
+\end{figure}
+
+The results seem to indicate that increasing $k$ adds a constant factor penalty to the runtime of the query algorithm. For each increment of $20$ in $k$, we see a corresponding increase in the runtime of about $1200$ to $1400$ ms. Although the runtime increase is constant, it is quite significant, dominating the increase in runtime caused by increasing the number of points. If we e.g. compare the test series for $k=20$ and $k=40$, the runtime for $k=20$ and $k=40$ increases with just about $90$ ms when $n$ is increased from $1e7$ to $2e7$. In comparison, the average runtime difference between the series is about $1200$ ms. In both cases both $k$ and $n$ is doubled, so despite the large difference in absolute value, this supports the assessment that scaling $k$ is a more expensive operation than scaling $n$ for this algorithm. This nature is not optimal, but is still a good fit for the requirements stated by TSI.
+
+% Remember to include information about the AWS hardware setup
+In order to investigate the performance of the GPU parallelized k-d tree based algorithm on hardware designed for GPGPU applications, test case one where repeated on a rented GPGPU graphics card supplied by Amazon Web Service (AWS). The main difference between the AWS GPU and the GTX 560 Ti, is that the AWS GPU have more memory available on the GPU itself, 4Gb compared to 1Gb, as well as more parallel cores and threads. In addition, it is running system software, optimized for GPGPU applications. The additional GPU memory allowed us to run the All-kNN query for a larger number of points $1e7<=n<=1e8$. Figure \ref{fig:v17-aws} shows the results obtained.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/v17-aws.png}
+    \caption{Timing results for k-d tree build and n query with k equal to one. Test performed on Amazon web service.}
+    \label{fig:v17-aws}
+\end{figure}
+
+The linear increase in runtime seem to be present in this graph as well, especially for the query algorithm. Comparing the runtime of the build and query algorithms, the query still take less time then the build, but the runtime is initially closer than in figure \ref{fig:v17-gtx-560}, and the gap widens when $n$ increases. This is a trend that was not initially present when testing on the GTX 560, and may have been caused by the smaller difference in $n$ used when testing on the GTX. In addition, and quite surprisingly, the AWS GPU is slower than the GTX 560 in solving All-kNN for $n=1e7$ and $n=2e7$. An interesting result, considering that the AWS GPU should supposedly be better suited to GPGPU applications.
+
+The CPU parallelized version of the k-d tree based query algorithm was also subjected to both test cases. Figure \ref{fig:v17-gpu-vs-cpu} shows the runtime of the query algorithm in both the GPU and CPU parallelized version, subjected to test case one.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/v17-gpu-vs-cpu.png}
+    \caption{Comparison of runtime for GPU (GTX 560) and CPU (OpenMP) parallelized k-d tree based n query.}
+    \label{fig:v17-gpu-vs-cpu}
+\end{figure}
+
+Figure \ref{fig:v17-cpu-variable-k} shows how the CPU parallelized query performs when subjected to test case two.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/v17-cpu-variable-k.png}
+    \caption{Timing results for varying values of k with CPU parallelized algorithm.}
+    \label{fig:v17-cpu-variable-k}
+\end{figure}
+
+In both figure \ref{fig:v17-gpu-vs-cpu} and figure \ref{fig:v17-cpu-variable-k} the CPU based parallelization is slower than the GPU based parallelization. This indicates, that for this algorithm, the benefit of having faster individual cores, and less overhead related to memory transfer on the CPU, is not enough to offset the drawback of the CPU has a lot fewer parallel cores than the GPU.
+
+Let us now have a look at how the brute-force algorithm performs subjected to these tests. Due to the low performance of the brute-force algorithm on repeated queries, test case one and two had to be modified. In both cases, we are testing our implementation on the kNN problem, and multiplying the timing result with $n$ and $q$. This will still give us a good approximation of the actual run time, since the brute-force algorithm is just executed sequentially when solving All-kNN and Q-kNN problems. Figure \ref{fig:brute-force-query} shows the estimated timing results obtained by testing the brute-force algorithm this way.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/brute-force-query.png}
+    \caption{Timing results for brute force query with k equal to one. Test performed on GTX 560.}
+    \label{fig:brute-force-query}
+\end{figure}
+
+The results from test case one confirms what our initial calculations indicated. The brute-force algorithm is very slow when applied to the All-kNN problem. Even solving All-kNN for the smallest point cloud $n=1e7$ would require approximately $2,7e8$ ms, or 75 hours.
+
+Figure \ref{fig:brute-force-variable-k} show the performance of the brute force algorithm on test case two.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/brute-force-variable-k.png}
+    \caption{Timing results for the brute force algorithm with varying values of k. Test performed on GTX 560.}
+    \label{fig:brute-force-variable-k}
+\end{figure}
+
+Increasing the value for $k$ shows a trend similar in overall to the k-d tree based algorithm, but with overall slower results. Another difference is that increasing $k$ from 80 to 100 seems to give a lover penalty than increasing $k$ from 1 to 20.
+% section final_results (end)
+
+\section{Relevant results from literature} % (fold)
+\label{sec:Relevant_results_from_literature}
+In this section we will present some results from literature.
+
+Garcia results \cite{Garcia2010}
+
+Approx 60x faster on k = 100, 70x faster on k = 1
+
+Possible note: Compared to Garcia, this implementation scales better in relation to n, but not as good in relation to k.
+
+Brown results \cite{Brown2010}
+% section Relevant_results_from_literature (end)
+
+\section{Conclusion} % (fold)
+\label{sec:conclusion}
+
+% section conclusion (end)
