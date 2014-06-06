@@ -137,4 +137,12 @@ if (BUILD_TESTS)
   target_link_libraries(time_kd_search_openmp knn_gpgpu)
   add_custom_target(kd_search_openmp time_kd_search_openmp)
 
+  cuda_add_executable(time_brute_force_reduce
+    kNN/kd-tree/time-brute-force-reduce.cu
+    OPTIONS ${GENCODE}  ${VERBOSE_PTXAS}
+  )
+
+  target_link_libraries(time_brute_force_reduce knn_gpgpu)
+  add_custom_target(brute_force time_brute_force_reduce)
+
   endif()

@@ -1,7 +1,7 @@
 
 As noted in the previous section, the k-d tree build process is by far the most expensive operation, and we would save a lot of time by managing to parallelize it.
 
-One could think, why not use the same algorithm as in the serial case. This is a intuitive choice, but since the environment has changed the optimal algorithm may have changed as well. This is specialty true for our implementation, Algorithm~\ref{alg:seriel_tree_build}, since in a CUDA context a recursive algorithm is hard to parallelize. CUDA is based on a massive number of lightweight threads, and to get a fast algorithm one have to split the work between as many threads as possible. This is only possible if it is easy to divide the work into independent subtasks. In a recursive context this is hard, because a algorithms execution flow in hidden inside a threads call stack. It is therefore hard for other threads to get the information needed to participate. The opposite of a recessive algorithm in an iterative approach, with have a more globally accessible execution flow. This introduces a new resource question.
+One could think, why not use the same algorithm as in the serial case. This is a intuitive choice, but since the environment has changed the optimal algorithm may have changed as well. This is specialty true for our implementation, Algorithm~\ref{alg:seriel_tree_build}, since in a CUDA context a recursive algorithm is hard to parallelize. CUDA is based on a massive number of lightweight threads, and to get a fast algorithm one have to split the work between as many threads as possible. This is only possible if it is easy to divide the work into independent subtasks, where data communication is at a minimum. In a recursive context, execution flow in hidden inside each threads call stack. Information needed by other threads to participate is therefore not easy to obtain. The opposite of a recessive algorithm in an iterative approach, with have a more globally accessible execution flow. This introduces a new research question.
 
 \begin{myrq}
 \label{rq:parallel_build}
@@ -17,16 +17,15 @@ In order to investigate RQ~\ref{rq:parallel_build}, we have to look a bit closer
 
 Before we dive into the parallelization strategy and how the parallelization can be done, lets try to make a iterative solution. We can start by enumerating the different steps in the recursive implementation.
 
-Steps:
 \begin{enumerate}
     \item Find the median of the points along a specified axis. This median point becomes the value of the current node.
     \item Sort all points with lower values than the median to the left of the median, and all the points with higher values than the median to the right.
     \item Perform this algorithm recursively on the left and right set of nodes.
 \end{enumerate}
 
-From the steps one can see that for each node in the k-d tree one have to partition a list around its median. We can call this recursive step to balance a subtree, since one of these operations creates the root node of the corresponding subtree.  If we analyze the Algorithm~\ref{alg:seriel_tree_build}, we see that there are two recursive calls. This is logical, because we are building a binary tree where each node have two children. The interesting observation is that a node balance is only dependent on the parent node. This means that each tree level are independent and can be done iteratively.
+From the steps one can see that for each node in the k-d tree one have to partition a list around its median. We can call this recursive step to balance a subtree, since one of these operations creates the root node of the corresponding subtree. If we analyze the Algorithm~\ref{alg:seriel_tree_build}, we see that there are two recursive calls. This is logical, because we are building a binary tree where each node have two children. The interesting observation is that a node balance is only dependent on the parent node. This means that each tree level are independent and can be done iteratively.
 
-The k-d tree construction basically boils down to successively balance each node in the tree. This leads to a basic reimplementation, see Algorithm~\ref{alg:iterativ_tree_build}. It goes through each level of the tree, starting at the top, and balances the nodes in the current tree level and discriminant.
+The k-d tree construction basically boils down to successively balance each node in the tree. This leads to a basic reimplementation, see Algorithm~\ref{alg:iterativ_tree_build}. It goes through each level of the tree, starting at the top, and balances each node successively down the tree.
 
 \begin{algorithm}
 \caption{Iterative k-d tree build}
@@ -75,7 +74,7 @@ Both strategies can be used in conjunction with each other. The parallel balance
 \centering
 \includegraphics[width=100mm]{../gfx/Tree_level_development.png}
 
-\caption{Development of subtasks as the kd-tree grows. (TODO: find s better caption!!!!) }
+\caption{Development of subtasks as the kd-tree generation progresses. It shows, at each tree level, how many nodes there is to parallelize and how big each node balancing is. }
 \label{fig:tree_level_development}
 \end{figure}
 
@@ -85,12 +84,12 @@ Both strategies can be used in conjunction with each other. The parallel balance
 \label{ssub:divide_work_on_cuda}
 
 
-CUDA have a special architecture that should be taken into account when parallelizing an algorithm. To efficiently use CUDA the program has to keep thousands of threads occupied, otherwise the benefit of CUDA disappears.The CUDA programming model is build up by a grid if independent block, i.e.\ execution can not be synchronized across blocks. Execution can only be synchronized between the 1 to 1024 theoretical threads launched inside a block~\cite{cuda_programming_guide}. Thread synchronization is important when multiple threads cooperate on one task, because at some point they need to exchange information.
+CUDA have a special architecture that should be taken into account when parallelizing an algorithm. To efficiently use CUDA the program has to keep thousands of threads occupied, otherwise the benefit of CUDA disappears. The CUDA programming model is build up by a grid if independent block, i.e.\ execution can not be synchronized across blocks. Execution can only be synchronized between the 1 to 1024 theoretical threads launched inside a block~\cite{cuda_programming_guide}. Thread synchronization is important when multiple threads cooperate on one task, because at some point information has to be exchanged.
 
 
 Our parallelization strategy stats that we have to balance one tree level after another, since they are dependent. This implies that the threads need to communicate between each tree level. One CUDA kernel should therefore balance a complete tree level. The other alternative would be to build the hole tree in one block, which would restrict our kernel to only one SM\@.
 
-The next step is how to split the tree level balance between the CUDA resources. As we observed in Section~\ref{ssub:parallelization_strategy}, the number of node in a tree level increases with the power of two as we go down the tree. The size of each balance process also decreased with a factor of two. From Fig~\ref{fig:tree_level_development} we see that a tree with $n$ elements, the task completely changes throughout the build process. First  only one node needs to be balanced, e.i only one parallel operation. At the end there are n different nodes to work on. The problem size also changes. At the top the problem size per node is $n$ and it goes towards $1$ as we increase the tree level.
+The next step is how to split the tree level balance between the CUDA resources. As we observed in Section~\ref{ssub:parallelization_strategy}, the number of node in a tree level increases with the power of two as we go down the tree. The size of each balance process also decreased with a factor of two. Fig~\ref{fig:tree_level_development} shows that our kernel, the tree balance, changes throughout the build process. First only one node needs to be balanced, e.i only one parallel operation. At the end there are $m$ different nodes to work on. The problem size also changes, at the top it is $m$ per node and  goes towards $1$ as the tree level increases.
 
 This varying problem sizes and subtasks, makes it hard to create a good work distribution between the CUDA resources. At the top part of the tree it is optimal to use many blocks to balance a node, but at the end it is desirable to balance many nodes inside every block. We choose a middle ground, to balance one node in one block. This means that there should be an overall good performance with a pick at the middle three levels.
 
@@ -102,15 +101,15 @@ This varying problem sizes and subtasks, makes it hard to create a good work dis
 \label{ssub:selecting_a_algorithm}
 
 
-Now that the overall parallelization strategy is created, we can start investigate the main operation and time consuming operation. This is the process of balancing a subtree. We have already determent that the parallelization should be done in one block, which means that one operation is done per SM\@. In other words, the task can potentially be parallelized between 1024 theoretical threads. Lets start investigating different approaches.
+Now that the overall parallelization strategy is created, we can start investigate the main and time consuming operation, balancing a tree level. We have already determent that the parallelization should be done in one block, which means that one operation is done per SM\@. In other words, the task can potentially be parallelized between 1024 theoretical threads. Lets start investigating different approaches.
 
 The main operation is to find a median. As we have seen in Section~\ref{sub:application_of_kd_trees_to_the_knn_problem}, many algorithms for finding median exist. Since we now want to implement the algorithm with CUDA, the environment has changed, and quick select may not be the best alternative anymore. The first problem with quick select is that it is recursive, which makes it hard to parallelize on CUDA\@. Therefor it may be profitable to look at other, more parallelization friendly, algorithms.
 
 
-First a reuse of the bitonic sort was investigated. Given a sorted list one can find the median directly, by simply looking at the midmost element of the array. The partitioning is also done in the process. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. The reason for this is that a pure bitonic sorting network only manage to sort lists with a length of power of two. The normal solution is to create a longer list then needed, which destroys many of the advantages with our binary tree representation. There are also other solutions to the problem, for example one by K.E. Batcher~\cite{Batcher:1968}, but these solutions introduces a lot of divergence that destroys performance on the GPU\@. We also have the inherent downside of sorting a list in order to find the median, since \BigO{n} algorithms for finding the median exist, compared to the \BigO{n log(n)} time required by sorting.
+First a reuse of the bitonic sort was investigated. Given a sorted list one can find the median directly, by simply looking at the midmost element of the array. The partitioning is also done in the process. Unfortunately this strategy proved unsuccessful, as re-purposing the bitonic algorithm for such an task proved difficult. The reason for this is that a pure bitonic sorting network only manage to sort lists with a length of power of two. The normal solution is to create a longer list then needed, which destroys many of the advantages with our binary tree representation. There are also other solutions to the problem, for example one by K.E. Batcher~\cite{Batcher:1968}, but these solutions introduces a lot of divergence that destroys performance on the GPU\@. We also have the inherent downside of sorting a list in order to find the median, since \BigO{m} algorithms for finding the median exist, compared to the \BigO{m log(m)} time required by sorting.
 
 
-The existing linear algorithms for finding the median is mostly based on a more generic problem, namely selection or k'th order statistic algorithms \citep[Chapter 9]{Cormen:2001}. Our serial choice, Quick select, is one of these. It is possible to implement a iterative version, so that the bad properties from the recursive version are eliminated. This option was ignored, because literature states that there are other better suited algorithms, like Alabi \citep{Alabi:2012}. Alabi goes through the radix select and bucket select algorithm in detail. The big difference between them is the constant time penalty. The radix sort have a more exact time complexity of \BigO{bn}, where b is the number of bits in each number. While the penalty for bucket select is \BigO{an}, where $a$ stands for the degree of agglomeration in the values. In other words, the algorithm is week when the points are clusters together. His results shows that bucket select normally is slightly faster, except when $a$ is high. Although bucket select normally have better results, we expect a high degree of agglomeration in our application, so we choose radix select.
+The existing linear algorithms for finding the median is mostly based on a more generic problem, namely selection or k'th order statistic algorithms \citep[Chapter 9]{Cormen:2001}. Our serial choice, Quick select, is one of these. It is possible to implement a iterative version, so that the bad properties from the recursive version are eliminated. This option was ignored, because literature states that there are other better suited algorithms, like Alabi \citep{Alabi:2012}. Alabi goes through the radix select and bucket select algorithm in detail. The big difference between them is the constant time penalty. The radix sort have a more exact time complexity of \BigO{bm}, where b is the number of bits in each number. While the penalty for bucket select is \BigO{am}, where $a$ stands for the degree of agglomeration in the values. In other words, the algorithm is week when the points are clusters together. His results shows that bucket select normally is slightly faster, except when $a$ is high. Although bucket select normally have better results, we expect a high degree of agglomeration in our application, so we choose radix select.
 
 
 \subsubsection{Radix select} % (fold)
@@ -148,7 +147,7 @@ Lets take a deeper look into the Algorithm~\ref{alg:parallel_balance_subtree}, t
 \caption{Parallel subtree balance}
 \label{alg:parallel_balance_subtree}
 \begin{algorithmic}
-    \Require{A subtree $S$ of length $n$, and dimension $d$}
+    \Require{A subtree $S$ of length $m$, and dimension $d$}
     \Ensure{A balanced subtree, $S$}
     \Function{Balance-Subtree}{$T$, $d$}
         \State Let $l$ and $u$ be the upper and lower bond of current partition.
@@ -158,7 +157,7 @@ Lets take a deeper look into the Algorithm~\ref{alg:parallel_balance_subtree}, t
                 \State $Z(t) \gets $  \text{Occurrences of zeros in current bit, $b$, found by thread, $t$.}
             \EndFor
             \State $c \gets \Call{Sum-Reduce}{Z}$ \Comment{$c$ is the cut of the current partition $P$.}
-            \If{$u-c >= n/2$}
+            \If{$u-c >= m/2$}
                 \State$ u \gets u-c$
             \Else
                 \State$l \gets u-c$

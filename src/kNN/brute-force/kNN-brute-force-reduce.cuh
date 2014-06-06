@@ -6,7 +6,7 @@ __global__ void cuComputeDistance( float *ref, unsigned int ref_nb , float *quer
 __global__ void cuParallelSqrt(Distance *dist, unsigned int k);
 void min_reduce(Distance *d_dist, unsigned int n, unsigned int k, unsigned int dir);
 
-void knn_brute_force_reduce(float *ref_host, unsigned int ref_nb, float *query_host, unsigned int dim, unsigned int k, float *dist_host, int *ind_host);
+void knn_brute_force(float *ref_host, int ref_nb, float *query_host, int dim, int k, float *dist_host, int *ind_host);
 
 
 #endif
