@@ -1,11 +1,10 @@
-tsi-gpgpu
-=========
+# tsi-gpgpu
+
 
 A project to investigate the power of GPGPU programming for engineering tasks.
 
 
-The quick n'dirty guide to getting started on Windows
------------------------------------------------------
+## The quick n'dirty guide to getting started on Windows
 
 Requirements:
 
@@ -36,16 +35,16 @@ To get up and running, open the Visual Studio Command Prompt, or any other shell
 All executables will be in ```/build/bin``` and all libraries will be in ```/build/lib/```.
 
 
-Folder layout
--------------
+## Folder layout
+
 
 Code and documentation for different experiments are placed under the ```/src``` folder. Some source folders are supplies with informative README.md files. Visit [tsi-gpgpu/src/kNN](https://github.com/hgranlund/tsi-gpgpu/tree/master/src/kNN) for the most recent update on the kNN effort.
 
 Relevant papers and other background material is placed in the ```/resources``` folder.
 
 
+## 
 Installation notes for Windows
-------------------------------
 
 #### Installing CUDA
 
@@ -68,8 +67,8 @@ Visit [CMake.org](http://www.cmake.org/cmake/resources/software.html) and find a
 * Set up Powershell to work as your Visual Studio Command Prompt by loading vsvars.bat.
 
 
-Installation notes for Ubuntu
------------------------------
+## Installation notes for Ubuntu
+
 
 #### Installing CUDA
 
@@ -92,8 +91,68 @@ Installation notes for Ubuntu
 All executables will be in ```/build/bin``` and all libraries will be in ```/build/lib/```.
 
 
-Timing executables
-------------------
+
+## Amazon setup
+
+1. Create an amazon instance by following amazon's [instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/get-set-up-for-amazon-ec2.html). Select ubuntu-precise-12.04-amd64-server, and selelct the GPU intance type g2.2xlarge.
+
+2. After the instance is setup, SSH into it.
+
+3. Setup dependencies needed to install CUDA (gcc):
+
+        sudo apt-get update 
+        sudo apt-get install gcc 
+
+4. Download and install CUDA. For our choice in os, grap the following .deb file.:
+
+        wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_6.0-37_amd64.deb
+
+
+5. Then run:
+
+        sudo dpkg -i cuda-repo-ubuntu1204_6.0-37_amd64.deb
+        sudo apt-get update 
+        sudo apt-get install cuda 
+
+6. Seutp environment; add cuda to PATH and LD_LIBRARY_PATH. Add the two following lines to ~/.bashrc
+
+        export CUDA_HOME=/usr/local/cuda-6.0 
+        export LD_LIBRARY_PATH=${CUDA_HOME}/lib64 
+             
+        PATH=${CUDA_HOME}/bin:${PATH} 
+        export PATH
+
+7. Install CUDA samples (optional) to some directory:
+
+        cuda-install-samples-5.5.sh .
+
+8. Verify an example works:
+
+        cd  <NVIDIA_CUDA-5.5_Samples>/1_Utilities/deviceQuery 
+        make 
+        ./deviceQuery 
+
+9. Now that CUDA is installed, lets start building the project. First, clone the project from Github.
+
+        sudo apt-get install git
+        git clone https://github.com/hgranlund/tsi-gpgpu.git
+
+
+10. Install cmake and build the project.
+
+        cd tsi-gpgpu
+        sudo apt-get install cmake
+        mkdir build && cd build
+        cmake ..
+        make
+
+11. Now the project is created, test the solution by:
+    
+        make test
+
+
+## Timing executables
+
 
 The project comes with three timing test executables, time_kd_search, time_kd_search_openmp and time_kd_tree build. The following section describes how to use these executables for timing tests of the different library functions. Time_kd_tree build is documented in more detail as a reference for anyone not that familiar with a command line.
 
