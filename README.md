@@ -105,22 +105,19 @@ All executables will be in ```/build/bin``` and all libraries will be in ```/bui
 
 4. Download and install CUDA. For our choice in os, grap the following .deb file.:
 
-        wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_6.0-37_amd64.deb
+        wget http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1204/x86_64/cuda-repo-ubuntu1204_5.5-0_amd64.deb
 
 
 5. Then run:
 
-        sudo dpkg -i cuda-repo-ubuntu1204_6.0-37_amd64.deb
+        sudo dpkg -i cuda-repo-ubuntu1204_5.5-0_amd64.deb
         sudo apt-get update 
         sudo apt-get install cuda 
 
-6. Seutp environment; add cuda to PATH and LD_LIBRARY_PATH. Add the two following lines to ~/.bashrc
+6. Setup environment; Run the following lines. Add them to ~/.bashrc to make it permanent. 
 
-        export CUDA_HOME=/usr/local/cuda-6.0 
-        export LD_LIBRARY_PATH=${CUDA_HOME}/lib64 
-             
-        PATH=${CUDA_HOME}/bin:${PATH} 
-        export PATH
+        export PATH=/usr/local/cuda-5.5/bin:$PATH 
+        export LD_LIBRARY_PATH=/usr/local/cuda-5.5/lib64:$LD_LIBRARY_PATH 
 
 7. Install CUDA samples (optional) to some directory:
 
