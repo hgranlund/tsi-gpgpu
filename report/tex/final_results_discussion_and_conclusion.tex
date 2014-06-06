@@ -6,6 +6,10 @@
 \section{Test environment} % (fold)
 \label{sec:test_environment}
 
+To test and investigate our results three test environments have been used, as shown in Table~\ref{sec:test_environment}. They all have different properties that are used to test different aspects of our algorithms. Test environment 3 has a normal windows setup, with a graphics card that is used for both display rendering and CUDA computation. On the other hand, test environment 1, uses the same hardware, but is setup with a dedicated GPU\@. CUDA computations done on a environment without a dedicated GPU, is forced to split the resources with the running OS, which implies some restrictive properties. For instance, it is normal for an OS to kill long running processes. On windows the normal timeout is around $30$ seconds. To get around this restriction some editing in regedit is necessary.
+
+The last environment, number 2, is build on a amazon instance. This give us a way to test one a wither and a more powerful computer. In our case, as our specific application needs a high number of points, the biggest advantage was huge memory capacity on the amazon system. Increased number of CUDA cores also made it possible to test performance ratios and different variants of resource distributions. 
+
 \begin{table}[ht]
 \centering
     \begin{tabular}{|l|l|l|l|}
@@ -30,11 +34,8 @@
 
 
 
-Test environment 1: GTX 560, i7 2600K, (RAM ?) Linux/OS graphics turned off.
-%Test environment 2: GTX 560, i7 2600K, Windows
-Test environment 3: AWS
+All tests was run multiple times and averaged, to get more accurate results. It should also be noted that it is common practice to warm up the GPU before any test. Reason is that it may take as long time for the CUDA runtime to create a CUDA context, as launching the kernel itself.
 
-I should be noted that in our tests, we got noticeable better results, once the GPU was warmed up after a couple of runs. The cause of this phenomenon is not known to us.
 % section test_envorinment (end)
 
 \section{Final results} % (fold)
