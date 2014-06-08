@@ -10,11 +10,6 @@
 #define FILE (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 #define debugf(fmt, ...) if(debug)printf("%s:%d: " fmt, FILE, __LINE__, __VA_ARGS__);
 
-//TODO:
-// refactor
-// Levere alternere mellom swap og points slik at man slipper å skrive til å fra swap.
-// Ikke forandre plassering kun left and rigth????
-
 int nextPowerOf2(int x)
 {
     --x;
