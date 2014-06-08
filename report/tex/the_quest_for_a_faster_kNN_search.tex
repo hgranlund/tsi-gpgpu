@@ -302,13 +302,14 @@ In the next sections we will address these challenges, along with others, and de
 \section{CUDA Optimizations} % (fold)
 \label{sec:cuda_optimizations}
 
-Throughout this quest many optimizations have been done, some focusing on the algorithmic aspect, others more on implementation. This section is focusing on different CUDA optimizations and why it is necessary in regard of performance. Some performance considerations, like divergence, have already been mentioned. This is an imported property that have been considered in all our kernels, but had an huge algorithmic changing effect on both the tree-building algorithm and search algorithm, and was therefore necessary to take it into consideration in an earlier discussions. 
+Throughout this quest many optimizations have been done, some focusing on the algorithmic aspect, others more on implementation. This section is focusing on different CUDA optimizations and why it is necessary in regard of performance. Some performance considerations, like divergence, have already been mentioned, due to it's direct relation to the different implementations. Other important factors, occupancy, coalescing, loop-unrolling, block and thread load balancing.
+% TODO: Add arithmetic operations in list?
 
-An important metric to consider in all CUDA applications is occupancy, which relates to how many active warps there are on a SM. Earlier we have talked about how thread instructions are executed sequentially, resulting in alternating warps, one warp is paused while the other is executing. More warps a SM means that the time a stalled warp have to retrieve data increase. One should note that high occupancy does not always result in high performance, but low occupancy will always result in an inability to hide latency, which result in bad performance.
+Occupancy is a metric, which relates to how many active warps there are on a SM. Earlier we have talked about how thread instructions are executed sequentially, resulting in alternating warps, one warp is paused while the other is executing. The time a stalled warp will use to retrieve data, increases with the number of warps per SM. One should note that high occupancy does not always result in high performance, but low occupancy will always result in an inability to hide latency, which result in bad performance.
 
-The struggle to always have the right amount of occupancy, also relates to dividing CUDA resources. As well as keeping a right amount of warps in a SM, one must also keep every SM in activity. Forcing the algorithm to work over unsynchronizable blocks. Number of blocks that are necessary to keep in activity, changes with different GPU's. It is therefore important to think of how many blocks and threads that are launched with each kernel. We have solved this issue with methods that, based on different algorithmic parameters, calculates how many threads and blocks are needed for a particular launch.
+The struggle to always have the right amount of occupancy, also relates to dividing CUDA resources. As well as keeping a right amount of warps in a SM, one must also keep every SM in activity. Forcing the algorithm to work over unsynchronizable blocks. The number of blocks, that are optimal to keep in activity, changes with different GPUs. It is therefore important to think of how many blocks and threads that are launched with each kernel. We have solved this issue with methods that, based on different algorithmic parameters, calculates how many threads and blocks are needed for a particular launch.
 
-To coalesce memory access to global memory is probably one of the most performance increasing optimizations in CUDA, especially in our memory intense application. Global memory that is loaded and stored by threads in a warp can be coalesced into only one transaction, if the right conditions are met. How a device coalesce memory depends on the compute capability, but some basic properties are common. A warps access will coalesce into onto a number of transactions that equals the number of cache lines needed to service all the threads in the warp. Devices with compute capability $2.x$ will by default cache directly to L1, which has 128-byte lines. Higher capabilities will always cache to L2 cache, that have 32-byte segments\cite{cuda_c_best_practices_guide}. 
+To coalesce memory access to global memory, is probably one of the most performance increasing optimizations in CUDA, especially in our memory intense application. Global memory that is loaded and stored by threads in a warp, can be coalesced into only one transaction, if the right conditions are met. How a device coalesce memory depends on the compute capability, but some basic properties are common. A warps access will coalesce into onto a number of transactions that equals the number of cache lines needed to service all the threads in the warp. Devices with compute capability $2.x$ will by default cache directly to L1, which has 128-byte lines. Higher capabilities will always cache to L2 cache, that have 32-byte segments\cite{cuda_c_best_practices_guide}. 
 
 \begin{figure}[ht!]
     \centering
@@ -317,41 +318,21 @@ To coalesce memory access to global memory is probably one of the most performan
     \label{fig:coalesing_memory}
 \end{figure}
 
-
-
 If we focus on compute capability 2.x, Figures~\ref{fig:coalesing_memory}, shows have memory are coalesced. Green indicate memory lines that are retrieved, while blue indicate non retrieved lines. The first figure illustrate perfect coalescing, a warp performs a sequential 128-byte transaction that fit perfectly in a 128-byte lines. The second shows a misaligned sequential retrial, resulting in two transactions. The third uses stride access pattern with a offset of $128$ resulting in bad coalescing.
 
 We have tried to maximize coalescing by always using sequential addressing. This kind of addressing can be achieved in many ways. One way, that we have use throughout the code, is based on how data are partitioned and iterated. The generic partitioning algorithm, Algorithm~\ref{alg:general_aspects_dividing}, that we used to expand Garcia's algorithm, shows how this could be done.     
 
 
-The last optimization keyword we would like to introduce is unrolling. This is a technique we have used on many of our algorithms, like min-reduce, and also in some of our utility functions, like for example to accumulate an array. Unrolling is a standard technique in ordinary high performance serial programming, but give an extra dimensions of optimizations on CUDA\@. The basic idea is to for example card code a for loop, so the compiler may perform if statements at compile time. This results in lesser if statements, that destroys pipelining and therefore performance. On a CUDA context this is of course also the case, but it will also minimize divergence. Divergence is, as mentioned, branching threads, and since unrolling forces each thread to do the same, the divergence problem is minimized. Warp unrolling is also a performance gaining technique, and can be used if we know we are in a single warp. The results are, for instance, that no expensive thread synchronization is needed, since only one warp is executing. 
+The last optimization keyword we would like to introduce is unrolling. This is a technique we have used on many of our algorithms, like min-reduce, and also in some of our utility functions, like for example to accumulate an array. Unrolling is a standard technique in ordinary high performance serial programming, optimizing pipelining, and is given an extra dimensions on CUDA\@. 
 
-% Skal viu si noe om temple unrolling.
+Loop unrolling, is the procedure of rewriting a loop, containing conditional operators, into hard-coded sequential steps. This way, the result of conditional operators may be determined at compile-time, eliminating branching of the control flow. On a CUDA context this is of course the case, but in addition it will minimize divergence.
 
+The idea of loop unrolling can also be applied to warps. This is called warp unrolling, and it can be used if we know we are in a single warp. The results being, that no expensive thread synchronization is needed, since every warp is accessing a unique memory location.
 
-A last note to add is arithmetic operations. Some arithmetic operations are slow and are very costely 
-Arithmteric aperation  
+%TODO: See below.
+% A last note to add is arithmetic operations. Some arithmetic operations are slow and are very costely 
+% Arithmteric aperation  
 
-
-
-
-
-\begin{enumerate}
-\item 32 threads in a warp
-\item Number of threads and blocks. Calaculate on each lounch
-
-
-
-
-% Read more at: http://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#ixzz33tfaigHX 
-Follow us: @GPUComputing on Twitter | NVIDIA on Facebook
-\item divergence
-\item memory placement
-\item Improve utiliti methods like: accumulateindex, minReduce.
-\item Forloop Unrolling.
-\item Warp unroll
-\item Sequential addressing.
-\end{enumerate}
 % section cuda_optimizations (end)
 
 \cleardoublepage
