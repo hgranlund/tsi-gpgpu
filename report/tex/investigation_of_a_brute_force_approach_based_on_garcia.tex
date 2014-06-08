@@ -75,8 +75,8 @@ Graham Nolan discusses the possibility of improving Garcia's algorithm by using 
     \State $P \gets \{2^i|i \in \mathcal{N} \}$
     \Function{Bitonic-Sort}{$L$}
         \ForAll{$\{p \in P\ |\ p \le m \}$}
-            \ForAll{ $\{k \in P\ |\ k \in [p,0)\}$}
-                \ForAll{$i \in [0,m)$}
+            \ForAll{ $\{k \in P\ |\ p \ge k > 0\}$}
+                \ForAll{$0 \le i < m)$}
                 \State $pos \gets k \veebar p$ \Comment{$\veebar$ is the bitwise $xor$ operator}
                 \If{$pos < i$}
                     \If{$\lnot(i \& p)$} \Comment{$\&$ is the bitwise $and$ operator}
