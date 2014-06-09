@@ -3,9 +3,6 @@
 #include "utils.cuh"
 #include "knn_gpgpu.h"
 
-
-
-
 void cuSetDevice(int device)
 {
     checkCudaErrors(cudaSetDevice(device));
