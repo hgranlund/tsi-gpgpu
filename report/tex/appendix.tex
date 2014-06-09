@@ -1,6 +1,14 @@
 %!TEX root = ./main.tex
-\section*{\begin{center}{\Huge Appendix}\end{center}}
-\addcontentsline{toc}{chapter}{Appendix}
+\begin{appendices}
+\appendix
+
+\chapter{Data sheets}
+
+\includepdf[fitpaper=true, scale=1, noautoscale]{../gfx/data_sheet_variable_m.pdf}
+\includepdf[fitpaper=true, scale=1, noautoscale]{../gfx/data_sheet_variable_k.pdf}
+
+% section  (end)
+
 \chapter{Source code documentation}
 
 \section{Api documentation} % (fold)
@@ -111,3 +119,4 @@
 \lstinputlisting[language=C,breaklines=true]{../../src/kNN/kd-tree/kd-search-openmp.cu}
 % section k_d_tree_search_das_openmp (end)
 % section k_d_tree_search (end)
+\end{appendices}
