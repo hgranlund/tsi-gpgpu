@@ -98,7 +98,12 @@ A common strategy when wanting to improve the performance of repeated queries in
 
 \begin{myrq}
 \label{rq:serial-kd-tree}
-    It is possible to use a k-d tree to increase the performance of a large number of repeated, 3-d, low k queries in a large dataset?
+    It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution?
+\end{myrq}
+
+\begin{myrq}
+\label{rq:serial-kd-tree-all-knn}
+    It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute force solution?
 \end{myrq}
 
 A brief argument for why k-d trees is well suited for kNN query operations is given, then we will present the k-d tree data structure, and show how it can be used for operating on three-dimensional point cloud data. Finally a set of tests are performed on implementations of the k-d tree based algorithms, in order to determine the possible benefits of a parallel k-d tree based algorithm.

@@ -8,7 +8,7 @@
 
 To test and investigate our results three test environments have been used, as shown in Table~\ref{sec:test_environment}. They all have different properties that are used to test different aspects of our algorithms. Test environment 3 has a normal windows setup, with a graphics card that is used for both display rendering and CUDA computation. On the other hand, test environment 1, uses the same hardware, but is setup with a dedicated GPU\@. CUDA computations done on a environment without a dedicated GPU, is forced to split the resources with the running OS, which implies some restrictive properties. For instance, it is normal for an OS to kill long running processes. On windows the normal timeout is around $30$ seconds. To get around this restriction some editing in regedit is necessary.
 
-The last environment, number 2, is build on a amazon instance. This give us a way to test one a wither and a more powerful computer. In our case, as our specific application needs a high number of points, the biggest advantage was huge memory capacity on the amazon system. Increased number of CUDA cores also made it possible to test performance ratios and different variants of resource distributions. 
+The last environment, number 2, is build on a amazon instance. This give us a way to test one a wither and a more powerful computer. In our case, as our specific application needs a high number of points, the biggest  and discussionadvantage was huge memory capacity on the amazon system. Increased number of CUDA cores also made it possible to test performance ratios and different variants of resource distributions.
 
 \begin{table}[ht]
 \centering
@@ -32,14 +32,113 @@ The last environment, number 2, is build on a amazon instance. This give us a wa
     \label{tbl:test_envoronments}
 \end{table}
 
-
-
 All tests was run multiple times and averaged, to get more accurate results. It should also be noted that it is common practice to warm up the GPU before any test. Reason is that it may take as long time for the CUDA runtime to create a CUDA context, as launching the kernel itself.
-
 % section test_envorinment (end)
 
-\section{Final results} % (fold)
-\label{sec:final_results}
+\section{Final results and discussion} % (fold)
+\label{sec:final_results_and_discusstion}
+
+During the development of our algorithms, we have presented many intermediate results, in order to argument for the design and implementation choices made. In this section, we will present our final results for the GPU parallelized brute force, GPU parallelized and CPU parallelized k-d tree based kNN algorithm.
+
+The different research questions stated during development of our algorithms are revisited, and answered are given, based on the presented results. 
+
+\subsection{Solving the kNN problem} % (fold)
+\label{sub:solving_the_knn_problem}
+
+In Section~\ref{sec:brute_force_garcia} we started off our quest for a faster kNN search, by investigating a possible brute-force algorithm, pioneered by Garcia et.al. The following research question was asked. RQ~\ref{rq:brute_force_performance}, can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.
+
+In order to discuss this question, we have to clarify what we consider to be high performance in this context. The work of Garcia et.al. contains the fastest brute force algorithm, for solving the kNN problem, we have found in current literature. We would therefore consider a kNN algorithm to have high performance, if it is able to solve the kNN problem for point cloud data, in the 3D format specified by TSI, at comparable speeds to the algorithm developed by Garcia et.al. 
+
+Although the algorithm developed by Garcia et.al. is the fastest brute force algorithm we have managed to find, this is not as a high benchmark as it might initially seem. The algorithm developed by Garcia et.al. is optimized for solving the kNN problem for a more general version of the kNN problem than required by TSI. Where we are only concerned with solving the kNN problem for three dimensions, Garcia's algorithm will solve problems stated in any dimension. Given that we solve a more restricted version of the kNN problem, any less than comparable speeds to the implementation made by Garcia et.al. could not be considered to be of high performance in our eyes.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/fin-garcia-vs-min-reduce.png}
+    \caption{Timing results for varying values of k with GPU parallelized algorithm. k = 10}
+    \label{fig:fin-garcia-vs-min-reduce}
+\end{figure}
+
+A bit unfair comparison, since Garcias algorithm was not developed for this kind of application, but it gives a benchmark, since this is the fastest parallel brute force algorithm we know of for this problem.
+
+% Can we apply some data from Brown as well?
+
+Garcia results \cite{Garcia2010}
+
+Approx 60x faster on k = 100, 70x faster on k = 1
+
+Possible note: Compared to Garcia, this implementation scales better in relation to n, but not as good in relation to k.
+
+Brown results \cite{Brown2010}
+
+Comparison graph with Garcia algorithm and fastest brute force.
+
+RQ~\ref{rq:serial-kd-tree} It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution?
+
+We have investigated this as well.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/final-knn-kd-vs-bf.png}
+    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+    \label{fig:final-knn-kd-vs-bf}
+\end{figure}
+
+Unfortunatly not so good. Should be expected since time complexity of tree build and so on.
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/final-var-knn-kd-vs-bf.png}
+    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+    \label{fig:final-var-knn-kd-vs-bf}
+\end{figure}
+
+Trend is same for increasing k. Build time, not connected to k, dominates the runtime.
+
+% subsection solving_the_knn_problem (end)
+
+\subsection{Solving the All-kNN problem} % (fold)
+\label{sub:solving_the_all_knn_problem}
+
+We have seen that performance of k-d search is not good enough 
+
+RQ~\ref{rq:brute_force_Q-kNN} Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?
+
+RQ~\ref{rq:serial-kd-tree-all-knn} It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute force solution?
+
+\begin{figure}[ht!]
+    \centering
+    \includegraphics[width=120mm]{../gfx/final-all-knn-gpu-vs-cpu-vs-bf.png}
+    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+    \label{fig:final-all-knn-gpu-vs-cpu-vs-bf}
+\end{figure}
+
+\begin{figure}[ht
+    \centering
+    \includegraphics[width=120mm]{../gfx/final-var-all-knn-kd-vs-bf.png}
+    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+
+    The different research questions stated during development of our algorithms are revisited, and answerd
+    \label{fig:final-var-all-knn-kd-vs-bf}
+\end{figure}
+
+Relation to solving the TSI problem. Something about solving the All-kNN problem is most related to this, bla bla.
+
+Maybe a final graph with All-kNN, k = 100 for very large values of m? Just some data points?
+% subsection solving_the_all_knn_problem (end)
+
+\subsection{Parallelization performance increase} % (fold)
+\label{sub:parallelization_performance_increase}
+
+RQ~\ref{rq:parallel_build} It is possible to parallelize the k-d tree build algorithm, in such a way that it gives a significant speed improvement compared to the serial algorithm.
+
+RQ~\ref{rq:parallel_query} It is possible to parallelize the All-kNN query algorithm, in such a way that it gives a significant speed improvement compared to the serial algorithm.
+
+Graph of serial and parallel build, and query.
+
+Some speedup calculation. Include Garcia as well, and point out that high speedup does not equal fast algorithm.
+% subsection parallelization_performance_increase (end)
+
+
 During the development of our algorithms, we have presented many intermediate results, in order to argument for the design and implementation choices made. In this section, we will present our final results for the GPU parallelized brute force, GPU parallelized and CPU parallelized k-d tree based kNN algorithm.
 
 We wanted to test the performance of our algorithms as closely as possible to the TSI point cloud use-case. This meant exploring the performance of the algorithms for solving the All-kNN problem for point clouds in the order of magnitude $1e7$ and values of $k<=100$. As well as exploring the requirements stated by TSI, we wanted the test set to be able to run within reasonable time, since we wanted to be able to run the same tests for every major update to our implementation. To do this two test cases where set up.
@@ -131,22 +230,20 @@ Figure \ref{fig:brute-force-variable-k} show the performance of the brute force 
 \end{figure}
 
 Increasing the value for $k$ shows a trend similar in overall to the k-d tree based algorithm, but with overall slower results. Another difference is that increasing $k$ from 80 to 100 seems to give a lover penalty than increasing $k$ from 1 to 20.
-% section final_results (end)
-
-\section{Relevant results from literature} % (fold)
-\label{sec:Relevant_results_from_literature}
-In this section we will present some results from literature.
-
-Garcia results \cite{Garcia2010}
-
-Approx 60x faster on k = 100, 70x faster on k = 1
-
-Possible note: Compared to Garcia, this implementation scales better in relation to n, but not as good in relation to k.
-
-Brown results \cite{Brown2010}
-% section Relevant_results_from_literature (end)
+% section final_results_and_discusstion (end)
 
 \section{Conclusion} % (fold)
 \label{sec:conclusion}
 
+Fast algorithms have been made. The developed library of CUDA parallelized algorithms are significantly faster than comparable literature.
+
+Brute force is good for single, non-repeated, kNN queries.
+
+To solve All-kNN k-d trees is best. Big improvement over brute force approach.
+
+All-kNN is even so fast that TSI goal can be achieved. This was not possible with conventional algorithms. 
+
+In our work GPGPU has been a success, and should be explored for other problems as well.
+
+Some reccomendations for further work.
 % section conclusion (end)
