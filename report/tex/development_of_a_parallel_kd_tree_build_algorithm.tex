@@ -41,10 +41,6 @@ The k-d tree construction basically boils down to successively balance each node
     \EndFunction
 \end{algorithmic}
 \end{algorithm}
-
-% TODO: Finne ut om det er vits å ta med den codespesifikke delen under
-%The solution is not as easy as shown in Algorithm~\ref{alg:iterativ_tree_build}, one key element is omitted. It is what the call stack was hiding in the recursive implementation, namely the partition of each subtree in a given tree level. This can be solved by keeping a partition array, that keep track of each sublist. The partition array then have to be incremented at each level.
-
 % subsection from_recursive_to_iterative_implementation (end)
 
 \subsection{Parallelization strategy} % (fold)
@@ -113,9 +109,6 @@ The radix select is based on a bitwise partitioning, much like radix sort~\cite[
 \end{figure}
 
 When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort like, \citep{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select from \citep{Alabi:2012}. They both uses a parallelization strategy by splitting each radix partition into parallel operations. The way our and Alabi's solution differs from Merrill's solution, is that we start on the most significant digit, since a least significant digit approach will not reduce the k'th order statistic problem in each step.
-
-% TODO: Remove or what?
-% Our radix select is a slightly modified version in three ways. We want to solve the node task, which forces us to also partition the list around the median. The algorithm also need to work in a in place fashion. The last modification, is that our parallel operation must to several radix selections at once, at different parts of the main tree array.
 % subsection radix_select (end)
 
 \subsubsection{Our implementation} % (fold)
