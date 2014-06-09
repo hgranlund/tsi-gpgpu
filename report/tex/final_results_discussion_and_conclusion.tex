@@ -54,46 +54,35 @@ Although the algorithm developed by Garcia et.al. is the fastest brute force alg
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=120mm]{../gfx/fin-garcia-vs-min-reduce.png}
-    \caption{Timing results for varying values of k with GPU parallelized algorithm. k = 10}
+    \caption{Comparison of brute-force algorithm developed by Garcia et.al. and min-reduce based brute-force algorithm developed in this thesis. $k$ is fixed at 10 and $m$ is increasing.}
     \label{fig:fin-garcia-vs-min-reduce}
 \end{figure}
 
-A bit unfair comparison, since Garcias algorithm was not developed for this kind of application, but it gives a benchmark, since this is the fastest parallel brute force algorithm we know of for this problem.
+In Section~\ref{sub:continuing_on_garcia_s_path}, we discussed Figure~\ref{fig:brute_force}. As a reminder, part of this figure is presented as Figure~\ref{fig:fin-garcia-vs-min-reduce}, which shows the result of a comparison between the brute force algorithm developed by Garcia et.al. and our min-reduce brute-force algorithm developed in Section~\ref{sub:continuing_on_garcia_s_path}. The test is performed with a low value for $k=10$, and focuses on performance for large values of number of points, $m$. In this test, our min-reduce brute-algorithm is shown to be almost $70$ times faster than the algorithm developed by Garcia et.al. In addition, it is capable of solving the kNN problem for much larger values of $m$.
 
-% Can we apply some data from Brown as well?
+We therefore conclude that RQ~\ref{rq:brute_force_performance} can be answered with yes. High performance can be achieved with a brute-force based algorithm.
 
-Garcia results \cite{Garcia2010}
-
-Approx 60x faster on k = 100, 70x faster on k = 1
-
-Possible note: Compared to Garcia, this implementation scales better in relation to n, but not as good in relation to k.
-
-Brown results \cite{Brown2010}
-
-Comparison graph with Garcia algorithm and fastest brute force.
-
-RQ~\ref{rq:serial-kd-tree} It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution?
-
-We have investigated this as well.
+In Section~\ref{sec:brute_force_garcia} we introduced the k-d tree, a data-structure with a known \BigO{log(m)} nearest neighbor query algorithm. We therefore presented RQ~\ref{rq:serial-kd-tree}: It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution? We try to answer this question in Figure~\ref{fig:final-knn-kd-vs-bf}.
 
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=120mm]{../gfx/final-knn-kd-vs-bf.png}
-    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+    \caption{Comparison of min-reduce brute-force and k-d tree based algorithms for solving the kNN problem for $k=100$ and increasing $m$.}
     \label{fig:final-knn-kd-vs-bf}
 \end{figure}
 
-Unfortunatly not so good. Should be expected since time complexity of tree build and so on.
+The graph compares the runtime of the k-d tree build and query algorithms developed in Section~\ref{sec:development_of_a_parallel_k_d_search_algorithm} with the min-reduce brute-force algorithm. All test data is generated using test environment 1 \ref{tbl:test_envoronments}.
+
+Figure~\ref{fig:final-var-knn-kd-vs-bf} compares the same two algorithms, but for a fixed value of $m$, and increasing value of $k$. This test is also performed using test environment 1 \ref{tbl:test_envoronments}.
 
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=120mm]{../gfx/final-var-knn-kd-vs-bf.png}
-    \caption{Timing results for varying values of k with GPU parallelized algorithm.}
+    \caption{Comparison of min-reduce brute-force and k-d tree based algorithms for solving the kNN problem for $m=1e6$ and increasing $k\le200$.}
     \label{fig:final-var-knn-kd-vs-bf}
 \end{figure}
 
-Trend is same for increasing k. Build time, not connected to k, dominates the runtime.
-
+Both Figure~\ref{fig:final-knn-kd-vs-bf} and \ref{fig:final-var-knn-kd-vs-bf} shows that this algorithm is slower than a brute force approach. In order to solve the kNN problem, the k-d tree based solution first has to construct the k-d tree, then query for the closest points. Given that our previous calculation shows that the time complexity of the k-d tree build algorithm is larger than the time-complexity for the brute-force algorithm, this result should come as no surprise. Constructing the k-d data-structure for a single query is simply a waste of resources, if just one kNN query is to be performed.
 % subsection solving_the_knn_problem (end)
 
 \subsection{Solving the All-kNN problem} % (fold)
