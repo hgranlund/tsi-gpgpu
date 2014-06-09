@@ -1,11 +1,31 @@
 %!TEX root = ./main.tex
 \section*{\begin{center}{\Huge Appendix}\end{center}}
 \addcontentsline{toc}{chapter}{Appendix}
-\vspace{1 cm}
+\chapter{Source code documentation}
 
-\noindent Write your appendix here\dots
+\section{Api documentation} % (fold)
+\label{sec:api_documentation}
+
+% section api_documentation (end)
+\includepdf[fitpaper=true, pages={1,2}, scale=1, noautoscale]{../gfx/api_documentation.pdf}
+
+\section{Installation instructions} % (fold)
+\label{sec:installation_instructions}
+\includepdf[fitpaper=true, pages={1,2,3}, scale=1, noautoscale]{../gfx/instructions.pdf}
+
+
+% section installation_instructions (end)
+
 
 \chapter{Source code}
+
+\section{API header} % (fold)
+\label{sec:api_header}
+
+\lstinputlisting[language=C,breaklines=true]{../../include/knn_gpgpu.h}
+
+% section api_header (end)
+
 \section{Brute Force} % (fold)
 \label{sec:brute_force_garcia}
 
@@ -76,6 +96,8 @@
 \subsubsection{k-d tree split wrapper} % (fold)
  \label{sub:wrapper}
  
+\lstinputlisting[language=C,breaklines=true]{../../src/common/utils.cuh}
+\lstinputlisting[language=C,breaklines=true]{../../src/common/utils.cu}
 \lstinputlisting[language=C,breaklines=true]{../../src/kNN/kd-tree/kd-search.cuh}
 \lstinputlisting[language=C,breaklines=true]{../../src/kNN/kd-tree/kd-search.cu}
  % subsection wrapper (end)
