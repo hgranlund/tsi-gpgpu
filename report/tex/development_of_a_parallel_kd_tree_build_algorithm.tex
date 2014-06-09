@@ -212,5 +212,14 @@ The implementation details are omitted here, but can be found in Appendix~\ref{s
 
 We also would like to improve performance, when Balance-Subtree is applied to many small subtrees. For instance, at level $18$ there are $131072$ different subtask with only an average size of $7$. The previous implementation divided all these subtask between a small number of SM, typically $8-32$ on current NVIDIA GPUs\@. The algorithm the uses to many cores to balance a subtree of only $7$ elements, which is not a efficient way to divide resources.
 
-Letting just one thread handle the Balance-Subtree operation for small subtrees, would let us process more subtrees in parallel, improving performance. With this parallelization, each thread is responsible for it's own subtree, and communication with other threads is no longer needed.Whith the need for communication eliminated, we can utilize Algorithm~\ref{alg:seriel_tree_build}. The final implementation can be found in Appendix~\ref{sec:parallel_quick_select}.
+Letting just one thread handle the Balance-Subtree operation for small subtrees, would let us process more subtrees in parallel, improving performance. With this parallelization, each thread is responsible for it's own subtree, and communication with other threads is no longer needed. With the need for communication eliminated, we can utilize Algorithm~\ref{alg:seriel_tree_build}. 
+
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=100mm]{../gfx/the_jumps_final.png}
+\caption{Visualization of the final improvments on the k-d tree build implementation.}
+\label{fig:the_jumps_final}
+\end{figure}
+
+Now that a lot of improvments have been made, lets take a look at the results. Figure~\ref{fig:the_jumps_final} compare our imtermidiate result with our new and imporved version, and the changes made a huge impact on the performance. The jumps disappeared, and was replaced by a faster and smoother curve, indicating that the CUDA resources is perfectly balanced. The final implementation can be found in Appendix~\ref{sec:parallel_quick_select}.
 % subsection further_development (end)
