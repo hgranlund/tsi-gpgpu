@@ -17,12 +17,21 @@ Norwegian University of Science and Technology
 
 The goal of this thesis, is to investigate the possible benefits of using general-purpose computing on graphics processing units (GPGPU), in order to speed up the execution of calculations in engineering applications.
 
-% TODO: find simething better than focuses mainly and can we reduce the repeat of the thesis?
-The thesis focuses mainly on speeding up processing of laser scan point clouds in software developed by TechnoSoft Inc, by reducing the time needed to perform a k-nearest neighbors search (kNN search) for every point in the point cloud, for values of k significantly smaller than than the number of points.
-% TODO: cut of final sentence part.
+The thesis focuses primarily on speeding up the process of analyzing laser scan point clouds, in software developed by TechnoSoft Inc. This is achieved by developing faster algorithms for solving the k-nearest neighbors (kNN), and All-kNN problem, optimized for point cloud data.
 
-First, a brute force method, based on the work by Vincent Garcia et.al, is refined and evaluated for this application. Although a large speedup is gained by using this approach, the overall performance is to low to be used on the problem sizes required by TechnoSoft Inc. Second, a kd-tree based approach is investigated, and the inherent difficulties of parallelizing this tree based algorithm is addressed. Finally, it is shown that the GPGPU based algorithms developed in this thesis can be used to speed up a k-nearest neighbors search in a large point cloud.
-%TODO: Norwegian sammendrag somwhere?
+A parallel brute-force algorithm is developed, which is capable of solving the kNN problem up to $70$ times faster than a similar algorithm developed by Garcia et.al \cite{Garcia2008}, when working on comparable data.
+
+By utilizing the k-d tree data structure, a parallel tree-build and query algorithm is developed, suitable for solving the All-kNN problem. This algorithm improves the result obtained by the brute-force algorithm by up to $300$ times.
+
+% Norsk sammendrag:
+
+% Målet med denne avhandlingen, er å utforske mulighetene knyttet til å anvende GPGPU (general-purpose computing on graphics processing units) for å forbedre ytelsen til tunge beregninger i programvarebaserte ingeniørverktøy.
+
+% Avhandlingen tar for seg en problemstilling, knyttet til analyse av punktskyer, i programvare utviklet av TechnoSoft Inc. Ytelsen i denne programvaren blir forsøkt økt, ved å utvikle raskere algoritmer, for løsning av kNN (k nærmeste naboer) og Alle-kNN problemet, optimalisert for punktskybaserte data.
+
+% En GPU-parallellisert “brute-force” algoritme blir utvikle,t som er i stand til å løse kNN problemet $70$ ganger raksere enn en tilsvarende algoritme, utviklet av Garcia et.al. \cite{Garcia2008}, anvendt på tilsvarende data.
+
+% Ved å anvende k-d trær, en GPU-parallelisert algoritme blir utviklet, egnet for å løse Alle-kNN problemet. Denne algoritmen forbedrer resultatet oppnådd gjennom bruk av “brute-force algoritmen med 300 ganger.
 
 
 \clearpage\
