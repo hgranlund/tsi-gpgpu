@@ -44,7 +44,7 @@ Due to the reasons above, and the available time for this thesis, we have chosen
 \section{Final results and discussion} % (fold)
 \label{sec:final_results_and_discusstion}
 
-During the development of our algorithms, we have presented many intermediate results, in order to argument for the design and implementation choices made. In this section, we will present our final results for the GPU parallelized brute force, GPU parallelized and CPU parallelized k-d tree based kNN algorithm.
+During the development of our algorithms, we have presented many intermediate results, in order to argument for the design and implementation choices made. In this section, we will present our final results for the GPU parallelized brute-force, GPU parallelized and CPU parallelized k-d tree based kNN algorithm.
 
 The different research questions stated during development of our algorithms are revisited, and answered are given, based on the presented results.
 
@@ -53,11 +53,11 @@ The different research questions stated during development of our algorithms are
 
 In Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia} we started on our quest for a faster kNN search, by investigating a possible brute-force algorithm, pioneered by Garcia et.al. The following research question was asked. 
 
-\textbf{RQ~\ref{rq:brute_force_performance}.} \emph{Can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.}
+\textbf{RQ~\ref{rq:brute_force_performance}.} \emph{Can high performance be achieved by a parallel brute-force kNN algorithm on large point clouds.}
 
-In order to discuss this question, we have to clarify what we consider to be high performance in this context. The work of Garcia et.al\@. contains the fastest brute force algorithm, for solving the kNN problem, we have found in current literature. We would therefore consider a kNN algorithm to have high performance, if it is able to solve the kNN problem for point cloud data, in the 3D format specified by TSI, at comparable speeds to the algorithm developed by Garcia et.al. 
+In order to discuss this question, we have to clarify what we consider to be high performance in this context. The work of Garcia et.al\@. contains the fastest brute-force algorithm, for solving the kNN problem, we have found in current literature. We would therefore consider a kNN algorithm to have high performance, if it is able to solve the kNN problem for point cloud data, in the 3D format specified by TSI, at comparable speeds to the algorithm developed by Garcia et.al. 
 
-Although the algorithm developed by Garcia et.al\@. is the fastest brute force algorithm we have managed to find, this is not as a high benchmark as it might initially seem. The algorithm developed by Garcia et.al\@. is optimized for solving the kNN problem for a more general version of the kNN problem than required by TSI\@. Where we are only concerned with solving the kNN problem for three dimensions, Garcia's algorithm will solve problems stated in any dimension. Given that we solve a more restricted version of the kNN problem, any less than comparable speeds to the implementation made by Garcia et.al\@. could not be considered to be of high performance in our eyes.
+Although the algorithm developed by Garcia et.al\@. is the fastest brute-force algorithm we have managed to find, this is not as a high benchmark as it might initially seem. The algorithm developed by Garcia et.al\@. is optimized for solving the kNN problem for a more general version of the kNN problem than required by TSI\@. Where we are only concerned with solving the kNN problem for three dimensions, Garcia's algorithm will solve problems stated in any dimension. Given that we solve a more restricted version of the kNN problem, any less than comparable speeds to the implementation made by Garcia et.al\@. could not be considered to be of high performance in our eyes.
 
 \begin{figure}[ht!]
     \centering
@@ -66,13 +66,13 @@ Although the algorithm developed by Garcia et.al\@. is the fastest brute force a
     \label{fig:fin-garcia-vs-min-reduce}
 \end{figure}
 
-In Section~\ref{sub:continuing_on_garcia_s_path}, we discussed Figure~\ref{fig:brute_force}. As a reminder, part of this figure is presented as Figure~\ref{fig:fin-garcia-vs-min-reduce}, which shows the result of a comparison between the brute force algorithm developed by Garcia et.al\@. and our min-reduce brute-force algorithm developed in Section~\ref{sub:continuing_on_garcia_s_path}. The test is performed with a low value for $k=10$, and focuses on performance for large values of number of points, $m$. In this test, our min-reduce brute-algorithm is shown to be almost $70$ times faster than the algorithm developed by Garcia et.al\@. In addition, it is capable of solving the kNN problem for much larger values of $m$.
+In Section~\ref{sub:continuing_on_garcia_s_path}, we discussed Figure~\ref{fig:brute_force}. As a reminder, part of this figure is presented as Figure~\ref{fig:fin-garcia-vs-min-reduce}, which shows the result of a comparison between the brute-force algorithm developed by Garcia et.al\@. and our min-reduce brute-force algorithm developed in Section~\ref{sub:continuing_on_garcia_s_path}. The test is performed with a low value for $k=10$, and focuses on performance for large values of number of points, $m$. In this test, our min-reduce brute-algorithm is shown to be almost $70$ times faster than the algorithm developed by Garcia et.al\@. In addition, it is capable of solving the kNN problem for much larger values of $m$.
 
 We therefore conclude that RQ~\ref{rq:brute_force_performance} can be answered with yes. High performance can be achieved with a brute-force based algorithm.
 
 In Section~\ref{sub:application_of_kd_trees_to_the_knn_problem} we introduced the k-d tree, a data-structure with a known \BigO{log(m)} nearest neighbor query algorithm. We therefore presented a new research question, which we try to answer in Figure~\ref{fig:final-knn-kd-vs-bf}.
 
-\textbf{RQ~\ref{rq:serial-kd-tree}.} \emph{It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution?}
+\textbf{RQ~\ref{rq:serial-kd-tree}.} \emph{It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute-force solution?}
 
 \begin{figure}[ht!]
     \centering
@@ -92,7 +92,7 @@ Figure~\ref{fig:final-var-knn-kd-vs-bf} compares the same two algorithms, but fo
     \label{fig:final-var-knn-kd-vs-bf}
 \end{figure}
 
-Both Figure~\ref{fig:final-knn-kd-vs-bf} and \ref{fig:final-var-knn-kd-vs-bf} shows that this algorithm is slower than a brute force approach. This answers RQ~\ref{rq:serial-kd-tree}. In order to solve the kNN problem, the k-d tree based solution first has to construct the k-d tree, then query for the closest points. Given that our previous calculation shows that the time complexity of the k-d tree build algorithm is larger than the time-complexity for the brute-force algorithm, this result should come as no surprise. Constructing the k-d data-structure for a single query is simply a waste of resources, if just one kNN query is to be performed.
+Both Figure~\ref{fig:final-knn-kd-vs-bf} and \ref{fig:final-var-knn-kd-vs-bf} shows that this algorithm is slower than a brute-force approach. This answers RQ~\ref{rq:serial-kd-tree}. In order to solve the kNN problem, the k-d tree based solution first has to construct the k-d tree, then query for the closest points. Given that our previous calculation shows that the time complexity of the k-d tree build algorithm is larger than the time-complexity for the brute-force algorithm, this result should come as no surprise. Constructing the k-d data-structure for a single query is simply a waste of resources, if just one kNN query is to be performed.
 % subsection solving_the_knn_problem (end)
 
 \subsection{Solving the All-kNN problem} % (fold)
@@ -100,9 +100,9 @@ Both Figure~\ref{fig:final-knn-kd-vs-bf} and \ref{fig:final-var-knn-kd-vs-bf} sh
 
 The All-kNN problem was studied in both relation to the brute-force algorithm and the k-d tree based algorithm. In Section~\ref{sub:continuing_on_garcia_s_path} we proposed RQ~\ref{rq:brute_force_Q-kNN}. We also wanted to compare our parallel k-d tree based algorithm to the brute-force algorithm, postulated in RQ~\ref{rq:serial-kd-tree-all-knn}.
 
-\textbf{RQ~\ref{rq:brute_force_Q-kNN}.} \emph{Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?}
+\textbf{RQ~\ref{rq:brute_force_Q-kNN}.} \emph{Can a parallel brute-force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?}
 
-\textbf{RQ~\ref{rq:serial-kd-tree-all-knn}.} \emph{It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute force solution?}
+\textbf{RQ~\ref{rq:serial-kd-tree-all-knn}.} \emph{It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute-force solution?}
 
 Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} compares the runtime of the min-reduce brute-force algorithm to the k-d tree based algorithm, for increasing values of $m\le1e7$, and a fixed value of $k=100$. The data series for the min-reduce algorithm is estimated from the data obtained in Figure~\ref{fig:final-knn-kd-vs-bf}. This estimation is valid, since all GPU resources are used to perform one kNN query, when using the brute-force algorithm. Solving the All-kNN problem with the brute-force algorithm, can therefore only be performed as repeated application of the brute-force kNN algorithm, given a reasonable hardware setup, with one CUDA enabled GPU\@.
 
@@ -115,7 +115,7 @@ The data series for the k-d tree based algorithms are, on the other hand, genera
     \label{fig:final-all-knn-gpu-vs-cpu-vs-bf}
 \end{figure}
 
-Figure~\ref{fig:final-var-all-knn-kd-vs-bf} compares the GPU parallelized k-d tree algorithm, with the parallel brute force algorithm, for a fixed value of $m$, and increasing values for $k\le200$. Test environment 1 is also used in this comparison.
+Figure~\ref{fig:final-var-all-knn-kd-vs-bf} compares the GPU parallelized k-d tree algorithm, with the parallel brute-force algorithm, for a fixed value of $m$, and increasing values for $k\le200$. Test environment 1 is also used in this comparison.
 
 \begin{figure}[ht!]
     \centering
@@ -128,7 +128,7 @@ Both graphs clearly shows the benefit of using a k-d tree based algorithm for so
 
 Another important factor is that each k-d kNN query, is parallelized. This can be done for a k-d based query algorithm, since the resource requirements for each individual kNN query is lower than for the brute-force algorithm. These two improvements combined, result in an algorithm that is capable of solving the All-kNN problem for values of $m$ and $k$, that would not be feasible with a brute-force algorithm. This answers RQ~\ref{rq:serial-kd-tree-all-knn}.
 
-Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} shows that the brute-force algorithm is capable of solving the All-kNN for small point clouds, although significantly slower than the k-d tree based algorithm. With a point cloud containing just $10000$, the brute force algorithm will take at least $10$ s to execute, compared to the $100$ ms required by the k-d tree based algorithm. Although slow, for low values of $m$, the brute-force algorithm computes the answer within arguably reasonable time. When $m$ is increased, this changes. For a point cloud of size $1e7$, the brute-force algorithm would require about $3e9$ ms to compute the answer, or almost 34 days. This would most certainly not be considered to be within reasonable time. The answer to RQ~\ref{rq:brute_force_Q-kNN} is therefore dependent on the size of $m$. It can be argued that the brute-force algorithm is capable, but not the best alternative, for solving the All-kNN problem for small values of $m$.
+Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} shows that the brute-force algorithm is capable of solving the All-kNN for small point clouds, although significantly slower than the k-d tree based algorithm. With a point cloud containing just $10000$, the brute-force algorithm will take at least $10$ s to execute, compared to the $100$ ms required by the k-d tree based algorithm. Although slow, for low values of $m$, the brute-force algorithm computes the answer within arguably reasonable time. When $m$ is increased, this changes. For a point cloud of size $1e7$, the brute-force algorithm would require about $3e9$ ms to compute the answer, or almost 34 days. This would most certainly not be considered to be within reasonable time. The answer to RQ~\ref{rq:brute_force_Q-kNN} is therefore dependent on the size of $m$. It can be argued that the brute-force algorithm is capable, but not the best alternative, for solving the All-kNN problem for small values of $m$.
 
 In Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} the impression is that the GPU and CPU parallelized k-d algorithms performs similarly. We will therefore investigate additional results, to get a better understanding of how they compare.
 
@@ -160,9 +160,9 @@ In this thesis, we have investigated the possible benefits of using general-purp
 
 By utilizing the parallelization possibilities offered by CUDA enabled GPUs, and optimizing our algorithms for 3D point cloud data, we have been able to develop fast algorithms for solving the kNN and All-kNN problem.
 
-The parallel brute-force algorithm developed in this thesis, is $70$ times faster than the brute-force algorithm developed by Garcia et-al. \cite{Garcia2008} on comparable problem sizes. Considering the algorithm developed by Garcia et.al. is significantly faster than conventional libraries, being up to $407$ times faster than Matlab, and up to $148$ times faster than ANN \citep[Table 1]{Garcia2008}, this is a notable result.
+The parallel brute-force algorithm developed in this thesis, is $70$ times faster than the brute-force algorithm developed by Garcia et-al\@.~\cite{Garcia2008} on comparable problem sizes. Considering the algorithm developed by Garcia et.al\@. is significantly faster than conventional libraries, being up to $407$ times faster than Matlab, and up to $148$ times faster than ANN \citep[Table 1]{Garcia2008}, this is a notable result.
 
-A parallel k-d tree based Q-kNN algorithm has also been developed in this thesis, and optimized for solving the All-kNN problem. The parallel k-d tree based algorithm is able to solve the All-kNN problem $300$ times faster than the parallel brute force implementation, and this could enable All-kNN analysis of much larger point clouds than was previously feasible.
+A parallel k-d tree based Q-kNN algorithm has also been developed in this thesis, and optimized for solving the All-kNN problem. The parallel k-d tree based algorithm is able to solve the All-kNN problem $300$ times faster than the parallel brute-force implementation, and this could enable All-kNN analysis of much larger point clouds than was previously feasible.
 
 In addition, all algorithms has been implemented with memory scalability in mind, resulting in a finished library of algorithms, which solves kNN and All-kNN problems faster, and for larger point clouds, than other alternatives, known from literature. This library is currently being integrated into point cloud analysis software at TechnoSoft Inc.
 

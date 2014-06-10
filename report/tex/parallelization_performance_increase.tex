@@ -47,7 +47,7 @@ Figure~\ref{fig:final_kd_search} visualize the results from the two different pa
 
 If we look at the parallel speedup, shown in Figure~\ref{fig:final_kd_search_speedup}, we can again conclude that the OpenMP version is outperformed by the CUDA implementation. The trend resembles what we saw in the k-d tree build parallelization, only this time the speedup goes towards $50$ in the CUDA version. This correlations perfectly with the discussion, in Section~\ref{sub:parallelization_strategy}, about the parallelization strategy and how easily the work could be partitioned.      
 
-An interesting note is that this speedup is lower then in both our and Garcia's\cite{Garcia2008} brute force implementations, which implies that speedup don't equal a fast implementations. It only implies a good parallel performance increase, compared to the serial algorithmic in use.
+An interesting note is that this speedup is lower then in both our and Garcia's\cite{Garcia2008} brute-force implementations, which implies that speedup don't equal a fast implementations. It only implies a good parallel performance increase, compared to the serial algorithmic in use.
 
 This answers RQ~\ref{rq:serial-kd-tree}, and we conclude that our All-kNN query has a significant parallel improvement.
 % subsubsection parallelization_of_the_k_d_tree_build (end)

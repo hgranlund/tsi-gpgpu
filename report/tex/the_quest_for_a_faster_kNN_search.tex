@@ -90,7 +90,7 @@ When we where installing CUDA and OpenCL, and implementing our test algorithms, 
 % section a_short_evaluation_of_opencl_and_cuda (end)
 
 
-\section{A brute force based approach} % (fold)
+\section{A brute-force based approach} % (fold)
 \label{sub:investigation_of_a_brute_force_approach_based_on_garcia}
 
 \input{investigation_of_a_brute_force_approach_based_on_garcia.tex}
@@ -100,16 +100,16 @@ When we where installing CUDA and OpenCL, and implementing our test algorithms, 
 \section{Application of k-d trees to the kNN problem} % (fold)
 \label{sub:application_of_kd_trees_to_the_knn_problem}
 
-A common strategy when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure suited for fast querying. This strategy trades the additional time required building an data structure, for increased performance on each query. In Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia} we developed an optimized parallel brute force algorithm for performing kNN queries on a large point cloud. In this section we will investigate the possibility of improving on the brute force algorithm by using the k-d tree data structure.
+A common strategy when wanting to improve the performance of repeated queries in a large dataset, is to organize the dataset into some data structure suited for fast querying. This strategy trades the additional time required building an data structure, for increased performance on each query. In Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia} we developed an optimized parallel brute-force algorithm for performing kNN queries on a large point cloud. In this section we will investigate the possibility of improving on the brute-force algorithm by using the k-d tree data structure.
 
 \begin{myrq}
 \label{rq:serial-kd-tree}
-    It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution?
+    It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute-force solution?
 \end{myrq}
 
 \begin{myrq}
 \label{rq:serial-kd-tree-all-knn}
-    It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute force solution?
+    It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute-force solution?
 \end{myrq}
 
 A brief argument for why k-d trees is well suited for kNN query operations is given, then we will present the k-d tree data structure, and show how it can be used for operating on three-dimensional point cloud data. Finally a set of tests are performed on implementations of the k-d tree based algorithms, in order to determine the possible benefits of a parallel k-d tree based algorithm.
@@ -262,27 +262,27 @@ Figure~\ref{fig:serial-query} shows the timing results for querying a k-d tree o
 
 We see that querying the k-d tree is very fast on average. Querying for one point in a tree of size $1.41^7$ takes about $0.0014$ milliseconds. It has to be taken into account, that a query with $k=1$ will give the best query time, since the time complexity of the query algorithm scales with k. Still, for queries with a low $k$, we should expect good performance. The graph also seems to scale with the logarithm of the number of points, as expected by the time complexity calculation.
 
-In order to try to answer RQ~\ref{rq:serial-kd-tree}, we compare the timing results gained from the fastest brute force algorithm developed in Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}. Figure~\ref{fig:brute-force-vs-serial-build-query} compare the average time required for building a k-d tree of a given size, and performing a single $k=1$ query, to the time required to compute the same result with the fastest brute force algorithm obtained in Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}.
+In order to try to answer RQ~\ref{rq:serial-kd-tree}, we compare the timing results gained from the fastest brute-force algorithm developed in Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}. Figure~\ref{fig:brute-force-vs-serial-build-query} compare the average time required for building a k-d tree of a given size, and performing a single $k=1$ query, to the time required to compute the same result with the fastest brute-force algorithm obtained in Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia}.
 
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=120mm]{../gfx/brute-force-vs-serial-build-query.png}
-\caption{Comparison of mean query time with k equal to one with fast brute force and recursive k-d tree based algorithms}
+\caption{Comparison of mean query time with k equal to one with fast brute-force and recursive k-d tree based algorithms}
 \label{fig:brute-force-vs-serial-build-query}
 \end{figure}
 
-In this comparison, the k-d tree based algorithm does not seem like a good option. When performing just one query, the additional time required to build the k-d tree heavily outweighs the benefit of the improved query time, compared to the brute force solution. This result is to be expected, since we are not really utilizing the benefit of the k-d tree, but it is still an important point that a brute force algorithm can be very efficient for certain use-cases.
+In this comparison, the k-d tree based algorithm does not seem like a good option. When performing just one query, the additional time required to build the k-d tree heavily outweighs the benefit of the improved query time, compared to the brute-force solution. This result is to be expected, since we are not really utilizing the benefit of the k-d tree, but it is still an important point that a brute-force algorithm can be very efficient for certain use-cases.
 
 Let us finally look at some results more closely related to the use-case given by TSI\@. Figure~\ref{fig:brute-force-vs-serial-build-n-queries} does the same comparison as Figure~\ref{fig:brute-force-vs-serial-build-query}, but instead of comparing the time taken to perform one query, $n$ repeated queries are performed, with $n$ being the size of the k-d tree.
 
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=120mm]{../gfx/brute-force-vs-serial-build-n-queries.png}
-    \caption{Comparison of timing of n queries with k equal to one with fast brute force and recursive k-d tree based algorithms}
+    \caption{Comparison of timing of n queries with k equal to one with fast brute-force and recursive k-d tree based algorithms}
     \label{fig:brute-force-vs-serial-build-n-queries}
 \end{figure}
 
-We observe that in this use-case, the k-d tree based approach have much better results than the brute force based approach. Now the k-d tree only have to be built once, but we benefit from the decreased query time in all $n$ queries. Performing $n$ queries on a point cloud of size $1.41^7$ with the brute force based algorithm takes about $\numprint{9.7e5}$ seconds, or about 11 days. With the recursive k-d based algorithm, the same operation can be calculated in just over a minute. Considering the needs of TSI, it seem that this approach is worth developing further into an parallel algorithm.
+We observe that in this use-case, the k-d tree based approach have much better results than the brute-force based approach. Now the k-d tree only have to be built once, but we benefit from the decreased query time in all $n$ queries. Performing $n$ queries on a point cloud of size $1.41^7$ with the brute-force based algorithm takes about $\numprint{9.7e5}$ seconds, or about 11 days. With the recursive k-d based algorithm, the same operation can be calculated in just over a minute. Considering the needs of TSI, it seem that this approach is worth developing further into an parallel algorithm.
 
 Despite these initial positive results, some problems are apparent from our initial tests.
 
