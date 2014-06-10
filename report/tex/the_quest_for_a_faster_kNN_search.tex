@@ -190,8 +190,6 @@ A final note about Algorithm~\ref{alg:seriel_tree_build}, is that it does not ha
 
 With a k-d tree we can perform efficient searches for the closest point to a given point in \BigO{log(m)} average time\cite{Friedman:1977}. By maintaining a collection of the k closest points during execution of the query, we can even perform kNN searches. An example of a kNN search algorithm is shown in Algorithm~\ref{alg:recursive_knn_kd_tree_search}.
 
-%TODO: Something about how searching works in the general sense?
-
 The procedure will take the root of a k-d tree, $r$ and a query point, for which we want to find the k closest points. In addition, it requires a initial dimension, $i$, which should be the same as the initial dimension used when building the tree. It uses this data to manipulate a collection of the k closest points to $q$. This collection is called the k-heap, $K$.
 
 The k-heap is a data structure with some special properties. You can query it for the maximum distance value of the k points stored in it, and it will only store a predetermined number of points. If you try to insert more points than the predetermined number of points, it will discard the highest values, and only keep the k lowest values. This data structure can be easily implemented as a modified max-heap~\cite[Chapter 6]{Cormen:2001}. When the size of the heap is lower than k, it is used in the usual manner, but when the heap is of size k, a slight modification to the insertion operation is made. Instead of adding the new element to the heap, the new element is swapped with the maximum value of the heap, if it is lower than the current maximum value in the k-heap. Then the heap is re-balanced using the standard max-heap balance algorithm. In our code, we assume the k-heap to be filled at the start with k points of either a random sample of points from the k-d tree, or with positive infinity. This way we do not need to check if the heap is filled during the recursive execution of the procedure.
@@ -240,8 +238,7 @@ After recursively investigating the target subtree, we ask if our estimates in t
 \subsection{Testing a serial k-d tree based kNN solver} % (fold)
 \label{sub:testing_a_serial_k_d_tree_based_knn_solver}
 
-%TODO: Add in appendix and reference.
-In order to gain some real world insight into the performance characteristics of k-d tree building and querying, a serial implementation of the build and query algorithm was made. This implementation is available in Appendix X. These two implementations where then subjected to several tests, using test setup Y. All tests were performed on a set of randomly generated points 3-d points, with the number of points ranging from $10^5$ to $1.41*10^7$. The raw data from these tests are included in Appendix X. The result of these test are summed up in the following figures.
+In order to gain some real world insight into the performance characteristics of k-d tree building and querying, a serial implementation of the build and query algorithm was made. These implementations is available in Appendix~\ref{sec:k_d_tree_build} and Appendix~\ref{sec:cuda_k_d_tree_search}. These two implementations where then subjected to several tests, using test setup Y. All tests were performed on a set of randomly generated points 3-d points, with the number of points ranging from $10^5$ to $1.41*10^7$. The result of these test are summed up in the following figures.
 
 Figure~\ref{fig:serial-build} shows the timing results for the recursive k-d tree build algorithm.
 

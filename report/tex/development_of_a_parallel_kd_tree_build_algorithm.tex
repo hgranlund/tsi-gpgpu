@@ -1,14 +1,11 @@
-% TODO: Lang twerks?
-The build process is by far the most expensive operation on a k-d tree, and parallelizing it could reduce the runtime.
-
-One could think, why not use the same algorithm as in the serial case. This is a intuitive choice, but since the environment has changed the optimal algorithm may have changed as well. This is especially true for our implementation, Algorithm~\ref{alg:seriel_tree_build}, since in a CUDA context a recursive algorithm is hard to parallelize. CUDA is based on a massive number of lightweight threads, and to get a fast algorithm one have to split the work between as many threads as possible. This is only possible if it is easy to divide the work into independent subtasks, where data communication is at a minimum. In a recursive context, execution flow in hidden inside each threads call stack. Information needed by other threads to participate is therefore not easy to obtain. To solve this, a iterative approach should be used, which have a more globally accessible execution flow. This introduces a new research question.
+The build process is by far the most expensive operation on a k-d tree, and parallelizing it could reduce the overall runtime significantly, when solving the kNN problem. This is not as straight-forward as it might seem. The serial k-d tree build algorithm is usually implemented as a recursive function, since recursive functions tend to go along well with tree-based data structures. On the other hand, performance in CUDA is based on efficient use of a massive number of lightweight threads, and to get a fast algorithm one have to split the work between as many threads as possible. This is only possible if it is easy to divide the work into independent subtasks, where data communication is kept at a minimum. In a recursive context, execution flow in hidden inside each threads call stack. Information needed by other threads is therefore not easy to obtain. To solve this, a iterative approach should be used, which can be implemented with a global accessible execution flow. This will however, give a more complex k-d tree build algorithm, and it is not certain that this algorithm is easy to parallelize. 
 
 \begin{myrq}
 \label{rq:parallel_build}
     It is possible to parallelize the k-d tree build algorithm, in such a way that it gives a significant speed improvement compared to the serial algorithm.
 \end{myrq}
 
-In order to investigate RQ~\ref{rq:parallel_build}, we have to look a bit closer at the different steps of the k-d tree build algorithm and look at different parallelization strategies.
+In order to investigate RQ~\ref{rq:parallel_build}, we have to look a bit closer at the different steps of the k-d tree build algorithm and investigate different parallelization strategies.
 
 \subsection{From recursive to iterative implementation} % (fold)
 \label{ssub:from_recursive_to_iterative_implementation}
