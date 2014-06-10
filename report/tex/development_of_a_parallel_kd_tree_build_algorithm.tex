@@ -51,7 +51,9 @@ Now that an iterative solution have been created, lets start looking at how this
 %TODO: One observation. Children in same tree can be done in parallel. Implies one parallelization.
 When we converted our k-d tree algorithm from a recursive to a iterative solution two interesting observations was made. The first observation is that a node balance is only dependent on the parent node. This means that each tree level are independent, which acts as a good start for our parallelization strategy.
 
-Second, since a node only is dependent on it's parent, all subtrees in the k-d tree generation are independent. Hence, the tree corresponding to the left and right child of a node can be done in parallel without any communication. The data is also independent, as a result of how we represent the tree as an array. By data independent, it is meant that the data structure easily can be partitioned to each subtask. In our case will the tree array successively be partitioned into contentious sublists, that represent a subtree.
+This also means that all subtrees in the k-d tree generation are independent. Hence, the tree corresponding to the left and right child of a node can be done in parallel without any communication. 
+
+The data is also independent, as a result of how we represent the tree as an array. By data independent, it is meant that the data structure easily can be partitioned to each subtask. In our case will the tree array successively be partitioned into contentious subtrees.
 
 From these observations, several strategies can be used to parallelize the k-d tree build algorithm. The first observation implies that we can divide the tree levels into dependent tasks, where each node balance in a tree level is a independent subtask. This gives us an power of two increasing number of parallel tasks as we go down a tree level. The sublist size will decrease with a factor of two in each downward step, see Fig~\ref{fig:tree_level_development}
 
@@ -75,9 +77,9 @@ CUDA have a special architecture that should be taken into account when parallel
 
 Our parallelization strategy states that we have to balance one tree level after another, since they are dependent. This implies that the threads need to communicate between each tree level. One CUDA kernel should therefore balance a complete tree level. The other alternative would be to build the hole tree in one block, which would restrict our kernel to only be executed on one SM\@.
 
-The next step is to split the tree level balance between the CUDA resources. The number of node in a tree level increases with the power of two, as we go down the tree. Fig~\ref{fig:tree_level_development} shows that our kernel, the tree balance, changes throughout the build process. First only one node needs to be balanced, e.i only one parallel operation. At the end there are $m$ different nodes to work on. The problem size also changes, at the top it is $m$ per node and  goes towards $1$ as the tree level increases.
+The next step is to split the tree level balance between the CUDA resources. The number of node in a tree level increases with the power of two, as we go down the tree. Fig~\ref{fig:tree_level_development} shows that our kernel, the tree balance, changes throughout the build process. First only one node needs to be balanced, e.g only one parallel operation. At the end there are $m$ different nodes to work on. The problem size also changes, at the top, it is $m$ per node and goes towards $1$, as the tree level increases.
 
-This varying problem sizes and subtasks, makes it hard to create a good work distribution between the CUDA resources. At the top part of the tree it is optimal to use many blocks to balance a node, but at the end it is desirable to balance many nodes inside every block. We choose a middle ground, to balance one node in one block. This means that there should be an overall good performance with a pick at the middle three levels.
+This varying problem sizes and subtasks, makes it hard to create a good work distribution between the CUDA resources. At the top part of the tree it is optimal to use many blocks to balance a node, but at the end, it is desirable to balance many nodes inside a block. We choose a middle ground, to balance one node in one block. This means that there should be an overall good performance with a peek at the middle three levels.
 % subsection divide_work_on_cuda (end)
 
 \subsection{Parallelization of Subtree-Balance} % (fold)
@@ -91,7 +93,7 @@ First reusing the bitonic sort was investigated. Given a sorted list one can fin
 
 Another way to make bitonic sort work with a list of any size is described by K.E. Batcher~\cite{Batcher:1968}. The description of this solution is very lengthy, and has been omitted, since it introduces a lot of divergence, that would be decremental to performance on the GPU\@. We also have the inherent downside of sorting a list in order to find the median, since \BigO{m} algorithms for finding the median exist, compared to the \BigO{m log(m)} time required by sorting.
 
-%TODO: Check agglomeration
+%TODO: Check agglomeration vs adversarial
 Bucket-sort and radix-sort based algorithms are investigated in the paper Fast K-selection Algorithms for Graphics Processing Units by Alabi et.al\citep{Alabi:2012}. The big difference between them is the constant time penalty. The radix sort have a more exact time complexity of \BigO{b\ m}, where b is the number of bits in each number. While the penalty for bucket select is \BigO{a\ m}, where $a$ denotes the degree of agglomeration in the values. In other words, the algorithm is week when the points are clusters together. His results shows that bucket select normally is slightly faster, except when $a$ is high. Although bucket select normally have better results, we expect a high degree of agglomeration in our application, so we choose radix select.
 % subsubsection selecting_a_algorithm (end)
 
@@ -108,7 +110,7 @@ The radix select is based on a bitwise partitioning, much like radix sort~\cite[
 \label{fig:radix_select}
 \end{figure}
 
-When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort like, \citep{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select from \citep{Alabi:2012}. They both uses a parallelization strategy by splitting each radix partition into parallel operations. The way our and Alabi's solution differs from Merrill's solution, is that we start on the most significant digit, since a least significant digit approach will not reduce the k'th order statistic problem in each step.
+When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort, like the variens introduced by Merrill\cite{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select by Alabi\citep{Alabi:2012}. They both uses a parallelization strategy by splitting each radix partition into parallel operations. The way our and Alabi's solution differs from Merrill's solution, is that we start on the most significant digit, since a least significant digit approach will not reduce the k'th order statistic problem in each step.
 % subsection radix_select (end)
 
 \subsubsection{Our implementation} % (fold)
@@ -117,7 +119,7 @@ When it comes to create a parallelization strategy for radix select it is first 
 % TODO: Ta med bigO kalkulasjon på hele algorithmen.
 Our implementation is based on Algorithm~\ref{alg:iterativ_tree_build}. Calling Balance-Subtree on all nodes in a tree-level, is performed on the GPU as a CUDA kernel. The outer for-loop is executed on the CPU, and launches the kernel for increasing tree-levels, until the entire tree is built. The complete implementation can be found in Appendix~\ref{sec:paralell_k_d_tree_build}.
 
-Algorithm~\ref{alg:parallel_balance_subtree} is parallelized only within a single CUDA block. This means that the parallel threads are able to communicate. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation \citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
+Algorithm~\ref{alg:parallel_balance_subtree} is parallelized only within a single CUDA block. This means that the parallel threads are able to communicate. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation\citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
 
 \begin{algorithm}[ht]
 \caption{Parallel subtree balance}
@@ -146,7 +148,6 @@ Algorithm~\ref{alg:parallel_balance_subtree} is parallelized only within a singl
 \end{algorithmic}
 \end{algorithm}
 
-%TODO: Explain this?
 In CUDA thread instruction run sequentially in warps of 32. Control flow divergence within a warp can therefore significantly destroy the instruction throughput. This is because the different execution paths must be serialized, as all the thread in a warp share the same program counter\cite{cuda_c_best_practices_guide}. The total number of instruction in a warp will therefore increase. Any conditional operator, e.g. if and switch, should be used with care, since it may branch the control flow. Optimizing the use of conditionals, in order to reduce the amount of branching in the program control flow, will give better performance.
 
 In our implementation, all threads perform the same thing in every iteration. This will give a low thread branching. The loop is also almost done equal times by all thread, one time for each bit used to represent the points. The one $if$ statement in the iteration, can be reduced to only contain one statement, which make the divergent thread branch small. The code is therefore good in regard of divergence.
