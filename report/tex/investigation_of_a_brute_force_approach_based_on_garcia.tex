@@ -1,14 +1,14 @@
 As a starting point in our quest for a fast kNN search, we investigated relevant literature. Consulting our advisors lead us to two papers by Garcia et.al. \citep{Garcia2008, Garcia2010}. In these papers, a parallel brute-force algorithm is developed, capable of solving the kNN problem orders of magnitude faster than comparable fast serial algorithms. Unfortunately, the algorithm developed by Garcia et.al. has some limitations, especially regarding the number of points that the kNN problem can be solved for. This could be due to the general nature of the algorithm developed by Garcia et.al. as it is optimized for solving problems in a large number of dimensions. By optimizing the algorithm for point cloud data, we could be able to get around this limitation.
 
 \begin{myrq}
-    Can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.
+    Can high performance be achieved by a parallel brute-force kNN algorithm on large point clouds.
     \label{rq:brute_force_performance}
 \end{myrq}
 
 Given a fast kNN algorithm for point cloud data, the All-kNN problem can be solved easily, by applying the algorithm sequentially for all points in the cloud. This, however, is a strategy sensitive to minor inefficiencies in the kNN algorithm. The algorithm will have to be very fast for a single problem, in order to solve the All-kNN problem within reasonable time. Whether this is achievable with a fast brute-force based algorithm will have to be investigated.
 
 \begin{myrq}
-    Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?
+    Can a parallel brute-force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?
     \label{rq:brute_force_Q-kNN}
 \end{myrq}
 
@@ -144,7 +144,7 @@ We see that the general brute-force algorithm has the worst performance. This is
 \centering
 \includegraphics[width=100mm]{../gfx/brute_force.png}
 
-\caption{Three different kNN brute force implementations. The timing results is based on a $k$ equal to $10$.}
+\caption{Three different kNN brute-force implementations. The timing results is based on a $k$ equal to $10$.}
 \label{fig:brute_force}
 \end{figure}
 
