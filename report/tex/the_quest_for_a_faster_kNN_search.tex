@@ -3,7 +3,15 @@
 \chapter{The quest for a faster kNN search} % (fold)
 \label{sec:the_quest_for_a_faster_knn_search}
 
-% TODO: Short intro. The quest is a investigation of ??,  to solve the problem ??. Present the TSI problem.
+TechnoSoft Inc. is currently developing point cloud analysis software library. This software library is developed, with the goal of making comparisons between 3D models of a engineering design, and laser scans of the finished product. Such a comparison, would help engineers to pinpoint production errors faster, and more accurately.
+
+In order to get good precision in the laser scan data, a large amount of points in 3D space has to be recorded. This set of data is commonly called a point cloud, and it can easily consist of $1e6$ to $1e8$ 3D points, or even more, as a larger number of recorded points give better accuracy in the data.
+
+Processing such a large number of point, is a time consuming task, and reducing the time required for individual operations become important, since they will be repeated many times. Working on point cloud data is also a problem seemingly suitable for parallelization, since operations on individual points could be executed concurrently.
+
+TSI has analyzed their current point cloud analysis algorithms, and determined that a lot of time is spent solving the All-kNN problem, for the point clouds. They would therefore try to improve performance by developing GPU parallelized algorithms, capable of solving the kNN and All-kNN problem for a high number of points, at least in the order of $1e7$ to $1e8$, and a low value for $k\le100$.
+
+In this chapter, we will try to develop algorithms capable of solving the kNN and All-kNN problem, with the performance required by TSI.
 
 \section{A short evaluation of OpenCL and CUDA} % (fold)
 \label{sub:a_short_evaluation_of_opencl_and_cuda}
