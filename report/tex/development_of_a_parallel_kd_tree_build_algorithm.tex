@@ -168,7 +168,7 @@ Let us take a step back and look at RQ~\ref{rq:parallel_build}. The possibility 
 
 With the test setup as described in Section~\ref{sec:test_environment}, the current version of the algorithm gave results as shown in Figure~\ref{fig:gpuv1_vs_cpu}. The most interesting observation are the big jumps in the graph. If one look closely these jumps happens every time the problem size exceeds a power of two, as for example when the size passes $8388608$ the timing increases from $2703 ms$ to $4335 ms$. The results of further investigation is shown in Table~\ref{tbl:nvprc_balance_branch}. It shows how long time each tree level takes, and how the different tree level operations varies throughout the build process.
 
-\begin{table}[ht]
+\begin{table}[ht!]
 \centering
     \begin{tabular}{|l|l|l|l|}
         \hline
@@ -209,14 +209,15 @@ The implementation details are omitted here, but can be found in Appendix~\ref{s
 
 We also would like to improve performance, when Balance-Subtree is applied to many small subtrees. For instance, at level $18$ there are $131072$ different subtask with only an average size of $7$. The previous implementation divided all these subtask between a small number of SM, typically $8-32$ on current NVIDIA GPUs\@. The algorithm the uses to many cores to balance a subtree of only $7$ elements, which is not a efficient way to divide resources.
 
-Letting just one thread handle the Balance-Subtree operation for small subtrees, would let us process more subtrees in parallel, improving performance. With this parallelization, each thread is responsible for it's own subtree, and communication with other threads is no longer needed. With the need for communication eliminated, we can utilize Algorithm~\ref{alg:seriel_tree_build}. 
-
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=100mm]{../gfx/the_jumps_final.png}
 \caption{Visualization of the final improvments on the k-d tree build implementation.}
 \label{fig:the_jumps_final}
 \end{figure}
+
+Letting just one thread handle the Balance-Subtree operation for small subtrees, would let us process more subtrees in parallel, improving performance. With this parallelization, each thread is responsible for it's own subtree, and communication with other threads is no longer needed. With the need for communication eliminated, we can utilize Algorithm~\ref{alg:seriel_tree_build}. 
+
 
 Now that a lot of improvements have been made, lets take a look at the results. Figure~\ref{fig:the_jumps_final} compare our intermediate result with our new and improved version, and the changes made a huge impact on the performance. The jumps disappeared, and was replaced by a faster and smoother curve, indicating that the CUDA resources is perfectly balanced. The final implementation can be found in Appendix~\ref{sec:parallel_quick_select}.
 % subsection further_development (end)

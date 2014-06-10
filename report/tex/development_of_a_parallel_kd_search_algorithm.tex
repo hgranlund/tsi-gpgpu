@@ -97,7 +97,7 @@ The explicit stack also makes an interesting question about where to store the n
 
 The iterative search algorithm uses one stack and one heap, both stored as arrays in memory. Th number of arrays are dependent on the number of threads used in each block. The s-stack array size is dependent on how many elements the inorder tree traversal needs to store. If one looks on how the algorithm handles the stack, one can see that elements are pushed on the way down, and poped on the way up. This means that the stack never will be longer then the tree hight. One stack element uses $16$ bytes of space, which means that the stack memory is s subset of $\Theta(16\log_2(n)T)$. Here $T$ represent the number of threads and $n$ is the k-d tree size. The k-heap array size, depends on the number of closest neighbors, $k$, and one element uses $8$ bytes. This implies that it's memory usage will be, $\Theta(8kT)$.
 
-\begin{figure}[ht]
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=100mm]{../gfx/shared_memory_and_stack.png}
 
