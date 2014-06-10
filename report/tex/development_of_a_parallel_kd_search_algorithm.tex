@@ -1,13 +1,11 @@
-%TODO: Less direct binding to previous section in introduction.
-Now that a parallel k-d tree build algorithm has been build, lets start looking into a parallelization of the All-kNN operation. Some question immediately arise. What is the best way to parallelize such a problem? Will a GPU version give a beneficial speedup? This leads to a new research question that acts as an extension of RQ~\ref{rq:serial-kd-tree}.
-%TSI requires high performance on repeated queries, how can we parallelize the All-kNN problem. something, something...
+In this section, we will investigate parallelization of the k-d tree based query algorithm, applied to the All-kNN problem. The following research question is stated:
 
 \begin{myrq}
 \label{rq:parallel_query}
     It is possible to parallelize the All-kNN query algorithm, in such a way that it gives a significant speed improvement compared to the serial algorithm.
 \end{myrq}
 
-To investigate RQ~\ref{rq:parallel_query}, a real world test and implementation is always beneficial, but first some resource and discussion is needed. Especially in what kind of parallelization strategy and algorithm that should be used. Maybe the GPU is not the right way to parallelize this kind of operations.
+To investigate RQ~\ref{rq:parallel_query}, we will device a parallelization strategy, rewrite the k-d search algorithm as a iterative algorithm and optimize our implementation for CUDA execution. Finally results obtained from testing this implementation is presented.
 
 \subsection{Parallelization strategy} % (fold)
 \label{sub:parallelization_strategy}
@@ -20,8 +18,7 @@ Let us now consider if we can use Algorithm~\ref{alg:recursive_knn_kd_tree_searc
 
 The GPU threads are lightweight, with restricted available memory and cache. This means that the call stack, where the all program instructions are managed, is relatively small. Given a non tail-recursive algorithm, the program context and instructions are appended to the call stack at each recursive call. This will eventually fill up the limited call stack available for an individual CUDA thread. It might be possible to still use a recursive algorithm, given that the call stack never gets to large.
 
-% TODO: Fix verb tense
-To determine if the recursive k-d tree query algorithm can fit within the CUDA thread call stack tests was performed. On a individual block, $64$ theoretical threads was spawned, querying a tree of increasing size. The results showed that when the tree size passed \numprint{1e5} points, unknown errors started to appear. This was probably caused by leak of call stack space.
+To determine if the recursive k-d tree query algorithm can fit within a CUDA thread, call stack tests was performed. On a individual block, $64$ theoretical threads was spawned, each querying a k-d tree of increasing size. The results showed that when the k-d tree size passed \numprint{1e5} points, unknown errors started to appear. This indicated a stack overflow.
 
 Divergence also needs to be considered. In a recursive algorithm the decision of whether a recursive call should be made or not, is entirely up to a single thread. Once two threads have made different decisions, there is no guaranty that they will stay synchronized.
 
@@ -31,8 +28,7 @@ Both problems would be solved by rewriting Algorithm~\ref{alg:recursive_knn_kd_t
 \subsection{From recursive to iterative implementation} % (fold)
 \label{sub:from_recursive_to_iterative_implementation}
 
-% TODO: Explain combination of preoder and inorder dfs need.
-To rewrite Algorithm~\ref{alg:recursive_knn_kd_tree_search} into a iterative algorithm by explicitly managing the recursion stack, some properties about how the search traverse the k-d tree is needed. From Algorithm~\ref{alg:recursive_knn_kd_tree_search} one can see that this is an inorder traversal, since the work of the current node is done between the recursive calls. This traversal in also the best strategy in a binary tree search, because the pruning of subtrees is maximized. How to make a standard binary search tree in an iterative fashion is described in Cormen~\citep[Chapter 12]{Cormen:2001}, but since this is a k-d tree search the implementation is slightly different, as shown in Algorithm~\ref{alg:iterative_knn_kd_tree_search},
+To rewrite Algorithm~\ref{alg:recursive_knn_kd_tree_search} into a iterative algorithm by explicitly managing the recursion stack, some properties about how the search traverse the k-d tree is needed. From Algorithm~\ref{alg:recursive_knn_kd_tree_search} one can see that this is a variant of the depth-first traversal, since the work of the current node is done before and between the recursive calls. This traversal in also the best strategy in a binary tree search, because the pruning of subtrees is maximized. How to make a standard binary search tree in an iterative fashion is described in Cormen~\citep[Chapter 12]{Cormen:2001}, but since this is a k-d tree search the implementation is slightly different, as shown in Algorithm~\ref{alg:iterative_knn_kd_tree_search},
 
 \begin{algorithm}
 \caption{Iterative kNN k-d tree search}
@@ -93,10 +89,9 @@ Our simple parallelization strategy, combined with an iterative implementation o
 
 Algorithm~\ref{alg:iterative_knn_kd_tree_search} does not have a lot of divergence, and the remaining branching can be further reduced. If threads in a warp is traversing completely different parts of the tree, they will access different nodes. This is called data divergence. The solution is to let each warp search for points that are located closely in the k-d tree. This will cause all the threads to traverse down the tree in roughly along roughly the same branch, reducing the data divergence. Due to the nature of our k-d tree implementation, this can be achieved by feeding the points to the search algorithm as they are placed in the k-d tree.
 
-%TODO: Possible citation 400-600$ clock cycles.
 The explicit stack also makes an interesting question about where to store the new stack. This is data that are modifiable and thread independent, which means that the possible options memory options are shared memory, local memory and global memory. Local memory is the memory each thread can allocate dynamically from the heap. Global memory is a possible candidate. It has enough space, it is modifiable and accessible to all threads. The drawback is the access time, it takes around $400-600$ clock cycles, and it would therefore be beneficial to use some other kind of memory. Shared memory would be a perfect candidate, because the memory is fast and the need to communicate between blocks is nonexistent. The only drawback is the amount of data available in shared memory, which is around $49 kb$ on current NVIDIA GPU's. 
 
-The iterative search algorithm uses one stack and one heap, both stored as arrays in memory. Th number of arrays are dependent on the number of threads used in each block. The s-stack array size is dependent on how many elements the inorder tree traversal needs to store. If one looks on how the algorithm handles the stack, one can see that elements are pushed on the way down, and poped on the way up. This means that the stack never will be longer then the tree hight. One stack element uses $16$ bytes of space, which means that the stack memory is s subset of $\Theta(16\log_2(n)T)$. Here $T$ represent the number of threads and $n$ is the k-d tree size. The k-heap array size, depends on the number of closest neighbors, $k$, and one element uses $8$ bytes. This implies that it's memory usage will be, $\Theta(8kT)$.
+The iterative search algorithm uses one stack and one heap, both stored as arrays in memory. Th number of arrays are dependent on the number of threads used in each block. The s-stack array size is dependent on how many elements the depth-first tree traversal needs to store. If one looks on how the algorithm handles the stack, one can see that elements are pushed on the way down, and poped on the way up. This means that the stack never will be longer then the tree hight. One stack element uses $16$ bytes of space, which means that the stack memory is s subset of $\Theta(16\ log_2(n)T)$. Here $T$ represent the number of threads and $n$ is the k-d tree size. The k-heap array size, depends on the number of closest neighbors, $k$, and one element uses $8$ bytes. This implies that it's memory usage will be, $\Theta(8kT)$.
 
 \begin{figure}[ht!]
 \centering

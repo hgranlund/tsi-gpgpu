@@ -1,8 +1,8 @@
-Continuing on our quest for a fast kNN search, a parallelization of the k-d tree build was introduced with RQ~\ref{rq:parallel_build}, in Section~\ref{sec:development_of_a_parallel_k_d_tree_build_algorithm}.
+Parallelization of the k-d tree build was introduced with RQ~\ref{rq:parallel_build}, in Section~\ref{sec:development_of_a_parallel_k_d_tree_build_algorithm}.
 
 \textbf{RQ~\ref{rq:parallel_build}.} \emph{It is possible to parallelize the k-d tree build algorithm, in such a way that it gives a significant speed improvement compared to the serial algorithm.}
 
-The resource question is based around the complex nature of the k-d tree build, and the uncertainty of a acceptable parallel speedup. This question was investigated though implementation prototypes, together with a thorough discussion about the parallelization strategy and the intermediate results. 
+This research question is based around the complex nature of the k-d tree build, and the uncertainty of it achieving a acceptable parallel speedup. This question was investigated though implementation prototypes, together with a thorough discussion about the parallelization strategy and the intermediate results. 
 
 \begin{figure}[ht!]
     \centering
@@ -22,10 +22,9 @@ To get a better picture of the parallel improvement, it is natural to talk about
     \label{fig:final_tree_build_speedup}
 \end{figure}
 
-With the complex nature if a k-d tree build process, a speedup of three is acceptable, and we categorize it as a significant improvement, which answer RQ~\ref{rq:parallel_build}. 
+With the complex nature if the k-d tree build process, a speedup of three is acceptable, and we consider overall performance increase to be a significant compared to the serial algorithm, answering RQ~\ref{rq:parallel_build}. 
 
-
-RQ~\ref{rq:parallel_query} proposed the next topic of our quest, namely the parallelization of the All-kNN query. 
+Parallelization of the All-kNN query was introduced with RQ~\ref{rq:parallel_query}, in Section~\ref{sec:development_of_a_parallel_k_d_search_algorithm}. 
 
 \textbf{RQ~\ref{rq:parallel_query}.} \emph{It is possible to parallelize the All-kNN query algorithm, in such a way that it gives a significant speed improvement compared to the serial algorithm.}
 
@@ -36,7 +35,7 @@ RQ~\ref{rq:parallel_query} proposed the next topic of our quest, namely the para
     \label{fig:final_kd_search}
 \end{figure}
 
-Figure~\ref{fig:final_kd_search} visualize the results from the two different parallel All-kNN query implementations, CUDA and OpenMP, compared to the serial version. The linear trend, also found in the k-d tree build algorithm, is not surprising, as the time complexity for all algorithms are \BigO{m\ log(m)}. The parallel improvement is only shown in the gradient these slopes have, which is reasonable, because the work is only divided amongst more cores. In both OpenMp and CUDA the parallel improvement is significant.
+Figure~\ref{fig:final_kd_search} display the results from the two different parallel All-kNN query implementations, CUDA and OpenMP, compared to the serial version. The linear trend, also found in the k-d tree build algorithm, is not surprising, as the time complexity for all algorithms are \BigO{m\ log(m)}. The parallel improvement is only shown in the gradient these slopes have, which is reasonable, because the work is only divided amongst more cores. In both OpenMp and CUDA the parallel improvement is significant.
 
 \begin{figure}[ht!]
     \centering
@@ -45,9 +44,7 @@ Figure~\ref{fig:final_kd_search} visualize the results from the two different pa
     \label{fig:final_kd_search_speedup}
 \end{figure}
 
-If we look at the parallel speedup, shown in Figure~\ref{fig:final_kd_search_speedup}, we can again conclude that the OpenMP version is outperformed by the CUDA implementation. The trend resembles what we saw in the k-d tree build parallelization, only this time the speedup goes towards $50$ in the CUDA version. This correlations perfectly with the discussion, in Section~\ref{sub:parallelization_strategy}, about the parallelization strategy and how easily the work could be partitioned.      
+If we look at the parallel speedup, shown in Figure~\ref{fig:final_kd_search_speedup}, we can again conclude that the OpenMP version is outperformed by the CUDA implementation. The trend resembles what we saw in the k-d tree build parallelization, only this time the speedup goes towards $50$ in the CUDA version. This correlations well with the discussion in Section~\ref{sub:parallelization_strategy}, and we can answer RQ~\ref{rq:serial-kd-tree}. Our All-kNN query has a significant parallel improvement.
 
-An interesting note is that this speedup is lower then in both our and Garcia's\cite{Garcia2008} brute-force implementations, which implies that speedup don't equal a fast implementations. It only implies a good parallel performance increase, compared to the serial algorithmic in use.
-
-This answers RQ~\ref{rq:serial-kd-tree}, and we conclude that our All-kNN query has a significant parallel improvement.
+An final note, is that the speedup for the k-d tree based All-kNN algorithms are lower than the speedup for both our and Garcia's\cite{Garcia2008} brute-force implementations, which shows that speedup don't equal a fast implementations for this problem.
 % subsubsection parallelization_of_the_k_d_tree_build (end)
