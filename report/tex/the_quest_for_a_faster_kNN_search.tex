@@ -333,9 +333,8 @@ Loop unrolling, is the procedure of rewriting a loop, containing conditional ope
 
 The idea of loop unrolling can also be applied to warps. This is called warp unrolling, and it can be used if we know we are in a single warp. The results being, that no expensive thread synchronization is needed, since every warp is accessing a unique memory location.
 
-%TODO: See below.
-% A last note to add is arithmetic operations. Some arithmetic operations are slow and are very costely 
-% Arithmteric aperation  
+%TODO: Skal denne være med?.
+A last note to add is arithmetic operations. Some arithmetic operations are more costly then others, like modulo and divisions. It is therefore time saving to optimize, in computationally heavy algorithms. This is especially the case in the light weighted threads found in CUDA. For instants, one can use a right bit-shift to divide a number by two.
 
 % section cuda_optimizations (end)
 
