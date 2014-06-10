@@ -6,7 +6,7 @@ The purpose of this chapter, is to cover some background material, giving the re
 \section{The k-nearest neighbors search problem} % (fold)
 \label{a_short_introduction_to_kNN_search_problem}
 
-The k-nearest neighbors (kNN) search problem, is, the problem of locating the k closest neighbors to a given query point, with k being some positive natural number. This is intuitively a quite simple problem to grasp, and for most of our purposes, an intuitive understanding of the problem will be sufficient, but let us start by looking a bit closer at the properties of kNN search in general.
+The k-nearest neighbors (kNN) search problem, is, the problem of locating the $k$ closest neighbors to a given query point, with $k$ being some positive natural number. This is intuitively a quite simple problem to grasp, and for most of our purposes, an intuitive understanding of the problem will be sufficient, but let us start by looking a bit closer at the properties of kNN search in general.
 
 If we consider $p$ to be a point in d-dimensional space so that $p = [x_1, x_2,\dots, x_d]$. Given a set of size $m$, consisting of such points $S = [p_1, p_2,\dots, p_m]$, a additional query point $q$, also in d-dimensional space, and some distance metric $D = f(p, q)$, the kNN problem is to find k points in $S$, such that the sum of distances in relation to $q$ is minimized. We introduce the term reference points to be the set $S$, to differentiate it from the query points $Q$. 
 
