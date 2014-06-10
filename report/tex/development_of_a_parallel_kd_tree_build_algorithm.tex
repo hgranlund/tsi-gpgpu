@@ -94,7 +94,7 @@ First reusing the bitonic sort was investigated. Given a sorted list one can fin
 Another way to make bitonic sort work with a list of any size is described by K.E. Batcher~\cite{Batcher:1968}. The description of this solution is very lengthy, and has been omitted, since it introduces a lot of divergence, that would be decremental to performance on the GPU\@. We also have the inherent downside of sorting a list in order to find the median, since \BigO{m} algorithms for finding the median exist, compared to the \BigO{m log(m)} time required by sorting.
 
 %TODO: Check agglomeration vs adversarial
-Bucket-sort and radix-sort based algorithms are investigated in the paper Fast K-selection Algorithms for Graphics Processing Units by Alabi et.al\citep{Alabi:2012}. The big difference between them is the constant time penalty. The radix sort have a more exact time complexity of \BigO{b\ m}, where b is the number of bits in each number. While the penalty for bucket select is \BigO{a\ m}, where $a$ denotes the degree of agglomeration in the values. In other words, the algorithm is week when the points are clusters together. His results shows that bucket select normally is slightly faster, except when $a$ is high. Although bucket select normally have better results, we expect a high degree of agglomeration in our application, so we choose radix select.
+Bucket-sort and radix-sort based algorithms are investigated in the paper Fast K-selection Algorithms for Graphics Processing Units by Alabi et.al\@.~\citep{Alabi:2012}. The big difference between them is the constant time penalty. The radix sort have a more exact time complexity of \BigO{b\ m}, where b is the number of bits in each number. While the penalty for bucket select is \BigO{a\ m}, where $a$ denotes the degree of agglomeration in the values. In other words, the algorithm is week when the points are clusters together. His results shows that bucket select normally is slightly faster, except when $a$ is high. Although bucket select normally have better results, we expect a high degree of agglomeration in our application, so we choose radix select.
 % subsubsection selecting_a_algorithm (end)
 
 \subsubsection{Radix select} % (fold)
@@ -106,11 +106,11 @@ The radix select is based on a bitwise partitioning, much like radix sort~\cite[
 \centering
 \includegraphics[width=100mm]{../gfx/Radix_select.png}
 
-\caption{An illustration of radix selection\cite{cayman:2012}.}
+\caption{An illustration of radix selection~\cite{cayman:2012}.}
 \label{fig:radix_select}
 \end{figure}
 
-When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort, like the variens introduced by Merrill\cite{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select by Alabi\citep{Alabi:2012}. They both uses a parallelization strategy by splitting each radix partition into parallel operations. The way our and Alabi's solution differs from Merrill's solution, is that we start on the most significant digit, since a least significant digit approach will not reduce the k'th order statistic problem in each step.
+When it comes to create a parallelization strategy for radix select it is first advisable to take a look at a highly optimized radix sort, like the variant introduced by Merrill~\cite{MerrillG11}. The radix select can easily be reduced from a radix sort, and many concepts can therefore be reused. An other interesting implementation is the radix select by Alabi~\citep{Alabi:2012}. They both uses a parallelization strategy by splitting each radix partition into parallel operations. The way our and Alabi's solution differs from Merrill's solution, is that we start on the most significant digit, since a least significant digit approach will not reduce the k'th order statistic problem in each step.
 % subsection radix_select (end)
 
 \subsubsection{Our implementation} % (fold)
@@ -119,7 +119,7 @@ When it comes to create a parallelization strategy for radix select it is first 
 % TODO: Ta med bigO kalkulasjon på hele algorithmen.
 Our implementation is based on Algorithm~\ref{alg:iterativ_tree_build}. Calling Balance-Subtree on all nodes in a tree-level, is performed on the GPU as a CUDA kernel. The outer for-loop is executed on the CPU, and launches the kernel for increasing tree-levels, until the entire tree is built. The complete implementation can be found in Appendix~\ref{sec:paralell_k_d_tree_build}.
 
-Algorithm~\ref{alg:parallel_balance_subtree} is parallelized only within a single CUDA block. This means that the parallel threads are able to communicate. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation\citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
+Algorithm~\ref{alg:parallel_balance_subtree} is parallelized only within a single CUDA block. This means that the parallel threads are able to communicate. The algorithm is based around a repeat-until loop, which basically do all the work. The loop keeps track of a partition array. This array is then sliced in to, by giving each thread a portion of the array, each thread then counts how many zeros it finds in the current bit position. The cut, as the arrows in Figure~\ref{fig:radix_select} shows, is calculated by doing a reduce sum operation~\citep{parallel_reduction_in_cuda}. This is repeated until the partition contains the median, which is when every bit is used or when the partition size is one. After the loop, the array is transformed. Such that the median is in the center, with lesser elements on the left and bigger on the right.
 
 \begin{algorithm}[ht]
 \caption{Parallel subtree balance}
@@ -148,7 +148,7 @@ Algorithm~\ref{alg:parallel_balance_subtree} is parallelized only within a singl
 \end{algorithmic}
 \end{algorithm}
 
-In CUDA thread instruction run sequentially in warps of 32. Control flow divergence within a warp can therefore significantly destroy the instruction throughput. This is because the different execution paths must be serialized, as all the thread in a warp share the same program counter\cite{cuda_c_best_practices_guide}. The total number of instruction in a warp will therefore increase. Any conditional operator, e.g. if and switch, should be used with care, since it may branch the control flow. Optimizing the use of conditionals, in order to reduce the amount of branching in the program control flow, will give better performance.
+In CUDA thread instruction run sequentially in warps of 32. Control flow divergence within a warp can therefore significantly destroy the instruction throughput. This is because the different execution paths must be serialized, as all the thread in a warp share the same program counter~\cite{cuda_c_best_practices_guide}. The total number of instruction in a warp will therefore increase. Any conditional operator, e.g\@. if and switch, should be used with care, since it may branch the control flow. Optimizing the use of conditionals, in order to reduce the amount of branching in the program control flow, will give better performance.
 
 In our implementation, all threads perform the same thing in every iteration. This will give a low thread branching. The loop is also almost done equal times by all thread, one time for each bit used to represent the points. The one $if$ statement in the iteration, can be reduced to only contain one statement, which make the divergent thread branch small. The code is therefore good in regard of divergence.
 
@@ -222,5 +222,5 @@ Letting just one thread handle the Balance-Subtree operation for small subtrees,
 \label{fig:the_jumps_final}
 \end{figure}
 
-Now that a lot of improvments have been made, lets take a look at the results. Figure~\ref{fig:the_jumps_final} compare our imtermidiate result with our new and imporved version, and the changes made a huge impact on the performance. The jumps disappeared, and was replaced by a faster and smoother curve, indicating that the CUDA resources is perfectly balanced. The final implementation can be found in Appendix~\ref{sec:parallel_quick_select}.
+Now that a lot of improvements have been made, lets take a look at the results. Figure~\ref{fig:the_jumps_final} compare our intermediate result with our new and improved version, and the changes made a huge impact on the performance. The jumps disappeared, and was replaced by a faster and smoother curve, indicating that the CUDA resources is perfectly balanced. The final implementation can be found in Appendix~\ref{sec:parallel_quick_select}.
 % subsection further_development (end)
