@@ -6,9 +6,9 @@
 \section{Test environment} % (fold)
 \label{sec:test_environment}
 
-To test and investigate our results three test environments have been used, as shown in Table~\ref{sec:test_environment}. They all have different properties that are used to test different aspects of our algorithms. Test environment 3 has a normal windows setup, with a graphics card that is used for both display rendering and CUDA computation. On the other hand, test environment 1, uses the same hardware, but is setup with a dedicated GPU\@. CUDA computations done on a environment without a dedicated GPU, is forced to split the resources with the running OS, which implies some restrictive properties. For instance, it is normal for an OS to kill long running processes. On windows the normal timeout is around $30$ seconds. To get around this restriction some editing in regedit is necessary.
+To test and investigate our results three test environments have been used, as shown in Table~\ref{sec:test_environment}.1. They all have different properties that are used to test different aspects of our algorithms. Test environment 3 has a normal Windows setup, with a graphics card that is used for both display rendering and CUDA computation. On the other hand, test environment 1, uses the same hardware, but is setup with a dedicated GPU\@. CUDA computations done on a environment without a dedicated GPU, is forced to split the resources with the running OS, which implies some restrictive properties. For instance, it is normal for an OS to kill long running GPU processes. On windows the normal timeout is around $30$ seconds. To get around this restriction some editing in regedit is necessary.
 
-The last environment, number 2, is build on a amazon instance. This give us a way to test one a wither and a more powerful computer. In our case, as our specific application needs a high number of points, the biggest  and discussionadvantage was huge memory capacity on the amazon system. Increased number of CUDA cores also made it possible to test performance ratios and different variants of resource distributions.
+The last environment, number 2, is build on an Amazon web service (AWS) cloud instance. Using AWS, enables us to test implementations on a more powerful GPU, than what we currently have in our personal procession. The biggest advantage of the AWS GPU for our applications, is the increased on-board GPU memory. This enables us to store larger point clouds directly on the GPU. The increased number of CUDA cores, also makes it possible to test performance ratios, and different variants of resource distributions.
 
 \begin{table}[ht]
 \centering
@@ -32,7 +32,7 @@ The last environment, number 2, is build on a amazon instance. This give us a wa
     \label{tbl:test_envoronments}
 \end{table}
 
-All tests was run multiple times and averaged, to get more accurate results. It should also be noted that it is common practice to warm up the GPU before any test. Reason is that it may take as long time for the CUDA runtime to create a CUDA context, as launching the kernel itself.
+All tests was run multiple times and averaged, to get more accurate results. It should also be noted that it is common practice to warm up the GPU before any test, because it may take as long time for the CUDA runtime to create a CUDA context, as launching the kernel itself.
 
 All tests used synthetic data, generated as uniformly distributed random points in a unit cube. Where needed, random points was generated and stored to disk. This data could then be used as the source for several different tests, eliminating deviation in tests used for comparison of between different implementations.
 
@@ -51,7 +51,9 @@ The different research questions stated during development of our algorithms are
 \subsection{Solving the kNN problem} % (fold)
 \label{sub:solving_the_knn_problem}
 
-In Section~\ref{sec:brute_force_garcia} we started off our quest for a faster kNN search, by investigating a possible brute-force algorithm, pioneered by Garcia et.al. The following research question was asked. RQ~\ref{rq:brute_force_performance}, can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.
+In Section~\ref{sub:investigation_of_a_brute_force_approach_based_on_garcia} we started on our quest for a faster kNN search, by investigating a possible brute-force algorithm, pioneered by Garcia et.al. The following research question was asked. 
+
+\textbf{RQ~\ref{rq:brute_force_performance}.} \emph{Can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.}
 
 In order to discuss this question, we have to clarify what we consider to be high performance in this context. The work of Garcia et.al. contains the fastest brute force algorithm, for solving the kNN problem, we have found in current literature. We would therefore consider a kNN algorithm to have high performance, if it is able to solve the kNN problem for point cloud data, in the 3D format specified by TSI, at comparable speeds to the algorithm developed by Garcia et.al. 
 
@@ -68,7 +70,9 @@ In Section~\ref{sub:continuing_on_garcia_s_path}, we discussed Figure~\ref{fig:b
 
 We therefore conclude that RQ~\ref{rq:brute_force_performance} can be answered with yes. High performance can be achieved with a brute-force based algorithm.
 
-In Section~\ref{sub:application_of_kd_trees_to_the_knn_problem} we introduced the k-d tree, a data-structure with a known \BigO{log(m)} nearest neighbor query algorithm. We therefore presented RQ~\ref{rq:serial-kd-tree}: It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution? We try to answer this question in Figure~\ref{fig:final-knn-kd-vs-bf}.
+In Section~\ref{sub:application_of_kd_trees_to_the_knn_problem} we introduced the k-d tree, a data-structure with a known \BigO{log(m)} nearest neighbor query algorithm. We therefore presented a new research question, which we try to answer in Figure~\ref{fig:final-knn-kd-vs-bf}.
+
+\textbf{RQ~\ref{rq:serial-kd-tree}.} \emph{It is possible to use a k-d tree to increase the performance of kNN queries, compared to a parallel brute force solution?}
 
 \begin{figure}[ht!]
     \centering
@@ -77,14 +81,14 @@ In Section~\ref{sub:application_of_kd_trees_to_the_knn_problem} we introduced th
     \label{fig:final-knn-kd-vs-bf}
 \end{figure}
 
-The graph compares the runtime of the k-d tree build and query algorithms developed in Section~\ref{sec:development_of_a_parallel_k_d_search_algorithm} with the min-reduce brute-force algorithm. All test data is generated using test environment 1.
+The graph compares the runtime of the k-d tree build and query algorithms developed in Section~\ref{sec:the_quest_for_a_faster_knn_search}, with the min-reduce brute-force algorithm. All test data is generated using test environment 1.
 
 Figure~\ref{fig:final-var-knn-kd-vs-bf} compares the same two algorithms, but for a fixed value of $m$, and increasing value of $k$. This test is also performed using test environment 1.
 
 \begin{figure}[ht!]
     \centering
     \includegraphics[width=120mm]{../gfx/final-var-knn-kd-vs-bf.png}
-    \caption{Comparison of min-reduce brute-force and k-d tree based algorithms for solving the kNN problem for $m=1e6$ and increasing $k\le200$.}
+    \caption{Comparison of min-reduce brute-force and k-d tree based algorithms for solving the kNN problem for $m=\numprint{1.0e6}$ and increasing $k\le200$.}
     \label{fig:final-var-knn-kd-vs-bf}
 \end{figure}
 
@@ -94,7 +98,11 @@ Both Figure~\ref{fig:final-knn-kd-vs-bf} and \ref{fig:final-var-knn-kd-vs-bf} sh
 \subsection{Solving the All-kNN problem} % (fold)
 \label{sub:solving_the_all_knn_problem}
 
-The All-kNN problem was studied in both in relation to the brute-force algorithm and the k-d tree based algorithm. In Section~\ref{sub:continuing_on_garcia_s_path} we proposed RQ~\ref{rq:brute_force_Q-kNN}: Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time? We also wanted to compare our parallel k-d tree based algorithm to the brute-force algorithm. This was formulated in Section~\ref{sub:application_of_kd_trees_to_the_knn_problem} as RQ~\ref{rq:serial-kd-tree-all-knn}: It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute force solution?
+The All-kNN problem was studied in both relation to the brute-force algorithm and the k-d tree based algorithm. In Section~\ref{sub:continuing_on_garcia_s_path} we proposed RQ~\ref{rq:brute_force_Q-kNN}. We also wanted to compare our parallel k-d tree based algorithm to the brute-force algorithm, postulated in RQ~\ref{rq:serial-kd-tree-all-knn}.
+
+\textbf{RQ~\ref{rq:brute_force_Q-kNN}.} \emph{Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?}
+
+\textbf{RQ~\ref{rq:serial-kd-tree-all-knn}.} \emph{It is possible to use a k-d tree to increase the performance of All-kNN queries, compared to a parallel brute force solution?}
 
 Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} compares the runtime of the min-reduce brute-force algorithm to the k-d tree based algorithm, for increasing values of $m\le1e7$, and a fixed value of $k=100$. The data series for the min-reduce algorithm is estimated from the data obtained in Figure~\ref{fig:final-knn-kd-vs-bf}. This estimation is valid, since all GPU resources are used to perform one kNN query, when using the brute-force algorithm. Solving the All-kNN problem with the brute-force algorithm, can therefore only be performed as repeated application of the brute-force kNN algorithm, given a reasonable hardware setup, with one CUDA enabled GPU.
 
@@ -124,7 +132,7 @@ Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} shows that the brute-force algor
 
 In Figure~\ref{fig:final-all-knn-gpu-vs-cpu-vs-bf} the impression is that the GPU and CPU parallelized k-d algorithms performs similarly. We will therefore investigate additional results, to get a better understanding of how they compare.
 
-Figure~C compares the difference between the CPU and the GPU parallelized k-d query algorithm. Test environment 1 is again used.
+Figure~\ref{fig:v17-gpu-vs-cpu} compares the difference between the CPU and the GPU parallelized k-d query algorithm. Test environment 1 is again used.
 
 \begin{figure}[ht!]
     \centering
