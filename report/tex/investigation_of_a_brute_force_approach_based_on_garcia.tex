@@ -60,7 +60,7 @@ It is proven that general sorting can be performed with a time complexity of \Bi
 
 However, using this strategy often forces us to select a sorting algorithm with bad time complexity. For instance, the insertion sort algorithm, used in the general brute-force algorithm \cite{Cormen:2001}, has a time complexity of \BigO{m^2}, the time complexity of finding the $k$ smallest points will therefore be \BigO{m\ k}. Asymptotically, this would give better timing results in cases where $k$ is smaller then $log(m)$. Let us analyze a case with $k=100$. For the insertion sort to get any asymptoticly advantage over the best sorting algorithms, the problem size has to be larger than $2^{100}$, which requires a point cloud of $1.3e30$. This is unrealistic for our problem. Choosing another sorting algorithm could therefore be a better strategy.
 
-Graham Nolan discusses the possibility of improving Garcia's algorithm by using bitonic sort, and he states that it gives a significant improvement \citep{Nolan}. Bitonic sort is a known \BigO{m\ log(m)} algorithm, and is based around a soring network. The network is a series of interleaving bitonic sequences. A sequence is bitonic if it monotonically increases and then monotonically decreases\cite{Cormen:2001}. An iterative version of the bitonic sort is described in Algorithm~\ref{alg:bitonic_sort}.
+Graham Nolan discusses the possibility of improving Garcia's algorithm by using bitonic sort, and he states that it gives a significant improvement \citep{Nolan}. Bitonic sort is a known \BigO{m\ log(m)} algorithm, and is based around a soring network. The network is a series of interleaving bitonic sequences. A sequence is bitonic if it monotonically increases and then monotonically decreases \cite{Cormen:2001}. An iterative version of the bitonic sort is described in Algorithm~\ref{alg:bitonic_sort}.
 
 \begin{algorithm}[ht]
 \caption{Iterative Bitonic sort}
@@ -99,11 +99,11 @@ Graham Nolan discusses the possibility of improving Garcia's algorithm by using 
 \subsubsection{Min-reduce} % (fold)
 \label{ssub:min_reduce}
 
-Sorting the distances, with a \BigO{m\ log(m)} operations, still looks like a high price to pay to get the smallest values. Especially if $k$ is reasonably small. Why do we need to sort the list in the first place? Sorting is a very naive way to go. The problem it solves is also extremely general compared to our specific goal, which is to get the smallest $k$ values. An algorithm that is more suitable, and also highly parallelizable, is a reduce operation. Cormen\cite{Cormen:2001} defines $\otimes$-reduction of an array $d$ of size $m$, where $\otimes$ is any associative operator, to be the value $y$, given by the following formula:
+Sorting the distances, with a \BigO{m\ log(m)} time complexity, still looks like a high price to pay to get the smallest values. Especially if $k$ is reasonably small. Do we need to sort the list in the first place? An algorithm that is more suitable, and also highly parallelizable, is the reduce operation. Cormen \cite{Cormen:2001} defines $\otimes$-reduction of an array $d$ of size $m$, where $\otimes$ is any associative operator, to be the value $y$, given by the following formula:
 
      $$ y = d[1] \otimes d[2] \dots \otimes d[m].$$
 
-In serial this is a typical linear algorithm with time complexity \BigO{m}, as shown in Algorithm~\ref{alg:serial_reduce}. 
+In the serial case, this is a typical linear algorithm with time complexity \BigO{m}, as shown in Algorithm~\ref{alg:serial_reduce}. 
 
 \begin{algorithm}[ht]
 \caption{Serial $\otimes$-reduction}
@@ -121,23 +121,24 @@ In serial this is a typical linear algorithm with time complexity \BigO{m}, as s
 
 Since the operator $\otimes$ is associative, there is no difference in which way the values are calculated or if it's done on parallel. A tree based approach, like Figure~\ref{fig:paralell_reduce_operation}, could be used. It is a good parallelization strategy, where every possible independent subtask is parallelized. Here each tree level do the associative operations in parallel, the results are combined as the tree level progresses downwards, until only one element remains. The parallel equivalent to Algorithm~\ref{alg:serial_reduce} is therefore done in \BigO{log(n)} time. 
 
-% TODO: finne en tittle
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=50mm]{../gfx/min_reduce.png}
-
 \caption{A visualization of the parallel min-reduce operation.}
 \label{fig:paralell_reduce_operation}
 \end{figure}
 
-To solve our problem the associative operation has to be the minimum operator. A min-reduce algorithm is easy to implement in CUDA, but it is hard to get fast. Implementing the min-reduce algorithm can easily be done in CUDA, but in order to get the best performance some optimization techniques, like loop unrolling, sequential addressing and warp unrolling, described in Section~\ref{sec:cuda_optimizations} should be applied.   
+To solve our problem the associative operation has to be the minimum operator. Implementing the min-reduce algorithm can easily be done in CUDA, but in order to get the best performance some optimization techniques, like loop unrolling, sequential addressing and warp unrolling, described in Section~\ref{sec:cuda_optimizations} should be applied.   
 % subsubsection min_reduce (end)
 
 \subsubsection{Results} % (fold)
 \label{ssub:comparison}
 
-%TODO: More bragging, less Garcia.
-Now that we have three different implementations of the kNN brute force method, lets take look at how they compare. Figure~\ref{fig:brute_force} shows the timing results with $k$ equals $10$. Garcia's algorithm lose much time, because of the more general problem it solves and the use of insertion sort. The generality also impacts the number of supported reference points, as the shorted graph implies. Graham Nolan's idea to improve the sorting algorithm gave a huge impact. It is almost five times faster then Garcia's implementation, shown in Table~\ref{tab:tabulated_results_from_brute_force}. Bitonic sort has a soring network that is suited for lengths that is a power of two, which give some pits in the graph. Partitioning of the list amongst the CUDA blocks, also moved the pits a bit around.  
+Two variations of our restricted brute-force algorithm where implemented, one using the bitonic-sort strategy, and one using the min-reduce operator. Both where compared to the algorithm developed by Garcia et.al.
+
+Figure~\ref{fig:brute_force} shows the timing results with $k$ equals $10$, for the three different brute-force implementations.
+
+We see that the general brute-force algorithm has the worst performance. This is as expected, since it is developed for solving a more general problem, and does not use the optimizations described in our previous sections. The results for the brute-force implementation using bitonic sort, shows that Graham Nolan's idea of improving the sorting algorithm give a huge impact. It is almost five times faster then Garcia's implementation, shown in Table~\ref{tab:tabulated_results_from_brute_force}. As a note, bitonic sort has a soring network that is most suited for lengths that is a power of two. This explains the two drops observed in the graph.
 
 \begin{figure}[ht!]
 \centering
@@ -159,10 +160,8 @@ Now that we have three different implementations of the kNN brute force method, 
     \label{tab:tabulated_results_from_brute_force}
 \end{table}
 
-The big winner in this contest is the min-reduce version. It is $70$ times faster then Garcia and almost $15$ times faster then the bitonic version. Although min-reduce is the big winner at a low k, lets not imply that it always is going to be the best alternative before some analysis are made.
+The big winner in this comparison is the min-reduce version. It is $70$ times faster than the general brute-force algorithm, and almost $15$ times faster then the bitonic version.
 
-First of all, lets see whats happening asymptoticly when $k$ is increasing.  Performing $k$ min-reduce operations takes \BigO{klog(m)} time, because one min-reduce has a time complexity of \BigO{log(m)}. If we increase $k$ towards $m$, the result would be a sorted list, and the time complexity will go towards \BigO{mlog(m)}. This is the same time complexity as our bitonic sort. The asymptotic growth of the min-reduce variant will not be any different then the bitonic sort variant, even though $k$ equals $m$. 
-
-A sorting operation with min-reduce naturally have a bigger constant time penalty than the bitonic version. However, if $k$ is reasonably small, the min-reduce method is highly superior.   
+Although the min-reduce brute-force algorithm is the best choice in this test for low values of $k$, this is not always the case. Performing $k$ min-reduce operations takes \BigO{k\ log(m)} time, because one min-reduce has a time complexity of \BigO{log(m)}. If we increase $k$ towards $m$, the result would be a sorted list, and the time complexity will go towards \BigO{m\ log(m)}. This is the same time complexity as our bitonic sort, but a sorting operation with min-reduce have a bigger constant time penalty than the bitonic version. However, for our use case, where $k$ is kept reasonably small, the min-reduce method is far superior.
 % subsubsection comparison (end)
  % subsection garcia_s_effort (end) 
