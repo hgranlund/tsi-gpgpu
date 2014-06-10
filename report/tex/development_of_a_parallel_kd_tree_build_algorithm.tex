@@ -45,24 +45,23 @@ The k-d tree construction basically boils down to successively balance each node
 
 Now that an iterative solution have been created, lets start looking at how this algorithm might be parallelized. First a good overall parallelization strategy has to be found. A good strategy manage to easily split the main task into small individual subtasks, that can be performed in parallel, while maintaining a minimal need for communication between the subtasks.
 
-%TODO: One observation. Children in same tree can be done in parallel. Implies one parallelization.
-When we converted our k-d tree algorithm from a recursive to a iterative solution two interesting observations was made. The first observation is that a node balance is only dependent on the parent node. This means that each tree level are independent, which acts as a good start for our parallelization strategy.
+When we converted our k-d tree algorithm from a recursive to a iterative solution some interesting observations was made. One observation is that a node balance is only dependent on the parent node. This means that each tree level are independent, which acts as a good start for our parallelization strategy.
 
-This also means that all subtrees in the k-d tree generation are independent. Hence, the tree corresponding to the left and right child of a node can be done in parallel without any communication. 
+This also implies that all subtrees in the k-d tree generation are independent. Hence, the tree corresponding to the left and right child of a node can be done in parallel without any communication. 
 
-The data is also independent, as a result of how we represent the tree as an array. By data independent, it is meant that the data structure easily can be partitioned to each subtask. In our case will the tree array successively be partitioned into contentious subtrees.
+The data is also independent, as a result of how we represent the tree as an array. By data independent, it is meant that the data structure easily can be partitioned to each subtask. In our case this will be to successively partition the tree into contentious subtrees.
 
-From these observations, several strategies can be used to parallelize the k-d tree build algorithm. The first observation implies that we can divide the tree levels into dependent tasks, where each node balance in a tree level is a independent subtask. This gives us an power of two increasing number of parallel tasks as we go down a tree level. The sublist size will decrease with a factor of two in each downward step, see Fig~\ref{fig:tree_level_development}
+These observation implies that we can divide the tree levels into dependent tasks, where each node balance in a tree level is a independent subtask. This gives us an power of two increasing number of parallel tasks as we go down a tree level. The subtree size will decrease with a factor of two in each downward step, see Fig~\ref{fig:tree_level_development}
 
-This parallelization strategy gives many concurrent operations at the lower level of the tree, but at the initial levels, we hardly get any parallelization at all. To cope with this we can seek to parallelize the work done in each Balance-Subtree procedure.
+This parallelization strategy gives many concurrent operations at the lower level of the tree, but at the initial levels, will hardly get any parallelization at all. To compensate for this one could seek to parallelize the work done in each Balance-Subtree procedure, which also act as a parallelizations strategy.
 
-Both strategies can be used in conjunction with each other. The parallel balance node task algorithm can be used to speed up the early iterations, where the amount of nodes in a tree level is small. As well as further parallelize the subtasks in later tree level iterations. This strategy also fit well to our choice of tree representation. One parallel operation can now take the tree representation, split it into subtrees, and balance each subtree. Everything can also be done in place, so the algorithm is as memory efficient as possible.
+Both strategies can be used in conjunction with each other. The parallel balance node task algorithm can be used to speed up the early iterations, where the amount of nodes in a tree level is small. As well as further parallelize the subtasks in later tree level iterations. This strategy also fit well to our choice of tree representation. One parallel operation can now take the tree representation, split it into subtrees, and balance each one. 
 
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=100mm]{../gfx/Tree_level_development.png}
 
-\caption{Development of subtasks as the kd-tree generation progresses. It shows, at each tree level, how many nodes there is to parallelize and how big each node balancing is. }
+\caption{Development of subtasks as the kd-tree generation progresses. It shows, at each tree level, how many nodes there is to parallelize and how big each node balancing is.}
 \label{fig:tree_level_development}
 \end{figure}
 % subsection parallelization_strategy (end)
@@ -169,7 +168,7 @@ Let us take a step back and look at RQ~\ref{rq:parallel_build}. The possibility 
 
 With the test setup as described in Section~\ref{sec:test_environment}, the current version of the algorithm gave results as shown in Figure~\ref{fig:gpuv1_vs_cpu}. The most interesting observation are the big jumps in the graph. If one look closely these jumps happens every time the problem size exceeds a power of two, as for example when the size passes $8388608$ the timing increases from $2703 ms$ to $4335 ms$. The results of further investigation is shown in Table~\ref{tbl:nvprc_balance_branch}. It shows how long time each tree level takes, and how the different tree level operations varies throughout the build process.
 
-\begin{table}[ht]
+\begin{table}[ht!]
 \centering
     \begin{tabular}{|l|l|l|l|}
         \hline
@@ -210,14 +209,15 @@ The implementation details are omitted here, but can be found in Appendix~\ref{s
 
 We also would like to improve performance, when Balance-Subtree is applied to many small subtrees. For instance, at level $18$ there are $131072$ different subtask with only an average size of $7$. The previous implementation divided all these subtask between a small number of SM, typically $8-32$ on current NVIDIA GPUs\@. The algorithm the uses to many cores to balance a subtree of only $7$ elements, which is not a efficient way to divide resources.
 
-Letting just one thread handle the Balance-Subtree operation for small subtrees, would let us process more subtrees in parallel, improving performance. With this parallelization, each thread is responsible for it's own subtree, and communication with other threads is no longer needed. With the need for communication eliminated, we can utilize Algorithm~\ref{alg:seriel_tree_build}. 
-
 \begin{figure}[ht!]
 \centering
 \includegraphics[width=100mm]{../gfx/the_jumps_final.png}
 \caption{Visualization of the final improvments on the k-d tree build implementation.}
 \label{fig:the_jumps_final}
 \end{figure}
+
+Letting just one thread handle the Balance-Subtree operation for small subtrees, would let us process more subtrees in parallel, improving performance. With this parallelization, each thread is responsible for it's own subtree, and communication with other threads is no longer needed. With the need for communication eliminated, we can utilize Algorithm~\ref{alg:seriel_tree_build}. 
+
 
 Now that a lot of improvements have been made, lets take a look at the results. Figure~\ref{fig:the_jumps_final} compare our intermediate result with our new and improved version, and the changes made a huge impact on the performance. The jumps disappeared, and was replaced by a faster and smoother curve, indicating that the CUDA resources is perfectly balanced. The final implementation can be found in Appendix~\ref{sec:parallel_quick_select}.
 % subsection further_development (end)

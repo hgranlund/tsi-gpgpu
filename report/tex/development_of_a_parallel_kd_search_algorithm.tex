@@ -89,7 +89,7 @@ Our simple parallelization strategy, combined with an iterative implementation o
 
 Algorithm~\ref{alg:iterative_knn_kd_tree_search} does not have a lot of divergence, and the remaining branching can be further reduced. If threads in a warp is traversing completely different parts of the tree, they will access different nodes. This is called data divergence. The solution is to let each warp search for points that are located closely in the k-d tree. This will cause all the threads to traverse down the tree in roughly along roughly the same branch, reducing the data divergence. Due to the nature of our k-d tree implementation, this can be achieved by feeding the points to the search algorithm as they are placed in the k-d tree.
 
-The explicit stack also makes an interesting question about where to store the new stack. This is data that are modifiable and thread independent, which means that the possible options memory options are shared memory, local memory and global memory. Local memory is the memory each thread can allocate dynamically from the heap. Global memory is a possible candidate. It has enough space, it is modifiable and accessible to all threads. The drawback is the access time, it takes around $400-600$ clock cycles, and it would therefore be beneficial to use some other kind of memory. Shared memory would be a perfect candidate, because the memory is fast and the need to communicate between blocks is nonexistent. The only drawback is the amount of data available in shared memory, which is around $49 kb$ on current NVIDIA GPU's. 
+The explicit stack also makes an interesting question about where to store the new stack. This is data that are modifiable and thread independent, which means that the possible options memory options are shared memory, local memory and global memory. Local memory is the memory each thread can allocate dynamically from the heap. Global memory is a possible candidate. It has enough space, it is modifiable and accessible to all threads. The drawback is the access time, it takes around $400-600$ clock cycles\cite{cuda_c_best_practices_guide}, and it would therefore be beneficial to use some other kind of memory. Shared memory would be a perfect candidate, because the memory is fast and the need to communicate between blocks is nonexistent. The only drawback is the amount of data available in shared memory, which is around $49 kb$ on current NVIDIA GPU's. 
 
 The iterative search algorithm uses one stack and one heap, both stored as arrays in memory. Th number of arrays are dependent on the number of threads used in each block. The s-stack array size is dependent on how many elements the depth-first tree traversal needs to store. If one looks on how the algorithm handles the stack, one can see that elements are pushed on the way down, and poped on the way up. This means that the stack never will be longer then the tree hight. One stack element uses $16$ bytes of space, which means that the stack memory is s subset of $\Theta(16\ log_2(n)T)$. Here $T$ represent the number of threads and $n$ is the k-d tree size. The k-heap array size, depends on the number of closest neighbors, $k$, and one element uses $8$ bytes. This implies that it's memory usage will be, $\Theta(8kT)$.
 
@@ -103,13 +103,11 @@ The iterative search algorithm uses one stack and one heap, both stored as array
 
 In Figure~\ref{fig:stacks_and_shared_memory} the memory usage of each stack is compared to the available shared memory. Some basic assumptions and approximations have been done in regard to the data. Treads are only compared in multiples of $32$, since this is the warp size and is therefore the most optimal thread numbers. The value of $k$ is dependent on the problem in hand, and as our application only needs a value of $100$, so that value is used. 
 
-%TODO: k-stack -> k-heap in figure
 Figure~\ref{fig:stacks_and_shared_memory} shows that the k-heap will not fit in shared memory. Already at a thread count of $64$ the memory is filled up. The size of the k-heap is also highly dependent on the size of $k$ which is hard to predict. However, locating the s-stack on shared memory looks promising. The memory size has also a relatively low asymptotic growth, \BigO{log(n)}, in regard to the tree size.
 
-\begin{figure}[ht!]
+\begin{figure}[ht]
     \centering
     \includegraphics[width=100mm]{../gfx/stack_speed.png}
-
     \caption{Search time comparison between different stack memory types. The test are done with $k$ equals 10 and \numprint{1e6} queries per tree size. }
     \label{tbl:stack_speed}
 \end{figure}
