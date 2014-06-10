@@ -1,25 +1,21 @@
-%TODO: General skrytespråk ;-)
-
-%TODO: Revisit this introduction.
-As a starting point, for our quest for a fast kNN search, our advisors gave us two papers by Garcia\citep{Garcia2008, Garcia2010}. The topic of these papers are to use a brute force method to solve the kNN problem. Expanding it into a All-kNN solution is then an easy task. These two papers is therefor a perfect start and introduces two new research questions.  
+As a starting point in our quest for a fast kNN search, we investigated relevant literature. Consulting our advisors lead us to two papers by Garcia et.al. \citep{Garcia2008, Garcia2010}. In these papers, a parallel brute-force algorithm is developed, capable of solving the kNN problem orders of magnitude faster than comparable fast serial algorithms. Unfortunately, the algorithm developed by Garcia et.al. has some limitations, especially regarding the number of points that the kNN problem can be solved for. This could be due to the general nature of the algorithm developed by Garcia et.al. as it is optimized for solving problems in a large number of dimensions. By optimizing the algorithm for point cloud data, we could be able to get around this limitation.
 
 \begin{myrq}
-Can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.
-\label{rq:brute_force_performance}
+    Can high performance be achieved by a parallel brute force kNN algorithm on large point clouds.
+    \label{rq:brute_force_performance}
 \end{myrq}
+
+Given a fast kNN algorithm for point cloud data, the All-kNN problem can be solved easily, by applying the algorithm sequentially for all points in the cloud. This, however, is a strategy sensitive to minor inefficiencies in the kNN algorithm. The algorithm will have to be very fast for a single problem, in order to solve the All-kNN problem within reasonable time. Whether this is achievable with a fast brute-force based algorithm will have to be investigated.
 
 \begin{myrq}
-Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?
-\label{rq:brute_force_Q-kNN}
+    Can a parallel brute force kNN algorithm be fast enough to solve the All-kNN problem within reasonable time?
+    \label{rq:brute_force_Q-kNN}
 \end{myrq}
 
-\subsection{Garcia's path} % (fold)
+\subsection{Progress made by Garcia et.al.} % (fold)
 \label{sub:garcia_s_effort}
 
-%TODO: Good reference to prev spesification of TSI problem. 
-Garcia's effort is based around a more mathematical version of our problem. A mathematician like to generalize a problem and make it a more uniform and accessible to other applications. For example, a mathematician does not make laws for only a 3-d space, but makes a more generalized version in the n-d space. In this case is is by widening the dimensions and not restricting the amounts of neighbors. In short, his problem is to find any number of closest neighbors in a space with any number of dimensions.  
-
-His solution is based around a brute force method. In terms of parallel speedup this would be the best alternative to parallelize the kNN search, because the task can easily be divided into individual subtasks. The brute force, or exhaustive search, algorithm basically consists of three steps:
+The algorithm developed by Garcia et.al. is general in nature, and solves the kNN problem for any given dimension. It does this by performing the following three steps:
 
 \begin{enumerate}
        \item Compute all distances between the query point $q$, and all reference points in $S$.
@@ -27,16 +23,15 @@ His solution is based around a brute force method. In terms of parallel speedup 
        \item Pick the $k$ shortest distances.
 \end{enumerate}
 
-If this algorithm is to be used on $n$ query points the time complexity will be \BigO{nmd}. That said, the parallelizable nature of the brute force method makes the speedup, in contrast, potentially high. Even though the speedup is great, and the parallelization is trivial, it does not imply that this is the best approach. Speedup is only a ratio between the parallel and serial speed, so if the algorithm itself is bad the parallel counterpart will also be affected. The brute force approach is steal an interesting candidate for our quest for a fast kNN search.
+If this general brute-force algorithm is to be used on $n$ query points the time complexity will be \BigO{n\ m\ d}. To an experienced programmer, this might seem like a inefficient choice for a kNN algorithm. Usually, brute-fore based algorithm is  frowned upon, but when taking into account parallelization, it can be a valid choice. Brute-force algorithms tend to perform a lot of isolated computations, which can be easily parallelized. Combined with potential poor performance of the serial brute-force algorithm, this gives great speedup, and in some cases actual good performance. In addition brute-force algorithms tend to be very robust on different data, and behave in a predictable manner.
 % subsection garcia_s_effort (end)
 
-\subsection{Continuing on Garcia's path} % (fold)
+\subsection{Optimizing the brute-force algorithm for point cloud data} % (fold)
 \label{sub:continuing_on_garcia_s_path} 
 
-Garcia's mathematical path to the kNN problem is good and generic solution, but we need to angle it towards a more specific path. Our problem, in regard to Garcia, is a more engineering-oriented problem. As engineers uses mathematical laws in a more specialized manner, we need to constrain Garcia's problem to fit our specifications. This include a 3-d space with a restricted number of $k$, as described in Section~\ref{a_short_introduction_to_kNN_search_problem}.
+In order to improve performance of the general brute-force algorithm, we want restrict it to 3D space, and optimize it for low values of $k$. We also want to iron out any implementation choices made, that limit the number of points, $m$, the algorithm can operate on. Let us start by addressing the limit on number of points.
 
-First of all, Garcia's implementation only supports problem sizes up to $65535$, as our point clouds tends to be mush bigger, an expansion is therefore necessary. The limitation of $65535$ is exactly the number of theoretical blocks a kernel is allowed to spawn. An expatiation is therefore only a implementation issue, and is solved by a general partitioning algorithm. In short, the algorithm splits a list into a number of partitions. In this case, it is to partition the problem amongst different blocks, as visualized in Algorithm~\ref{alg:general_aspects_dividing}. 
-%The whole reimplementation of Garcia's algorithm can be found in Appendix~\ref{sec:brute_force_garcia}.
+The implementation made by Garcia et.al. only supports problem sizes up to $65535$. The limitation of $65535$ corresponds to the number of theoretical blocks a CUDA kernel is allowed to spawn. This limitation is therefore only an implementation issue, not an issue with the underlying algorithm, and can be solved by applying a general partitioning algorithm. This algorithm splits the work amongst different CUDA blocks, and is shown in Algorithm~\ref{alg:general_aspects_dividing}.
 
 \begin{algorithm}[ht]
 \caption{General work distribution in CUDA}
@@ -54,17 +49,18 @@ First of all, Garcia's implementation only supports problem sizes up to $65535$,
 \end{algorithmic}
 \end{algorithm}
 
-A lot of improvements can be done to Garcia's algorithm, especially if we take advantage of our specialized case. For instance, with the dimension locked to three, the euclidean distance can be calculated in a mush easier fashion.  CUDA consists of lightweight threads, which makes reducing the amount of arithmetic calculations time saving. Garcia, who has to take any number of dimensions into account, uses to vectors and cuBlas to calculate the distance. This makes a lot of extra complexity and data bandwidth, that also can be ignored on our case.
+Additional improvements can be made to the general base algorithm, if we take advantage of our restrictions to the kNN problem. With the dimension fixed to three, the Euclidean distance can be calculated in a more optimized fashion. CUDA consists of lightweight threads, which makes reducing the amount of arithmetic calculations important for achieving good performance. The general base algorithm, who has to take any number of dimensions into account, uses two vectors and cuBlas to calculate the distance. This increases the complexity and data bandwidth required, and can be removed in our case.
 
-An other, and the most time reducing improvement, has to to with the sorting operation. On a problem instance with a small dimension, the most time consuming operation in Garcia's algorithm is the sorting operation. For instance, a search with $8$ dimensions, the sort occupies $62\%$ of the time \citep[Correct table]{Garcia2008}.
-%TODO: Correct citation 
+The final, and maybe the most important, optimization we want to make, is changing the sorting operation, used to sort the computed distances. For problem instances in a low number of dimensions, the most time consuming operation is the sorting operation. For instance, given a search with $8$ dimensions, the sort consumes $62\%$ of the runtime \cite{Garcia2008}.
 
 \subsubsection{Bitonic sort} % (fold)
 \label{ssub:bitonic_sort}
 
-The best general sorting algorithm today has a time complexity of \BigO{m\ log(m)} \cite{Cormen:2001}, which is a high price to pay for getting the smallest values in a list. One could, as Garcia does, use a sorting algorithm that sorts the list in a linear fashion, where the smallest elements are sorted first. However, this property often gives the soring algorithm a bad time complexity. For instance, Garcia's insertion sort\cite{Cormen:2001} has a time complexity of \BigO{m^2}, and the time complexity of finding the $k$ smallest points would be \BigO{m\ k}. Asymptotically this would give a better timing results in cases where $k$ is smaller then $log(m)$. To get a better understanding of these numbers lets look at an example. If we analyze a case with a $k$ of around $100$. For the insertion sort to get any asymptoticly advantage over the best sorting algorithms, the problem size has to be bigger then $2^{100}$, which is a overwhelming $1.3e30$. We therefore think insertion sort is not the way to go.
+It is proven that general sorting can be performed with a time complexity of \BigO{m\ log(m)} \cite{Cormen:2001}. This is a costly operation, if one only need the smallest $k$ values in a list, as is the case with the brute-force algorithm. To improve this, a sorting algorithm that sorts the list in a linear fashion, where the smallest elements are sorted first, could be used. This strategy is applied to the general brute-force algorithm.
 
-Graham Nolan discusses the possibility of improving Garcia's algorithm by using bitonic sort, and he stats that it gave an significant impact\citep{Nolan}. Bitonic sort is a known \BigO{m\ log(m)} algorithm, and is based around a soring network. The network is a series of interleaving bitonic sequences. A sequence is bitonic if it monotonically increases an then monotonically decreases\cite{Cormen:2001}. An iterative version of the bitonic sort is described in Algorithm~\ref{alg:bitonic_sort}.
+However, using this strategy often forces us to select a sorting algorithm with bad time complexity. For instance, the insertion sort algorithm, used in the general brute-force algorithm \cite{Cormen:2001}, has a time complexity of \BigO{m^2}, the time complexity of finding the $k$ smallest points will therefore be \BigO{m\ k}. Asymptotically, this would give better timing results in cases where $k$ is smaller then $log(m)$. Let us analyze a case with $k=100$. For the insertion sort to get any asymptoticly advantage over the best sorting algorithms, the problem size has to be larger than $2^{100}$, which requires a point cloud of $1.3e30$. This is unrealistic for our problem. Choosing another sorting algorithm could therefore be a better strategy.
+
+Graham Nolan discusses the possibility of improving Garcia's algorithm by using bitonic sort, and he states that it gives a significant improvement \citep{Nolan}. Bitonic sort is a known \BigO{m\ log(m)} algorithm, and is based around a soring network. The network is a series of interleaving bitonic sequences. A sequence is bitonic if it monotonically increases and then monotonically decreases\cite{Cormen:2001}. An iterative version of the bitonic sort is described in Algorithm~\ref{alg:bitonic_sort}.
 
 \begin{algorithm}[ht]
 \caption{Iterative Bitonic sort}
