@@ -223,3 +223,23 @@ To solve the error one have to make the GPU only work as a CUDA GPU. There are a
 
 1. (Good) Buy a separate GPU for CUDA computations.
 2. (Bad) Change the timeout value in regedit. HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\GraphicsDrivers --> TdrLevel = "yourTimeoutValueInSeconds".
+
+
+Source file relations
+---------------------
+
+This section outlines important files, and their relation, and can serve as a guide for anyone wanting to attempt to port the source code to a different build system.
+
+#### /include/knn_gpgpu.h
+
+This is the main API header file.
+
+#### /src/kNN/data_types.h, /src/kNN/point.h and /src/kNN/stack.h
+
+This is header files defining important structs.
+
+#### /src/kNN/brute-force/kNN-brute-force-reduce.cu and kNN-brute-force-reduce.cuh
+
+This is the file that implements the fastest version of our brute-force algorithm. It is dependant on the reduce implementation.
+
+####  /src/kNN/brute-force/reduction-mod.cu and reduction-mod.cuh
