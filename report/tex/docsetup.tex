@@ -37,7 +37,7 @@
 % Define aothor and title
 \newcommand{\myauthorA}{Simen Haugerud Granlund}
 \newcommand{\myauthorB}{Teodor Ande Elstad}
-\newcommand{\mytitle}{Utilizing general-purpose computing on graphic processing units (gpgpu) for engineering algorithm speed up}
+\newcommand{\mytitle}{Utilizing general-purpose computing on graphic processing units for engineering algorithm speed up}
 
 \pagestyle{fancy}
 \fancyhf{}
@@ -54,7 +54,7 @@
 \usepackage{listings}
 
 \usepackage[parfill]{parskip}
-
+\usepackage[title,titletoc]{appendix}
 %to include pdf
 \usepackage{pdfpages}
 
@@ -68,7 +68,7 @@
   {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space above
   {.5\baselineskip\@plus.2\baselineskip\@minus.2\baselineskip}% Space below
   {\slshape}% Body font
-  {\parindent}%Indent amount (empty = no indent, \parindent = para indent)
+  {\parindent}%Indent amount (empty = no indent, \parindent = para indent) 
   {\bfseries}%  Thm head font
   {.}%       Punctuation after thm head
   { }%      Space after thm head: " " = normal interword space;
@@ -80,7 +80,6 @@
 
 % Define reserch question label
 \newtheorem{myrq}{RQ}
-
 % Define a big-O  notation command
 
 \newcommand{\BigO}[1]{\ensuremath{\operatorname{O}\bigl(#1\bigr)}}
@@ -89,6 +88,5 @@
 \usepackage{algpseudocode}
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
-\input{glossaries.tex}
 \usepackage{numprint}
 % %---------------------------------------------------------

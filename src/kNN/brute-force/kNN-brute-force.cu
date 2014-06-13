@@ -53,13 +53,13 @@ __global__ void cuBitonicSortOneBlock(float *dist, int *ind, int n, int dir)
     dist += blockoffset;
     ind += blockoffset;
 
-    for (uint size = 2; size <= blockDim.x * 2; size <<= 1)
+    for (int size = 2; size <= blockDim.x * 2; size <<= 1)
     {
-        uint ddd = dir ^ ((threadIdx.x & (size / 2)) != 0);
-        for (uint stride = size / 2; stride > 0; stride >>= 1)
+        int ddd = dir ^ ((threadIdx.x & (size / 2)) != 0);
+        for (int stride = size / 2; stride > 0; stride >>= 1)
         {
             __syncthreads();
-            uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
+            int pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
             cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride], ddd);
         }
     }
@@ -71,23 +71,23 @@ __global__ void cuBitonicSort(float *dist, int *ind, int n, int dir)
     dist += blockoffset;
     ind += blockoffset;
 
-    for (uint size = 2; size <= blockDim.x * 2; size <<= 1)
+    for (int size = 2; size <= blockDim.x * 2; size <<= 1)
     {
-        uint ddd = dir ^ ((threadIdx.x & (size / 2)) != 0);
-        for (uint stride = size / 2; stride > 0; stride >>= 1)
+        int ddd = dir ^ ((threadIdx.x & (size / 2)) != 0);
+        for (int stride = size / 2; stride > 0; stride >>= 1)
         {
             __syncthreads();
-            uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
+            int pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
             cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride], ddd);
         }
     }
 
-    uint ddd = blockIdx.x & 1;
+    int ddd = blockIdx.x & 1;
     {
-        for (uint stride = blockDim.x; stride > 0; stride >>= 1)
+        for (int stride = blockDim.x; stride > 0; stride >>= 1)
         {
             __syncthreads();
-            uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
+            int pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
             cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride], ddd);
         }
     }
@@ -95,8 +95,8 @@ __global__ void cuBitonicSort(float *dist, int *ind, int n, int dir)
 
 __global__ void cuBitonicMergeGlobal(float *dist, int *ind, int n, int size, int stride , int dir)
 {
-    uint global_comparatorI = blockIdx.x * blockDim.x + threadIdx.x;
-    uint        comparatorI = global_comparatorI & (n / 2 - 1);
+    int global_comparatorI = blockIdx.x * blockDim.x + threadIdx.x;
+    int        comparatorI = global_comparatorI & (n / 2 - 1);
 
     int ddd = dir ^ ((comparatorI & (size / 2)) != 0);
     int pos = 2 * global_comparatorI - (global_comparatorI & (stride - 1));
@@ -120,12 +120,12 @@ __global__ void cuBitonicMergeShared(float *dist, int *ind, int n, int size, int
     int blockoffset = blockIdx.x * blockDim.x * 2;
     dist += blockoffset;
     ind += blockoffset;
-    uint comparatorI = (blockIdx.x * blockDim.x + threadIdx.x) & ((n / 2) - 1);
-    uint ddd = dir ^ ((comparatorI & (size / 2)) != 0);
-    for (uint stride = blockDim.x; stride > 0; stride >>= 1)
+    int comparatorI = (blockIdx.x * blockDim.x + threadIdx.x) & ((n / 2) - 1);
+    int ddd = dir ^ ((comparatorI & (size / 2)) != 0);
+    for (int stride = blockDim.x; stride > 0; stride >>= 1)
     {
         __syncthreads();
-        uint pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
+        int pos = 2 * threadIdx.x - (threadIdx.x & (stride - 1));
         cuCompare(dist[pos], ind[pos], dist[pos + stride], ind[pos + stride], ddd);
     }
 }
@@ -144,9 +144,9 @@ void bitonic_sort(float *dist_dev, int *ind_dev, int n, int dir)
     else
     {
         cuBitonicSort <<< blockCount, threadCount>>>(dist_dev, ind_dev, n, dir);
-        for (uint size = 2 * max_threads_per_block; size <= n; size <<= 1)
+        for (int size = 2 * max_threads_per_block; size <= n; size <<= 1)
         {
-            for (uint stride = size / 2; stride > 0; stride >>= 1)
+            for (int stride = size / 2; stride > 0; stride >>= 1)
             {
                 if (stride >= max_threads_per_block)
                 {
@@ -162,7 +162,7 @@ void bitonic_sort(float *dist_dev, int *ind_dev, int n, int dir)
     }
 }
 
-uint factorRadix2(uint *log2L, uint L)
+int factorRadix2(int *log2L, int L)
 {
     if (!L)
     {
@@ -187,8 +187,8 @@ void knn_brute_force_bitonic_sort(float *ref_host, int ref_nb, float *query_host
     int          *ind_dev;
 
 
-    uint log2L;
-    uint factorizationRemainder = factorRadix2(&log2L, ref_nb);
+    int log2L;
+    int factorizationRemainder = factorRadix2(&log2L, ref_nb);
     // assert(factorizationRemainder == 1);
 
     checkCudaErrors(cudaMalloc( (void **) &dist_dev, ref_nb * size_of_float));

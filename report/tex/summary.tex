@@ -1,22 +1,15 @@
 %!TEX root = ./main.tex
 
-\clearpage
-\pagenumbering{roman}
-\setcounter{page}{1}
+\section*{Sammendrag}
 
-\pagestyle{fancy}
-\fancyhf{}
-\renewcommand{\chaptermark}[1]{\markboth{\chaptername\ \thechapter.\ #1}{}}
-\renewcommand{\sectionmark}[1]{\markright{\thesection\ #1}}
-\renewcommand{\headrulewidth}{0.1ex}
-\renewcommand{\footrulewidth}{0.1ex}
-\fancyfoot[LE,RO]{\thepage}
-\fancypagestyle{plain}{\fancyhf{}\fancyfoot[LE,RO]{\thepage}\renewcommand{\headrulewidth}{0ex}}
 
-\section*{\Huge Summary}
-\addcontentsline{toc}{chapter}{Summary}
-\vspace{1 cm}
+M{\aa}let med denne avhandlingen, er {\aa} utforske mulighetene knyttet til {\aa} anvende GPGPU (general-purpose computing on graphics processing units) for {\aa} forbedre ytelsen til tunge beregninger i programvarebaserte ingeni{\o}rverkt{\o}y.
 
-\noindent Write your summary here...
+Avhandlingen tar for seg en problemstilling, knyttet til analyse av punktskyer, i programvare utviklet av TechnoSoft Inc. Ytelsen i denne programvaren blir fors{\o}kt {\o}kt, ved {\aa} utvikle raskere algoritmer, for l{\o}sning av kNN (k n{\ae}rmeste naboer) og Alle-kNN problemet, optimalisert for punktskybaserte data.
 
-\clearpage
+En GPU-parallellisert “brute-force” algoritme blir utviklet, som er i stand til {\aa} l{\o}se kNN problemet $70$ ganger raskere enn en tilsvarende algoritme, utviklet av Garcia et.al\@.~\cite{Garcia2008}, anvendt p{\aa} tilsvarende data.
+
+Ved {\aa} anvende k-d tr{\ae}r, en GPU-parallellisert algoritme blir utviklet, egnet for {\aa} l{\o}se Alle-kNN problemet. Denne algoritmen forbedrer resultatet oppn{\aa}dd gjennom bruk av “brute-force algoritmen med 300 ganger.
+
+
+\clearpage\
